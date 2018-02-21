@@ -16,10 +16,15 @@ class problem_data {
     int problem_dimension;
 };
 
+/*
+voronoi constraint for one point only.
+*/
 class voronoi_data {
   public:
     problem_data* pdata;
     hyperplane plane;
+    int curve_idx;
+    int point_idx;
 };
 
 class obstacle_data {

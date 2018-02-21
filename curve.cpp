@@ -5,6 +5,9 @@
 #include "bezier_cost_integral_grad_mathematica.h"
 #include <gsl/gsl_sf_hyperg.h>
 #include <cassert>
+#include <iostream>
+
+using namespace std;
 
 typedef std::chrono::high_resolution_clock Time;
 typedef std::chrono::milliseconds ms;
@@ -86,7 +89,8 @@ double curve::integrate(double from, double to, vector<double>& grad) {
 
   //auto t0 = Time::now();
 
-  int combb = comb(d, 0);
+  // my code
+  /*int combb = comb(d, 0);
   int combcomb = combb * combb;
 
   double topwr2i = to;
@@ -96,6 +100,7 @@ double curve::integrate(double from, double to, vector<double>& grad) {
 
   for(int i=0; i<=cpts.size()-1; i++) {
     for(int q=0; q<dimension; q++) {
+      cout << to << " " << from << " " << 2*i+1 << " " << 2*i-2*d << " " << 2*i+2 << gsl_sf_hyperg_2F1(2*i+1, 2*i-2*d, 2*i+2, to) << endl;
       result += cpts[i][q] * cpts[i][q] * combcomb *
                 ((topwr2i * gsl_sf_hyperg_2F1(2*i+1, 2*i-2*d, 2*i+2, to) / (2*i+1)) -
                  (frompwr2i * gsl_sf_hyperg_2F1(2*i+1, 2*i-2*d, 2*i+2, from) / (2*i+1)));
@@ -113,6 +118,7 @@ double curve::integrate(double from, double to, vector<double>& grad) {
         toijpwr *= to;
         fromijpwr *= from;
       }
+      cout << "done" << endl;
     }
     combb *= (d-i);
     combb /= (i+1);
@@ -120,6 +126,8 @@ double curve::integrate(double from, double to, vector<double>& grad) {
     topwr2i *= topwr2iinc;
     frompwr2i *= frompwr2iinc;
   }
+  return result;*/
+
   /*auto t1 = Time::now();
 
   double result2 = bezier_integrate_2d_8pts(from, to, cpts);
@@ -132,7 +140,7 @@ double curve::integrate(double from, double to, vector<double>& grad) {
   us d2 = std::chrono::duration_cast<us>(fs2);
 
   cout << ">>>> My implementation:" << result << " time:" << d1.count() << " Mathematica:" << result2 << " time:" << d2.count() << endl;*/
-  return result;
+  return bezier_integrate_2d_8pts(from, to, cpts);
 }
 
 curve& curve::operator-=(const curve& rhs) {

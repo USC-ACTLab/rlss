@@ -1,5 +1,6 @@
 #include "optimization.h"
 #include <vector>
+#include <iostream>
 using namespace std;
 
 
@@ -45,8 +46,31 @@ double optimization::voronoi_constraint(const vector<double>& x, vector<double>&
   trajectory& ot = *(pdata.original_trajectory);
   int pd = pdata.problem_dimension;
   hyperplane& plane = vd.plane;
+  int cidx = vd.curve_idx;
+  int pidx = vd.point_idx;
 
-  return 0;
+  int fpidx = cidx * ot[0].size() * pd + pidx * pd;
+
+  vectoreuc cur_pt(pd);
+  for(int i=0; i<pd; i++) {
+    //cout << "here" << endl;
+    cur_pt[i] = x[fpidx+i];
+    //cout << "it comes" << endl;
+  }
+
+
+  if(grad.size() > 0) {
+    //cout << "here2" << endl;
+    for(int i=0; i< grad.size(); i++) {
+      grad[i] = 0;
+    }
+    for(int i=0; i<pd; i++) {
+      grad[fpidx+i] = plane.normal[i];
+    }
+  //  cout << "it comes2" << endl;
+  }
+
+  return cur_pt.dot(plane.normal) - plane.distance;
 }
 
 double optimization::obstacle_constraint(const vector<double>& x, vector<double>& grad, void* o_data) {
@@ -58,5 +82,10 @@ double optimization::obstacle_constraint(const vector<double>& x, vector<double>
   double dt = pdata.delta_t;
   int pd = pdata.problem_dimension;
 
-  return 0;
+  if(grad.size() >  0) {
+    for(int i=0; i<grad.size(); i++)
+      grad[i] = 0;
+  }
+
+  return -1;
 }

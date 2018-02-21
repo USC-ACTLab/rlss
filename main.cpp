@@ -16,6 +16,9 @@
 #include "hyperplane.h"
 #include "obstacle.h"
 #include "optimization.h"
+#include "cxxopts.hpp"
+
+#define PATHREPLAN_EPSILON 0.00001
 
 namespace fs = std::experimental::filesystem::v1;
 using namespace std;
@@ -28,16 +31,55 @@ double fRand(double fMin, double fMax)
 }
 
 
-int main() {
+int main(int argc, char** argv) {
+
+  string initial_trajectories_path = "../../initial_trajectories/";
+  string obstacles_path = "../../obstacles/";
+  double dt = 0.2;
+  double integral_stopval = 0.0001;
+  double relative_integral_stopval = 0.001;
+  int problem_dimension = 2;
+
+  cxxopts::Options options("Path Replanner", "Path replanner for UAV swarms");
+  options.add_options()
+    ("trajectories", "Folder that contains trajectories", cxxopts::value<std::string>()->default_value("../../initial_trajectories/"))
+    ("obstacles", "Folder that contains obstacles", cxxopts::value<std::string>()->default_value("../../obstacles/"))
+    ("dt", "Delta time", cxxopts::value<double>()->default_value("0.2"))
+    ("is", "Integral stop value", cxxopts::value<double>()->default_value("0.0001"))
+    ("ris", "Relative integral stop ratio", cxxopts::value<double>()->default_value("0.001"))
+    ("dimension", "Problem dimension", cxxopts::value<int>()->default_value("2"))
+    ("help", "Display help page");
+
+  auto result = options.parse(argc, argv);
+
+  if(result.count("help")>0) {
+    cout << options.help() << endl;
+    return 0;
+  }
+
+
+  initial_trajectories_path = result["trajectories"].as<string>();
+  obstacles_path = result["obstacles"].as<string>();
+  dt = result["dt"].as<double>();
+  integral_stopval = result["is"].as<double>();
+  relative_integral_stopval = result["ris"].as<double>();
+  problem_dimension = result["dimension"].as<int>();
+
+
+  cout << "initial_trajectories_path: " << initial_trajectories_path << endl
+       << "obstacles_path: " << obstacles_path << endl
+       << "dt: " << dt << endl
+       << "integral_stopval: " << integral_stopval << endl
+       << "relative_integral_stopval: " << relative_integral_stopval << endl
+       << "problem_dimension: " << problem_dimension << endl << endl;
 
   srand(time(NULL));
 
-  int problem_dimension = 2;
 
   vector<trajectory> trajectories;
 
-  string path = "../../initial_trajectories/";
-  for (auto & p : fs::directory_iterator(path)) {
+
+  for (auto & p : fs::directory_iterator(initial_trajectories_path)) {
     csv::Parser file(p.path().string());
     trajectory trj;
     for(int i=0; i<file.rowCount(); i++) {
@@ -68,8 +110,7 @@ int main() {
 
   vector<obstacle2D> obstacles;
 
-  path = "../../obstacles/";
-  for(auto & p : fs::directory_iterator(path)) {
+  for(auto & p : fs::directory_iterator(obstacles_path)) {
     csv::Parser file(p.path().string());
     obstacle2D o;
     for(int i=0; i<file.rowCount(); i++) {
@@ -90,16 +131,15 @@ int main() {
   }
 
 
-  double dt = total_t;
   vector<vectoreuc> positions(trajectories.size());
 
   for(double ct = 0; ct <= total_t; ct+=dt) {
     for(int i=0; i<trajectories.size(); i++) {
       positions[i] = trajectories[i].eval(ct);
+      cout << i << " (" << positions[i][0] << "," << positions[i][1] << ")" << endl;
     }
 
     for(int i=0; i<trajectories.size(); i++) {
-      int a;
 
       /*calculate voronoi hyperplanes for robot i*/
       vector<hyperplane> voronoi_hyperplanes = voronoi(positions, i);
@@ -109,7 +149,7 @@ int main() {
         number of curves \times number of points per curve \times problem_dimension
       */
       unsigned varcount = trajectories[i].size() * trajectories[i][0].size() * problem_dimension;
-      nlopt::opt problem(nlopt::LD_MMA, varcount);
+      nlopt::opt problem(nlopt::LD_SLSQP, varcount);
 
       problem_data data;
       data.current_t = ct;
@@ -139,12 +179,45 @@ int main() {
 
       for(int j=0; j<voronoi_hyperplanes.size(); j++) {
         hyperplane& plane = voronoi_hyperplanes[j];
-        voronoi_data* vd = new voronoi_data;
-        vd->pdata = &data;
-        vd->plane = plane;
 
-        problem.add_inequality_constraint(optimization::voronoi_constraint, (void*)vd, 0);
-        vdpts.push_back(vd);
+
+        double current_time = ct;
+        double end_time  = ct+dt;
+
+        int idx = 0;
+
+        while(idx < trajectories[i].size() && current_time >= trajectories[i][idx].duration) {
+          current_time -= trajectories[i][idx].duration;
+          end_time -= trajectories[i][idx].duration;
+          idx++;
+        }
+
+        current_time = max(current_time, 0.0); // to resolve underflows. just for ct == 0.
+
+        while(end_time > 0 && idx < trajectories[i].size()) {
+          double cend_time = min(end_time, trajectories[i][idx].duration);
+          double curvet = 0;
+          double step = trajectories[i][idx].duration / (trajectories[i][idx].size()-1);
+          for(int p=0; p<trajectories[i][idx].size(); p++) {
+            if((curvet > current_time || fabs(curvet - current_time) < PATHREPLAN_EPSILON) && (curvet < cend_time || fabs(curvet - cend_time) < PATHREPLAN_EPSILON)) {
+              voronoi_data* vd = new voronoi_data;
+              vd->pdata = &data;
+              vd->plane = plane;
+              vd->curve_idx = idx;
+              vd->point_idx = p;
+
+              problem.add_inequality_constraint(optimization::voronoi_constraint, (void*)vd, 0);
+              vdpts.push_back(vd);
+            }
+            curvet += step;
+          }
+
+
+          end_time -= cend_time;
+          current_time = 0;
+          idx++;
+        }
+
       }
 
       // just to delete them from heap later.
@@ -160,53 +233,62 @@ int main() {
       }
 
       /* if integral is less than this value, stop.*/
-      problem.set_stopval(0.00000001);
+      problem.set_stopval(integral_stopval);
 
       /* if objective function changes relatively less than this value, stop.*/
-      problem.set_ftol_rel(0.00000001);
+      problem.set_ftol_rel(relative_integral_stopval);
 
 
       vector<double> initial_values;
       for(int j=0; j<trajectories[i].size(); j++) {
         for(int k=0; k<trajectories[i][j].size(); k++) {
-          initial_values.push_back(trajectories[i][j][k][0]+fRand(0, 0.2));
-          initial_values.push_back(trajectories[i][j][k][1]+fRand(0, 0.2));
+          initial_values.push_back(trajectories[i][j][k][0]);
+          initial_values.push_back(trajectories[i][j][k][1]);
         }
       }
 
-      cout << initial_values.size() << endl;
+      //cout << initial_values.size() << endl;
 
       double opt_f;
 
-      int idx = 0;
+      int initidx = 0;
 
-      for(int j=0; j<trajectories[i].size(); j++) {
+      /*for(int j=0; j<trajectories[i].size(); j++) {
         cout << trajectories[i][j].duration;
         for(int k=0; k<trajectories[i][j].size(); k++) {
           for(int p=0; p<trajectories[i][j][k].size(); p++) {
-            cout << "," << initial_values[idx++];
+            cout << "," << initial_values[initidx++];
           }
         }
         cout << endl;
       }
-      cout << endl << endl;
+      cout << endl << endl;*/
       nlopt::result res = problem.optimize(initial_values, opt_f);
-      idx = 0;
 
-      cout << "nlopt result: " << res << " objective value: " << opt_f << endl;
+      initidx = 0;
       for(int j=0; j<trajectories[i].size(); j++) {
+        for(int k=0; k<trajectories[i][j].size(); k++) {
+          trajectories[i][j][k][0] = initial_values[initidx++];
+          trajectories[i][j][k][1] = initial_values[initidx++];
+        }
+      }
+
+      initidx = 0;
+
+      //cout << "nlopt result: " << res << " objective value: " << opt_f << endl;
+      /*for(int j=0; j<trajectories[i].size(); j++) {
         cout << trajectories[i][j].duration;
         for(int k=0; k<trajectories[i][j].size(); k++) {
           for(int p=0; p<trajectories[i][j][k].size(); p++) {
-            cout << "," << initial_values[idx++];
+            cout << "," << initial_values[initidx++];
           }
         }
         cout << endl;
-      }
+      }*/
 
 
 
-      cin >> a;
+//      cin >> a;
 
 
       for(int j=0; j<vdpts.size(); j++) {
@@ -217,8 +299,9 @@ int main() {
       }
     }
 
-    return 0;
 
   }
+
+  return 0;
 
 }
