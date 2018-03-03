@@ -85,7 +85,7 @@ double curve::integrate(double from, double to, vector<double>& grad) {
 
 
   if(grad.size() > 0)
-    grad = bezier_gradient_2d_8pts(from, to, cpts);
+    grad = bezier_gradient_2d_8pts(from, to, cpts, duration);
 
   //auto t0 = Time::now();
 
@@ -126,6 +126,7 @@ double curve::integrate(double from, double to, vector<double>& grad) {
     topwr2i *= topwr2iinc;
     frompwr2i *= frompwr2iinc;
   }
+  result *= duration;
   return result;*/
 
   /*auto t1 = Time::now();
@@ -140,7 +141,7 @@ double curve::integrate(double from, double to, vector<double>& grad) {
   us d2 = std::chrono::duration_cast<us>(fs2);
 
   cout << ">>>> My implementation:" << result << " time:" << d1.count() << " Mathematica:" << result2 << " time:" << d2.count() << endl;*/
-  return bezier_integrate_2d_8pts(from, to, cpts);
+  return bezier_integrate_2d_8pts(from, to, cpts, duration);
 }
 
 curve& curve::operator-=(const curve& rhs) {

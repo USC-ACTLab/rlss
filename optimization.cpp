@@ -89,3 +89,7 @@ double optimization::obstacle_constraint(const vector<double>& x, vector<double>
 
   return -1;
 }
+
+double optimization::continuity_constraint(const vector<double>& x, vector<double>& grad, void* c_data) {
+  return 0;
+}

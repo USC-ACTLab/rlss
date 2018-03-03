@@ -39,6 +39,7 @@ int main(int argc, char** argv) {
   double integral_stopval = 0.0001;
   double relative_integral_stopval = 0.001;
   int problem_dimension = 2;
+  int max_continuity = 3;
 
   cxxopts::Options options("Path Replanner", "Path replanner for UAV swarms");
   options.add_options()
@@ -48,6 +49,7 @@ int main(int argc, char** argv) {
     ("is", "Integral stop value", cxxopts::value<double>()->default_value("0.0001"))
     ("ris", "Relative integral stop ratio", cxxopts::value<double>()->default_value("0.001"))
     ("dimension", "Problem dimension", cxxopts::value<int>()->default_value("2"))
+    ("cont", "Contiuity upto this degree", cxxopts::value<int>()->default_value("3"))
     ("help", "Display help page");
 
   auto result = options.parse(argc, argv);
@@ -64,6 +66,7 @@ int main(int argc, char** argv) {
   integral_stopval = result["is"].as<double>();
   relative_integral_stopval = result["ris"].as<double>();
   problem_dimension = result["dimension"].as<int>();
+  max_continuity = result["cont"].as<int>();
 
 
   cout << "initial_trajectories_path: " << initial_trajectories_path << endl
@@ -71,7 +74,8 @@ int main(int argc, char** argv) {
        << "dt: " << dt << endl
        << "integral_stopval: " << integral_stopval << endl
        << "relative_integral_stopval: " << relative_integral_stopval << endl
-       << "problem_dimension: " << problem_dimension << endl << endl;
+       << "problem_dimension: " << problem_dimension << endl
+       << "continuity upto: " << max_continuity << endl << endl;
 
   srand(time(NULL));
 
@@ -232,6 +236,22 @@ int main(int argc, char** argv) {
         obspts.push_back(od);
       }
 
+
+      vector<continuity_data*> contpts;
+      for(int n=0; n<=max_continuity; n++) {
+        // nth degree continuity
+        for(int j=0; j<trajectories[i].size()-1; j++) {
+          continuity_data* cd = new continuity_data;
+          cd->n = n;
+          cd->pd = problem_dimension;
+          cd->c1 = j;
+          cd->c2 = j+1;
+
+          problem.add_equality_constraint(optimization::continuity_constraint, (void*)cd, 0.00001);
+          contpts.push_back(cd);
+        }
+      }
+
       /* if integral is less than this value, stop.*/
       problem.set_stopval(integral_stopval);
 
@@ -296,6 +316,9 @@ int main(int argc, char** argv) {
       }
       for(int j=0; j<obspts.size(); j++) {
         delete obspts[j];
+      }
+      for(int j=0; j<contpts.size(); j++) {
+        delete contpts[j];
       }
     }
 

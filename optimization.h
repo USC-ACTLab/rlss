@@ -33,11 +33,21 @@ class obstacle_data {
     obstacle2D* obs;
 };
 
+class continuity_data {
+  public:
+    int n; // continuity degree
+    int pd; // problem dimension
+    int c1; // curve 1 index
+    int c2; // curve 2 index
+};
+
 class optimization {
   public:
     static double objective(const vector<double>& x, vector<double>& grad, void* f_data);
     static double voronoi_constraint(const vector<double>& x, vector<double>& grad, void* v_data);
     static double obstacle_constraint(const vector<double>& x, vector<double>& grad, void* o_data);
+    static double continuity_constraint(const vector<double>& x, vector<double>& grad, void* c_data);
 };
+
 
 #endif
