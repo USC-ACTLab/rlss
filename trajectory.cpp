@@ -33,9 +33,11 @@ double trajectory::integrate(double from, double to, vector<double>& grad) {
     if(from >= curves[curveidx].duration) {
       from -= curves[curveidx].duration;
       to -= curves[curveidx].duration;
-      for(int i=0; i<curves[curveidx].size(); i++) {
-        for(int j=0; j<curves[curveidx].dimension; j++) {
-          grad[gradidx++] = 0;
+      if(grad.size() > 0) {
+        for(int i=0; i<curves[curveidx].size(); i++) {
+          for(int j=0; j<curves[curveidx].dimension; j++) {
+            grad[gradidx++] = 0;
+          }
         }
       }
     } else {
@@ -51,8 +53,10 @@ double trajectory::integrate(double from, double to, vector<double>& grad) {
   for(; to > 0 && curveidx < curves.size(); to-=curves[curveidx].duration, curveidx++) {
     vector<double> grdient(curves[curveidx].size() * curves[curveidx][0].size());
     res += curves[curveidx].integrate(from, min(to, curves[curveidx].duration), grdient);
-    for(int i=0; i<grdient.size(); i++) {
-      grad[gradidx++] = grdient[i];
+    if(grad.size() > 0) {
+      for(int i=0; i<grdient.size(); i++) {
+        grad[gradidx++] = grdient[i];
+      }
     }
     from = 0; // basically resets the first from value.
   }

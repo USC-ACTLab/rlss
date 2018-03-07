@@ -2,7 +2,7 @@
 #include "vectoreuc.h"
 #include "curve.h"
 #include <chrono>
-#include "bezier_cost_integral_grad_mathematica.h"
+#include "bezier_mathematica.h"
 #include <gsl/gsl_sf_hyperg.h>
 #include <cassert>
 #include <iostream>

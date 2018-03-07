@@ -40,6 +40,7 @@ int main(int argc, char** argv) {
   double relative_integral_stopval = 0.001;
   int problem_dimension = 2;
   int max_continuity = 3;
+  double continuity_tol = 0.001;
 
   cxxopts::Options options("Path Replanner", "Path replanner for UAV swarms");
   options.add_options()
@@ -50,6 +51,7 @@ int main(int argc, char** argv) {
     ("ris", "Relative integral stop ratio", cxxopts::value<double>()->default_value("0.001"))
     ("dimension", "Problem dimension", cxxopts::value<int>()->default_value("2"))
     ("cont", "Contiuity upto this degree", cxxopts::value<int>()->default_value("3"))
+    ("tol", "Continuity tolerances for equality", cxxopts::value<double>()->default_value("0.001"))
     ("help", "Display help page");
 
   auto result = options.parse(argc, argv);
@@ -67,6 +69,7 @@ int main(int argc, char** argv) {
   relative_integral_stopval = result["ris"].as<double>();
   problem_dimension = result["dimension"].as<int>();
   max_continuity = result["cont"].as<int>();
+  continuity_tol = result["tol"].as<double>();
 
 
   cout << "initial_trajectories_path: " << initial_trajectories_path << endl
@@ -137,6 +140,8 @@ int main(int argc, char** argv) {
 
   vector<vectoreuc> positions(trajectories.size());
 
+  double printdt = 0.01;
+
   for(double ct = 0; ct <= total_t; ct+=dt) {
     for(int i=0; i<trajectories.size(); i++) {
       positions[i] = trajectories[i].eval(ct);
@@ -153,7 +158,7 @@ int main(int argc, char** argv) {
         number of curves \times number of points per curve \times problem_dimension
       */
       unsigned varcount = trajectories[i].size() * trajectories[i][0].size() * problem_dimension;
-      nlopt::opt problem(nlopt::LD_SLSQP, varcount);
+      nlopt::opt problem(nlopt::LN_COBYLA, varcount);
 
       problem_data data;
       data.current_t = ct;
@@ -238,16 +243,19 @@ int main(int argc, char** argv) {
 
 
       vector<continuity_data*> contpts;
+      vector<double> continuity_tolerances(problem_dimension);
+      for(int i=0; i<problem_dimension; i++) {
+        continuity_tolerances[i] = continuity_tol;
+      }
       for(int n=0; n<=max_continuity; n++) {
         // nth degree continuity
         for(int j=0; j<trajectories[i].size()-1; j++) {
           continuity_data* cd = new continuity_data;
+          cd->pdata = &data;
           cd->n = n;
-          cd->pd = problem_dimension;
-          cd->c1 = j;
-          cd->c2 = j+1;
+          cd->c = j;
 
-          problem.add_equality_constraint(optimization::continuity_constraint, (void*)cd, 0.00001);
+          problem.add_equality_mconstraint(optimization::continuity_constraint, (void*)cd, continuity_tolerances);
           contpts.push_back(cd);
         }
       }
@@ -283,7 +291,12 @@ int main(int argc, char** argv) {
         cout << endl;
       }
       cout << endl << endl;*/
-      nlopt::result res = problem.optimize(initial_values, opt_f);
+      try {
+        nlopt::result res = problem.optimize(initial_values, opt_f);
+      } catch(nlopt::roundoff_limited& e) {
+        //cout << "roundoff_limited" << endl;
+
+      }
 
       initidx = 0;
       for(int j=0; j<trajectories[i].size(); j++) {
@@ -322,7 +335,12 @@ int main(int argc, char** argv) {
       }
     }
 
-
+    for(double t = ct + printdt; t<ct+dt; t+=printdt) {
+      for(int i=0; i<trajectories.size(); i++) {
+        vectoreuc vec = trajectories[i].eval(t);
+        cout << i << " (" << vec[0] << "," << vec[1] << ")" << endl;
+      }
+    }
   }
 
   return 0;

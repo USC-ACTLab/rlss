@@ -1,6 +1,7 @@
 #include "optimization.h"
 #include <vector>
 #include <iostream>
+#include "bezier_mathematica.h"
 using namespace std;
 
 
@@ -90,6 +91,40 @@ double optimization::obstacle_constraint(const vector<double>& x, vector<double>
   return -1;
 }
 
-double optimization::continuity_constraint(const vector<double>& x, vector<double>& grad, void* c_data) {
-  return 0;
+void optimization::continuity_constraint(unsigned m, double* result, unsigned n, const double* x, double* grad, void* c_data) {
+  continuity_data& cd = *((continuity_data*)c_data);
+  problem_data& pdata = *(cd.pdata);
+
+  int continuity_degree = cd.n;
+  int c = cd.c;
+  int pts = pdata.original_trajectory[0].size(); //pts per curve
+  int pd = pdata.problem_dimension;
+
+  const double* P = x + pts * pd * c;
+  const double* Q = x + pts* pd * (c+1);
+
+  vector<vector<double> > gradvec;
+  if(grad)
+    gradvec.resize(pd);
+
+  bezier_2d_8pts_continuity(P, Q, continuity_degree, gradvec, result);
+//  cout << result[0] << " " << result[1] << endl;
+  if(grad) {
+    for(int i=0; i<pd; i++) {
+      for(int j=0; j<n; j++) {
+        grad[i*n + j] = 0;
+      }
+    }
+
+
+    for(int i=0; i<pd; i++) {
+      for(int j=0; j<pts; j++) {
+        for(int k=0; k<pd; k++) {
+          grad[n*i + pts*pd*c+j*pd+k] = gradvec[i][j*pd + k];
+          grad[n*i + pts*pd*(c+1)+j*pd+k] = gradvec[i][pts*pd + j*pd+k];
+        }
+      }
+    }
+  }
+
 }

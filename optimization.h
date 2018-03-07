@@ -35,10 +35,9 @@ class obstacle_data {
 
 class continuity_data {
   public:
+    problem_data* pdata;
     int n; // continuity degree
-    int pd; // problem dimension
-    int c1; // curve 1 index
-    int c2; // curve 2 index
+    int c; // first curve index. next curve is c+1
 };
 
 class optimization {
@@ -46,7 +45,7 @@ class optimization {
     static double objective(const vector<double>& x, vector<double>& grad, void* f_data);
     static double voronoi_constraint(const vector<double>& x, vector<double>& grad, void* v_data);
     static double obstacle_constraint(const vector<double>& x, vector<double>& grad, void* o_data);
-    static double continuity_constraint(const vector<double>& x, vector<double>& grad, void* c_data);
+    static void continuity_constraint(unsigned m, double* result, unsigned n, const double* x, double* grad, void* c_data);
 };
 
 
