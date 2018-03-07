@@ -39,6 +39,7 @@ int main(int argc, char** argv) {
   double integral_stopval = 0.0001;
   double relative_integral_stopval = 0.001;
   int problem_dimension = 2;
+  int ppc = 8;
   int max_continuity = 3;
   double continuity_tol = 0.001;
 
@@ -50,6 +51,7 @@ int main(int argc, char** argv) {
     ("is", "Integral stop value", cxxopts::value<double>()->default_value("0.0001"))
     ("ris", "Relative integral stop ratio", cxxopts::value<double>()->default_value("0.001"))
     ("dimension", "Problem dimension", cxxopts::value<int>()->default_value("2"))
+    ("ppc", "Points per curve", cxxopts::value<int>()->default_value("8"))
     ("cont", "Contiuity upto this degree", cxxopts::value<int>()->default_value("3"))
     ("tol", "Continuity tolerances for equality", cxxopts::value<double>()->default_value("0.001"))
     ("help", "Display help page");
@@ -70,6 +72,7 @@ int main(int argc, char** argv) {
   problem_dimension = result["dimension"].as<int>();
   max_continuity = result["cont"].as<int>();
   continuity_tol = result["tol"].as<double>();
+  ppc = result["ppc"].as<int>();
 
 
   cout << "initial_trajectories_path: " << initial_trajectories_path << endl
@@ -78,7 +81,9 @@ int main(int argc, char** argv) {
        << "integral_stopval: " << integral_stopval << endl
        << "relative_integral_stopval: " << relative_integral_stopval << endl
        << "problem_dimension: " << problem_dimension << endl
-       << "continuity upto: " << max_continuity << endl << endl;
+       << "points per curve: " << ppc << endl
+       << "continuity upto: " << max_continuity << endl
+       << "continuity tolerance: " << continuity_tol << endl << endl;
 
   srand(time(NULL));
 
@@ -92,7 +97,7 @@ int main(int argc, char** argv) {
     for(int i=0; i<file.rowCount(); i++) {
       double duration = stod(file[i][0]);
       curve crv(duration, problem_dimension);
-      for(int j=1; j<=16; j+=problem_dimension) {
+      for(int j=1; j<=problem_dimension * ppc; j+=problem_dimension) {
         vectoreuc cp(problem_dimension);
         for(int u=0; u<problem_dimension; u++) {
           cp[u] = stod(file[i][j+u]);
@@ -157,17 +162,18 @@ int main(int argc, char** argv) {
       /*
         number of curves \times number of points per curve \times problem_dimension
       */
-      unsigned varcount = trajectories[i].size() * trajectories[i][0].size() * problem_dimension;
-      nlopt::opt problem(nlopt::LN_COBYLA, varcount);
+
+      unsigned varcount = trajectories[i].size() * ppc * problem_dimension;
+      nlopt::opt problem(nlopt::LD_SLSQP, varcount);
 
       problem_data data;
       data.current_t = ct;
       data.delta_t = dt;
-      data.original_trajectory = &trajectories[i];
+      data.original_trajectory = &(trajectories[i]);
       data.problem_dimension = problem_dimension;
+      data.ppc = ppc;
 
       problem.set_min_objective(optimization::objective, (void*)&data);
-
 
 
       /* all control points should be in range [-10, 10].
@@ -243,10 +249,10 @@ int main(int argc, char** argv) {
 
 
       vector<continuity_data*> contpts;
-      vector<double> continuity_tolerances(problem_dimension);
+      /*vector<double> continuity_tolerances(problem_dimension);
       for(int i=0; i<problem_dimension; i++) {
         continuity_tolerances[i] = continuity_tol;
-      }
+      }*/
       for(int n=0; n<=max_continuity; n++) {
         // nth degree continuity
         for(int j=0; j<trajectories[i].size()-1; j++) {
@@ -255,7 +261,8 @@ int main(int argc, char** argv) {
           cd->n = n;
           cd->c = j;
 
-          problem.add_equality_mconstraint(optimization::continuity_constraint, (void*)cd, continuity_tolerances);
+          //problem.add_equality_mconstraint(optimization::continuity_mconstraint, (void*)cd, continuity_tolerances);
+          problem.add_equality_constraint(optimization::continuity_constraint, (void*)cd, continuity_tol);
           contpts.push_back(cd);
         }
       }
@@ -269,9 +276,10 @@ int main(int argc, char** argv) {
 
       vector<double> initial_values;
       for(int j=0; j<trajectories[i].size(); j++) {
-        for(int k=0; k<trajectories[i][j].size(); k++) {
-          initial_values.push_back(trajectories[i][j][k][0]);
-          initial_values.push_back(trajectories[i][j][k][1]);
+        for(int k=0; k<ppc; k++) {
+          for(int p=0; p<problem_dimension; p++) {
+            initial_values.push_back(trajectories[i][j][k][p]);
+          }
         }
       }
 
@@ -280,6 +288,7 @@ int main(int argc, char** argv) {
       double opt_f;
 
       int initidx = 0;
+      //problem.set_maxeval(1000);
 
       /*for(int j=0; j<trajectories[i].size(); j++) {
         cout << trajectories[i][j].duration;
@@ -294,15 +303,17 @@ int main(int argc, char** argv) {
       try {
         nlopt::result res = problem.optimize(initial_values, opt_f);
       } catch(nlopt::roundoff_limited& e) {
-        //cout << "roundoff_limited" << endl;
-
+        cout << "roundoff_limited" << endl;
+      } catch(std::runtime_error& e) {
+        cout << "runtime error " << i << endl;
       }
 
       initidx = 0;
       for(int j=0; j<trajectories[i].size(); j++) {
-        for(int k=0; k<trajectories[i][j].size(); k++) {
-          trajectories[i][j][k][0] = initial_values[initidx++];
-          trajectories[i][j][k][1] = initial_values[initidx++];
+        for(int k=0; k<ppc; k++) {
+          for(int p=0; p<problem_dimension; p++) {
+            trajectories[i][j][k][p] = initial_values[initidx++];
+          }
         }
       }
 

@@ -14,6 +14,7 @@ class problem_data {
     double delta_t;
     trajectory* original_trajectory;
     int problem_dimension;
+    int ppc;
 };
 
 /*
@@ -45,7 +46,10 @@ class optimization {
     static double objective(const vector<double>& x, vector<double>& grad, void* f_data);
     static double voronoi_constraint(const vector<double>& x, vector<double>& grad, void* v_data);
     static double obstacle_constraint(const vector<double>& x, vector<double>& grad, void* o_data);
-    static void continuity_constraint(unsigned m, double* result, unsigned n, const double* x, double* grad, void* c_data);
+    /* requires two points to be equal, use it with add_equality_mconstraint */
+    static void continuity_mconstraint(unsigned m, double* result, unsigned n, const double* x, double* grad, void* c_data);
+    /* requires distance between two points to be zero, use it with add_equality_constraint*/
+    static double continuity_constraint(const vector<double>& x, vector<double>& grad, void* c_data);
 };
 
 

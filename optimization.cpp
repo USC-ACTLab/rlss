@@ -34,8 +34,8 @@ double optimization::objective(const vector<double>& x, vector<double>& grad, vo
   }
 
   nt -= ot;
-
-  return nt.integrate(ct, ct+dt, grad);
+  double result = nt.integrate(ct, ct+dt, grad);
+  return result;
 }
 
 double optimization::voronoi_constraint(const vector<double>& x, vector<double>& grad, void* v_data) {
@@ -49,8 +49,9 @@ double optimization::voronoi_constraint(const vector<double>& x, vector<double>&
   hyperplane& plane = vd.plane;
   int cidx = vd.curve_idx;
   int pidx = vd.point_idx;
+  int ppc = pdata.ppc;
 
-  int fpidx = cidx * ot[0].size() * pd + pidx * pd;
+  int fpidx = cidx * ppc * pd + pidx * pd;
 
   vectoreuc cur_pt(pd);
   for(int i=0; i<pd; i++) {
@@ -70,8 +71,8 @@ double optimization::voronoi_constraint(const vector<double>& x, vector<double>&
     }
   //  cout << "it comes2" << endl;
   }
-
-  return cur_pt.dot(plane.normal) - plane.distance;
+  double result = cur_pt.dot(plane.normal) - plane.distance;
+  return result;
 }
 
 double optimization::obstacle_constraint(const vector<double>& x, vector<double>& grad, void* o_data) {
@@ -88,20 +89,21 @@ double optimization::obstacle_constraint(const vector<double>& x, vector<double>
       grad[i] = 0;
   }
 
+
   return -1;
 }
 
-void optimization::continuity_constraint(unsigned m, double* result, unsigned n, const double* x, double* grad, void* c_data) {
+void optimization::continuity_mconstraint(unsigned m, double* result, unsigned n, const double* x, double* grad, void* c_data) {
   continuity_data& cd = *((continuity_data*)c_data);
   problem_data& pdata = *(cd.pdata);
 
   int continuity_degree = cd.n;
   int c = cd.c;
-  int pts = pdata.original_trajectory[0].size(); //pts per curve
+  int ppc = pdata.ppc; //pts per curve
   int pd = pdata.problem_dimension;
 
-  const double* P = x + pts * pd * c;
-  const double* Q = x + pts* pd * (c+1);
+  const double* P = x + ppc * pd * c;
+  const double* Q = x + ppc* pd * (c+1);
 
   vector<vector<double> > gradvec;
   if(grad)
@@ -118,13 +120,56 @@ void optimization::continuity_constraint(unsigned m, double* result, unsigned n,
 
 
     for(int i=0; i<pd; i++) {
-      for(int j=0; j<pts; j++) {
+      for(int j=0; j<ppc; j++) {
         for(int k=0; k<pd; k++) {
-          grad[n*i + pts*pd*c+j*pd+k] = gradvec[i][j*pd + k];
-          grad[n*i + pts*pd*(c+1)+j*pd+k] = gradvec[i][pts*pd + j*pd+k];
+          grad[n*i + ppc*pd*c+j*pd+k] = gradvec[i][j*pd + k];
+          grad[n*i + ppc*pd*(c+1)+j*pd+k] = gradvec[i][ppc*pd + j*pd+k];
         }
       }
     }
   }
 
+}
+
+double optimization::continuity_constraint(const vector<double>& x, vector<double>& grad, void* c_data) {
+  continuity_data& cd = *((continuity_data*)c_data);
+  problem_data& pdata = *(cd.pdata);
+
+  int continuity_degree = cd.n;
+  int c = cd.c;
+  int ppc = pdata.ppc; //pts per curve
+  int pd = pdata.problem_dimension;
+  int cpts = ppc * pd;
+
+  vector<double> P(cpts);
+  vector<double> Q(cpts);
+
+  int poffs = cpts*c;
+  int qoffs = cpts*(c+1);
+  for(int i=0; i<cpts; i++) {
+    P[i] = x[poffs+i];
+    Q[i] = x[qoffs+i];
+  }
+
+  vector<double> innergrad;
+
+  if(grad.size() > 0) {
+    innergrad.resize(cpts*2);
+  }
+
+  double result = bezier_2d_8pts_continuity_euc(P, Q, continuity_degree, innergrad);
+
+  if(grad.size() > 0) {
+    for(int i=0; i<grad.size(); i++) {
+      grad[i] = 0;
+    }
+    for(int i=0; i<ppc; i++) {
+      for(int j=0; j<pd; j++) {
+        grad[poffs + i*pd + j] = innergrad[i*pd+j];
+        grad[qoffs + i*pd + j] = innergrad[cpts + i*pd + j];
+      }
+    }
+  }
+
+  return result;
 }

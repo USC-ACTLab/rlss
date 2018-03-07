@@ -19,4 +19,8 @@ check mathematica/continuity.nb
 */
 void bezier_2d_8pts_continuity(const double* P, const double* Q, int n, vector<vector<double> >& grad, double* result);
 
+
+/*continuity constraint between the curve defined by control points P, and the curve defined by control points Q
+takes euclidean distance between points P^(n)[1] and Q^(n)[0], grad is the gradient of that function wrt to first P and Q (16 vars per curve, 32 vars in total)*/
+double bezier_2d_8pts_continuity_euc(vector<double>& P, vector<double>& Q, int n, vector<double>& grad);
 #endif

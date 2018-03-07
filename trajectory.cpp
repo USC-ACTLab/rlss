@@ -1,5 +1,6 @@
 #include <vector>
 #include "trajectory.h"
+#include <iostream>
 
 using namespace std;
 
@@ -18,11 +19,12 @@ int trajectory::size() {
 
 vectoreuc trajectory::eval(double t) {
   int i = 0;
-  while(curves[i].duration < t) {
+  while(i<curves.size() && curves[i].duration < t) {
     t -= curves[i].duration;
     i++;
   }
-
+  if(i==curves.size())
+    return curves[i-1].eval(curves[i-1].duration);
   return curves[i].eval(t);
 }
 
