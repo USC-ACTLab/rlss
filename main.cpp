@@ -24,7 +24,7 @@ namespace fs = std::experimental::filesystem::v1;
 using namespace std;
 using namespace boost::geometry;
 
-double fRand(double fMin, double fMax)
+double frand(double fMin, double fMax)
 {
     double f = (double)rand() / RAND_MAX;
     return fMin + f * (fMax - fMin);
@@ -273,12 +273,14 @@ int main(int argc, char** argv) {
       /* if objective function changes relatively less than this value, stop.*/
       problem.set_ftol_rel(relative_integral_stopval);
 
+      //problem.set_maxtime(10);
+
 
       vector<double> initial_values;
       for(int j=0; j<trajectories[i].size(); j++) {
         for(int k=0; k<ppc; k++) {
           for(int p=0; p<problem_dimension; p++) {
-            initial_values.push_back(trajectories[i][j][k][p]);
+            initial_values.push_back(trajectories[i][j][k][p]+frand(0, 0.2));
           }
         }
       }
@@ -300,12 +302,15 @@ int main(int argc, char** argv) {
         cout << endl;
       }
       cout << endl << endl;*/
+
+
+      nlopt::result res;
       try {
-        nlopt::result res = problem.optimize(initial_values, opt_f);
+        res = problem.optimize(initial_values, opt_f);
       } catch(nlopt::roundoff_limited& e) {
-        cout << "roundoff_limited" << endl;
+        //cout << "roundoff_limited" << endl;
       } catch(std::runtime_error& e) {
-        cout << "runtime error " << i << endl;
+        //cout << "runtime error " << i << endl;
       }
 
       initidx = 0;
@@ -317,10 +322,10 @@ int main(int argc, char** argv) {
         }
       }
 
-      initidx = 0;
 
-      //cout << "nlopt result: " << res << " objective value: " << opt_f << endl;
-      /*for(int j=0; j<trajectories[i].size(); j++) {
+      /*initidx = 0;
+      cout << "nlopt result: " << res << " objective value: " << opt_f << endl;
+      for(int j=0; j<trajectories[i].size(); j++) {
         cout << trajectories[i][j].duration;
         for(int k=0; k<trajectories[i][j].size(); k++) {
           for(int p=0; p<trajectories[i][j][k].size(); p++) {
@@ -328,11 +333,10 @@ int main(int argc, char** argv) {
           }
         }
         cout << endl;
-      }*/
+      }
+      cout << endl << endl;*/
 
 
-
-//      cin >> a;
 
 
       for(int j=0; j<vdpts.size(); j++) {

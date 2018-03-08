@@ -55,21 +55,17 @@ double optimization::voronoi_constraint(const vector<double>& x, vector<double>&
 
   vectoreuc cur_pt(pd);
   for(int i=0; i<pd; i++) {
-    //cout << "here" << endl;
     cur_pt[i] = x[fpidx+i];
-    //cout << "it comes" << endl;
   }
 
 
   if(grad.size() > 0) {
-    //cout << "here2" << endl;
     for(int i=0; i< grad.size(); i++) {
       grad[i] = 0;
     }
     for(int i=0; i<pd; i++) {
       grad[fpidx+i] = plane.normal[i];
     }
-  //  cout << "it comes2" << endl;
   }
   double result = cur_pt.dot(plane.normal) - plane.distance;
   return result;
@@ -110,7 +106,6 @@ void optimization::continuity_mconstraint(unsigned m, double* result, unsigned n
     gradvec.resize(pd);
 
   bezier_2d_8pts_continuity(P, Q, continuity_degree, gradvec, result);
-//  cout << result[0] << " " << result[1] << endl;
   if(grad) {
     for(int i=0; i<pd; i++) {
       for(int j=0; j<n; j++) {
@@ -170,6 +165,5 @@ double optimization::continuity_constraint(const vector<double>& x, vector<doubl
       }
     }
   }
-
   return result;
 }
