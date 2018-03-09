@@ -300,7 +300,7 @@ int main(int argc, char** argv) {
       for(int j=0; j<trajectories[i].size(); j++) {
         for(int k=0; k<ppc; k++) {
           for(int p=0; p<problem_dimension; p++) {
-            initial_values.push_back(trajectories[i][j][k][p]+frand(0,0.01));
+            initial_values.push_back(trajectories[i][j][k][p]+frand(0,0));
           }
         }
       }

@@ -11,6 +11,8 @@ class trajectory {
       curve& operator[](int idx);
       int size();
       vectoreuc eval(double t);
+      /* eval at given t, but add current curve index to curveidx param, and corresponding time in curve to ct normalized to [0,1] interval from [0, duration] interval */
+      vectoreuc eval(double t, int& curveidx, double& ct);
       double integrate(double from, double to, vector<double>& grad);
       trajectory& operator-=(const trajectory& rhs);
 };

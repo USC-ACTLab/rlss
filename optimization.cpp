@@ -109,9 +109,13 @@ double optimization::obstacle_constraint(const vector<double>& x, vector<double>
     nt.add_curve(nc);
   }
 
-  double obsdt = 0.01;
+  double constraint_result = 0;
+
+  double obsdt = 0.1;
   for(double t = ct; t<=ct+dt; t+=obsdt) {
-    vectoreuc cur = nt.eval(t);
+    int curveidx;
+    double curvet;
+    vectoreuc cur = nt.eval(t, curveidx, curvet);
     bool avoided = false;
     double closest_dist = numeric_limits<double>::infinity();
     int closest_hp = -1;
@@ -128,21 +132,27 @@ double optimization::obstacle_constraint(const vector<double>& x, vector<double>
     }
 
     if(!avoided) {
-      // find whichever curve trajectory is on currently. (trajectory::eval has a sample code)
+      /* current point is on curve curveidx */
 
-      // calculate gradient using bezier_2d_8pts_distance_from_plane
-
-      // sum the gradient to the input grad
-
-      // sum the result to the function result
-
-      // ?? maybe increase a counter to use in averaging later.
+      // calculate gradient and distance using bezier_2d_8pts_distance_from_plane
+      vector<double> innergrad;
+      if(grad.size() > 0) {
+        innergrad.resize(ppc * pd);
+      }
+      double dist = bezier_2d_8pts_distance_from_plane(nt[curveidx].cpts, hps[closest_hp], innergrad, curvet);
+      // sum the gradient to the input grad, and distance to the result of constraint
+      constraint_result += dist * obsdt;
+      if(innergrad.size() > 0) {
+        for(int i=0; i<ppc; i++) {
+          for(int j=0; j<pd; j++) {
+            grad[curveidx * ppc * pd + i*pd + j] += innergrad[i*pd + j] * obsdt;
+          }
+        }
+      }
 
     }
   }
-
-
-  return -1;
+  return constraint_result;
 }
 
 void optimization::continuity_mconstraint(unsigned m, double* result, unsigned n, const double* x, double* grad, void* c_data) {

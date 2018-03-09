@@ -28,6 +28,22 @@ vectoreuc trajectory::eval(double t) {
   return curves[i].eval(t);
 }
 
+vectoreuc trajectory::eval(double t, int& curveidx, double& ct) {
+  int i = 0;
+  while(i<curves.size() && curves[i].duration < t) {
+    t -= curves[i].duration;
+    i++;
+  }
+  if(i==curves.size()) {
+    curveidx = i-1;
+    ct = 1;
+    return curves[i-1].eval(curves[i-1].duration);
+  }
+  curveidx = i;
+  ct = t / curves[i].duration;
+  return curves[i].eval(t);
+}
+
 double trajectory::integrate(double from, double to, vector<double>& grad) {
   int curveidx;
   int gradidx = 0;
