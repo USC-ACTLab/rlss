@@ -23,4 +23,10 @@ void bezier_2d_8pts_continuity(const double* P, const double* Q, int n, vector<v
 /*continuity constraint between the curve defined by control points P, and the curve defined by control points Q
 takes euclidean distance between points P^(n)[1] and Q^(n)[0], grad is the gradient of that function wrt to first P and Q (16 vars per curve, 32 vars in total)*/
 double bezier_2d_8pts_continuity_euc(vector<double>& P, vector<double>& Q, int n, vector<double>& grad);
+
+/*
+  what is the distance of bezier curve defined by control points P evaluated at time t from given hyperplane.
+  grad is the gradient w.r.t. control points that shows the direction that increases distance most.
+*/
+double bezier_2d_8pts_distance_from_plane(vector<vectoreuc>& P, hyperplane& plane, vector<double>& grad, double t);
 #endif

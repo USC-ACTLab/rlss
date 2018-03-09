@@ -31,7 +31,7 @@ class voronoi_data {
 class obstacle_data {
   public:
     problem_data* pdata;
-    obstacle2D* obs;
+    vector<hyperplane>* hps;
 };
 
 class continuity_data {

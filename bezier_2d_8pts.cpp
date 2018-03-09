@@ -889,3 +889,27 @@ double bezier_2d_8pts_continuity_euc(vector<double>& P, vector<double>& Q, int n
   }
   return 0;
 }
+
+double bezier_2d_8pts_distance_from_plane(vector<vectoreuc>& P, hyperplane& plane, vector<double>& grad, double t) {
+  vectoreuc& n = plane.normal;
+  double planedist = plane.distance;
+
+  if(grad.size() > 0) {
+    grad = vector<double>{pow(1 - t,7)*n[0],pow(1 - t,7)*n[1],7*pow(1 - t,6)*t*n[0],
+   7*pow(1 - t,6)*t*n[1],21*pow(1 - t,5)*pow(t,2)*n[0],
+   21*pow(1 - t,5)*pow(t,2)*n[1],35*pow(1 - t,4)*pow(t,3)*n[0],
+   35*pow(1 - t,4)*pow(t,3)*n[1],35*pow(1 - t,3)*pow(t,4)*n[0],
+   35*pow(1 - t,3)*pow(t,4)*n[1],21*pow(1 - t,2)*pow(t,5)*n[0],
+   21*pow(1 - t,2)*pow(t,5)*n[1],7*(1 - t)*pow(t,6)*n[0],
+   7*(1 - t)*pow(t,6)*n[1],pow(t,7)*n[0],pow(t,7)*n[1]};
+  }
+
+  return -planedist + n[0]*(pow(1 - t,7)*P[0][0] + 7*pow(1 - t,6)*t*P[1][0] +
+      21*pow(1 - t,5)*pow(t,2)*P[2][0] + 35*pow(1 - t,4)*pow(t,3)*P[3][0] +
+      35*pow(1 - t,3)*pow(t,4)*P[4][0] + 21*pow(1 - t,2)*pow(t,5)*P[5][0] +
+      7*(1 - t)*pow(t,6)*P[6][0] + pow(t,7)*P[7][0]) +
+   n[1]*(pow(1 - t,7)*P[0][1] + 7*pow(1 - t,6)*t*P[1][1] +
+      21*pow(1 - t,5)*pow(t,2)*P[2][1] + 35*pow(1 - t,4)*pow(t,3)*P[3][1] +
+      35*pow(1 - t,3)*pow(t,4)*P[4][1] + 21*pow(1 - t,2)*pow(t,5)*P[5][1] +
+      7*(1 - t)*pow(t,6)*P[6][1] + pow(t,7)*P[7][1]);
+}

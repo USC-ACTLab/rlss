@@ -1,6 +1,7 @@
 #include "optimization.h"
 #include <vector>
 #include <iostream>
+#include <limits>
 #include "bezier_mathematica.h"
 using namespace std;
 
@@ -12,6 +13,7 @@ double optimization::objective(const vector<double>& x, vector<double>& grad, vo
   double dt = pdata.delta_t;
   trajectory& ot = *(pdata.original_trajectory);
   int pd = pdata.problem_dimension;
+  int ppc = pdata.ppc;
 
   /*
     get the difference of original trajectory and current trajectory.
@@ -24,10 +26,11 @@ double optimization::objective(const vector<double>& x, vector<double>& grad, vo
 
   for(int i=0; i<ot.size(); i++) {
     curve nc(ot[i].duration, pd);
-    for(int j=0; j<ot[i].size(); j++, xcnt+=2) {
-      vectoreuc nv(2);
-      nv[0] = x[xcnt];
-      nv[1] = x[xcnt+1];
+    for(int j=0; j<ppc; j++, xcnt+=pd) {
+      vectoreuc nv(pd);
+      for(int k=0; k<pd; k++) {
+        nv[k] = x[xcnt+k];
+      }
       nc.add_cpt(nv);
     }
     nt.add_curve(nc);
@@ -72,17 +75,70 @@ double optimization::voronoi_constraint(const vector<double>& x, vector<double>&
 }
 
 double optimization::obstacle_constraint(const vector<double>& x, vector<double>& grad, void* o_data) {
+  /*
+    if a point (dot) obstacle hyperplane - b < 0 than it is in free space
+  */
   obstacle_data& od = *((obstacle_data*)o_data);
   problem_data& pdata = *(od.pdata);
 
-  obstacle2D& obs = *(od.obs);
+  vector<hyperplane>& hps = *(od.hps);
+  trajectory& ot = *(pdata.original_trajectory);
   double ct = pdata.current_t;
   double dt = pdata.delta_t;
   int pd = pdata.problem_dimension;
+  int ppc = pdata.ppc;
 
   if(grad.size() >  0) {
     for(int i=0; i<grad.size(); i++)
       grad[i] = 0;
+  }
+
+  trajectory nt;
+
+  int xcnt = 0;
+
+  for(int i=0; i<ot.size(); i++) {
+    curve nc(ot[i].duration, pd);
+    for(int j=0; j<ppc; j++, xcnt+=pd) {
+      vectoreuc nv(pd);
+      for(int k=0; k<pd; k++) {
+        nv[k] = x[xcnt+k];
+      }
+      nc.add_cpt(nv);
+    }
+    nt.add_curve(nc);
+  }
+
+  double obsdt = 0.01;
+  for(double t = ct; t<=ct+dt; t+=obsdt) {
+    vectoreuc cur = nt.eval(t);
+    bool avoided = false;
+    double closest_dist = numeric_limits<double>::infinity();
+    int closest_hp = -1;
+    for(int i=0; i<hps.size(); i++) {
+      double dist = cur.dot(hps[i].normal) - hps[i].distance;
+      if(dist < 0) {
+        avoided = true;
+        break;
+      }
+      if(dist < closest_dist) {
+        closest_dist = dist;
+        closest_hp = i;
+      }
+    }
+
+    if(!avoided) {
+      // find whichever curve trajectory is on currently. (trajectory::eval has a sample code)
+
+      // calculate gradient using bezier_2d_8pts_distance_from_plane
+
+      // sum the gradient to the input grad
+
+      // sum the result to the function result
+
+      // ?? maybe increase a counter to use in averaging later.
+
+    }
   }
 
 

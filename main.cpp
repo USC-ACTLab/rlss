@@ -132,6 +132,7 @@ int main(int argc, char** argv) {
       o.add_pt(pt);
     }
     o.convex_hull();
+    o.ch_planes();
     obstacles.push_back(o);
   }
 
@@ -220,7 +221,6 @@ int main(int argc, char** argv) {
               vd->plane = plane;
               vd->curve_idx = idx;
               vd->point_idx = p;
-
               problem.add_inequality_constraint(optimization::voronoi_constraint, (void*)vd, 0);
               vdpts.push_back(vd);
             }
@@ -241,7 +241,7 @@ int main(int argc, char** argv) {
       for(int j=0; j<obstacles.size(); j++) {
         obstacle_data* od = new obstacle_data;
         od->pdata = &data;
-        od->obs = &obstacles[j];
+        od->hps = &(obstacles[j].chplanes);
 
         problem.add_inequality_constraint(optimization::obstacle_constraint, (void*)od, 0);
         obspts.push_back(od);
@@ -253,9 +253,29 @@ int main(int argc, char** argv) {
       for(int i=0; i<problem_dimension; i++) {
         continuity_tolerances[i] = continuity_tol;
       }*/
+      double current_time = ct;
+      double end_time = ct+dt;
+      int start_curve = 0;
+      int end_curve = 0;
+      for(int j=0; j<trajectories[i].size(); j++) {
+        if(current_time > trajectories[i][j].duration) {
+          current_time -= trajectories[i][j].duration;
+          end_time -= trajectories[i][j].duration;
+          start_curve++;
+          end_curve++;
+        } else {
+          if(end_time > trajectories[i][j].duration) {
+            end_time -= trajectories[i][j].duration;
+            end_curve++;
+          } else {
+            break;
+          }
+        }
+      }
+
       for(int n=0; n<=max_continuity; n++) {
         // nth degree continuity
-        for(int j=0; j<trajectories[i].size()-1; j++) {
+        for(int j=start_curve; j<trajectories[i].size()-1; j++) {
           continuity_data* cd = new continuity_data;
           cd->pdata = &data;
           cd->n = n;
@@ -280,7 +300,7 @@ int main(int argc, char** argv) {
       for(int j=0; j<trajectories[i].size(); j++) {
         for(int k=0; k<ppc; k++) {
           for(int p=0; p<problem_dimension; p++) {
-            initial_values.push_back(trajectories[i][j][k][p]/*+frand(0, 0.2)*/);
+            initial_values.push_back(trajectories[i][j][k][p]+frand(0,0.01));
           }
         }
       }

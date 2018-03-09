@@ -67,3 +67,18 @@ void obstacle2D::convex_hull() {
     ch.push_back(i);
   }
 }
+
+void obstacle2D::ch_planes() {
+  chplanes.clear();
+  for(int i=0; i<ch.size()-1; i++) {
+    hyperplane hp;
+    vectoreuc& firstpt = pts[ch[i]];
+    vectoreuc& secondpt = pts[ch[i+1]];
+    vectoreuc normal(2);
+    normal[0] = secondpt[1] - firstpt[1];
+    normal[1] = firstpt[0] - secondpt[0];
+    hp.normal = normal.normalized();
+    hp.distance = firstpt.dot(hp.normal);
+    chplanes.push_back(hp);
+  }
+}
