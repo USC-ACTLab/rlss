@@ -3,6 +3,7 @@
 
 #include <vector>
 #include "vectoreuc.h"
+#include "hyperplane.h"
 using namespace std;
 
 /*
