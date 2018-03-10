@@ -42,6 +42,7 @@ int main(int argc, char** argv) {
   int ppc = 8;
   int max_continuity = 3;
   double continuity_tol = 0.001;
+  bool set_max_time = false;
 
   cxxopts::Options options("Path Replanner", "Path replanner for UAV swarms");
   options.add_options()
@@ -54,6 +55,7 @@ int main(int argc, char** argv) {
     ("ppc", "Points per curve", cxxopts::value<int>()->default_value("8"))
     ("cont", "Contiuity upto this degree", cxxopts::value<int>()->default_value("3"))
     ("tol", "Continuity tolerances for equality", cxxopts::value<double>()->default_value("0.001"))
+    ("setmt", "Set max time as dt", cxxopts::value<bool>()->default_value("false"))
     ("help", "Display help page");
 
   auto result = options.parse(argc, argv);
@@ -73,9 +75,10 @@ int main(int argc, char** argv) {
   max_continuity = result["cont"].as<int>();
   continuity_tol = result["tol"].as<double>();
   ppc = result["ppc"].as<int>();
+  set_max_time = result["setmt"].as<bool>();
 
 
-  cout << "initial_trajectories_path: " << initial_trajectories_path << endl
+  /*cout << "initial_trajectories_path: " << initial_trajectories_path << endl
        << "obstacles_path: " << obstacles_path << endl
        << "dt: " << dt << endl
        << "integral_stopval: " << integral_stopval << endl
@@ -83,7 +86,8 @@ int main(int argc, char** argv) {
        << "problem_dimension: " << problem_dimension << endl
        << "points per curve: " << ppc << endl
        << "continuity upto: " << max_continuity << endl
-       << "continuity tolerance: " << continuity_tol << endl << endl;
+       << "continuity tolerance: " << continuity_tol << endl
+       << "set max time: " << set_max_time << endl << endl;*/
 
   srand(time(NULL));
 
@@ -109,6 +113,8 @@ int main(int argc, char** argv) {
     trajectories.push_back(trj);
   }
 
+
+  vector<trajectory> orijinal_trajectories = trajectories;
 
 /*
   cout << "Number of trajectories: " << trajectories.size() << endl;
@@ -166,11 +172,14 @@ int main(int argc, char** argv) {
 
       unsigned varcount = trajectories[i].size() * ppc * problem_dimension;
       nlopt::opt problem(nlopt::LD_SLSQP, varcount);
-
+      //nlopt::opt problem(nlopt::LD_MMA, varcount);
+      //nlopt::opt problem(nlopt::LD_CCSAQ, varcount);
+      //nlopt::opt problem(nlopt::GN_ISRES, varcount);
       problem_data data;
       data.current_t = ct;
       data.delta_t = dt;
-      data.original_trajectory = &(trajectories[i]);
+      data.original_trajectory = &(orijinal_trajectories[i]);
+      //data.original_trajectory = &(trajectories[i]);
       data.problem_dimension = problem_dimension;
       data.ppc = ppc;
 
@@ -242,6 +251,7 @@ int main(int argc, char** argv) {
         obstacle_data* od = new obstacle_data;
         od->pdata = &data;
         od->hps = &(obstacles[j].chplanes);
+        od->total_time = total_t;
 
         problem.add_inequality_constraint(optimization::obstacle_constraint, (void*)od, 0);
         obspts.push_back(od);
@@ -282,8 +292,11 @@ int main(int argc, char** argv) {
           cd->c = j;
 
           //problem.add_equality_mconstraint(optimization::continuity_mconstraint, (void*)cd, continuity_tolerances);
-          problem.add_equality_constraint(optimization::continuity_constraint, (void*)cd, continuity_tol);
+          //problem.add_equality_constraint(optimization::continuity_constraint, (void*)cd, continuity_tol);
+          problem.add_inequality_constraint(optimization::continuity_constraint, (void*)cd, continuity_tol);
           contpts.push_back(cd);
+
+
         }
       }
 
@@ -293,17 +306,19 @@ int main(int argc, char** argv) {
       /* if objective function changes relatively less than this value, stop.*/
       problem.set_ftol_rel(relative_integral_stopval);
 
-      //problem.set_maxtime(10);
+      if(set_max_time)
+        problem.set_maxtime(dt);
 
 
       vector<double> initial_values;
       for(int j=0; j<trajectories[i].size(); j++) {
         for(int k=0; k<ppc; k++) {
           for(int p=0; p<problem_dimension; p++) {
-            initial_values.push_back(trajectories[i][j][k][p]+frand(0,0));
+            initial_values.push_back(trajectories[i][j][k][p]);
           }
         }
       }
+      //initial_values[initial_values.size()-1]+=frand(-0.1, 0.1);
 
       //cout << initial_values.size() << endl;
 
@@ -343,8 +358,10 @@ int main(int argc, char** argv) {
       }
 
 
+    /*  cout << "nlopt result: " << res << " objective value: " << opt_f << endl;
+      int a; cin >> a;*/
+
       /*initidx = 0;
-      cout << "nlopt result: " << res << " objective value: " << opt_f << endl;
       for(int j=0; j<trajectories[i].size(); j++) {
         cout << trajectories[i][j].duration;
         for(int k=0; k<trajectories[i][j].size(); k++) {

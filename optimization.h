@@ -32,6 +32,7 @@ class obstacle_data {
   public:
     problem_data* pdata;
     vector<hyperplane>* hps;
+    double total_time;
 };
 
 class continuity_data {

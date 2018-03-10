@@ -82,9 +82,11 @@ double optimization::obstacle_constraint(const vector<double>& x, vector<double>
   problem_data& pdata = *(od.pdata);
 
   vector<hyperplane>& hps = *(od.hps);
+  //cout << hps.size() << endl;
   trajectory& ot = *(pdata.original_trajectory);
   double ct = pdata.current_t;
   double dt = pdata.delta_t;
+  double total_time = od.total_time;
   int pd = pdata.problem_dimension;
   int ppc = pdata.ppc;
 
@@ -111,8 +113,9 @@ double optimization::obstacle_constraint(const vector<double>& x, vector<double>
 
   double constraint_result = 0;
 
-  double obsdt = 0.1;
-  for(double t = ct; t<=ct+dt; t+=obsdt) {
+  double obsdt = 0.01;
+  double end_time = min(total_time, ct+5*dt);
+  for(double t = ct; t<=total_time; t+=obsdt) {
     int curveidx;
     double curvet;
     vectoreuc cur = nt.eval(t, curveidx, curvet);
@@ -152,6 +155,10 @@ double optimization::obstacle_constraint(const vector<double>& x, vector<double>
 
     }
   }
+  /*cout << constraint_result << " " << &od << endl;
+  if(constraint_result>0) {
+    int a; cin >> a;
+  }*/
   return constraint_result;
 }
 
