@@ -14,6 +14,7 @@ double optimization::objective(const vector<double>& x, vector<double>& grad, vo
   trajectory& ot = *(pdata.original_trajectory);
   int pd = pdata.problem_dimension;
   int ppc = pdata.ppc;
+  double tt = pdata.tt;
 
   /*
     get the difference of original trajectory and current trajectory.
@@ -38,6 +39,7 @@ double optimization::objective(const vector<double>& x, vector<double>& grad, vo
 
   nt -= ot;
   double result = nt.integrate(ct, ct+dt, grad);
+  cout << "obj end: " << result << endl;
   return result;
 }
 
@@ -86,7 +88,7 @@ double optimization::obstacle_constraint(const vector<double>& x, vector<double>
   trajectory& ot = *(pdata.original_trajectory);
   double ct = pdata.current_t;
   double dt = pdata.delta_t;
-  double total_time = od.total_time;
+  double tt = pdata.tt;
   int pd = pdata.problem_dimension;
   int ppc = pdata.ppc;
 
@@ -113,9 +115,8 @@ double optimization::obstacle_constraint(const vector<double>& x, vector<double>
 
   double constraint_result = 0;
 
-  double obsdt = 0.01;
-  double end_time = min(total_time, ct+5*dt);
-  for(double t = ct; t<=total_time; t+=obsdt) {
+  double obsdt = 0.0001;
+  for(double t = ct; t<=ct+dt; t+=obsdt) {
     int curveidx;
     double curvet;
     vectoreuc cur = nt.eval(t, curveidx, curvet);
@@ -159,6 +160,7 @@ double optimization::obstacle_constraint(const vector<double>& x, vector<double>
   if(constraint_result>0) {
     int a; cin >> a;
   }*/
+  cout << "obs end: " << constraint_result << endl;
   return constraint_result;
 }
 
@@ -238,5 +240,62 @@ double optimization::continuity_constraint(const vector<double>& x, vector<doubl
       }
     }
   }
+  cout << "con end: " << result << endl;
   return result;
+}
+
+double optimization::point_constraint(const vector<double>& x, vector<double>& grad, void* p_data) {
+  point_data& poidata = *((point_data*)p_data);
+  problem_data& pdata = *(poidata.pdata);
+  int ppc = pdata.ppc; //pts per curve
+  int pd = pdata.problem_dimension;
+  int cpts = ppc * pd;
+
+  trajectory& ot = *(pdata.original_trajectory);
+
+  vectoreuc& pos = poidata.pos;
+  double T = poidata.time;
+
+  int i = 0;
+  while(i<ot.curves.size() && ot.curves[i].duration < T) {
+    T -= ot.curves[i].duration;
+    i++;
+  }
+  if(i == ot.curves.size()) {
+    i--;
+    T = ot.curves[i].duration;
+  }
+
+  T /= ot.curves[i].duration;
+
+  vector<double> ccurve(cpts);
+
+  for(int j=0; j<ppc; j++) {
+    for(int k=0; k<pd; k++) {
+      ccurve[j*pd+k] = x[i*cpts+j*pd+k];
+    }
+  }
+
+  vector<double> innergrad;
+
+  if(grad.size() > 0) {
+    innergrad.resize(cpts);
+  }
+
+  double result = bezier_2d_8pts_distance_from_point(ccurve, pos, innergrad, T);
+
+  if(grad.size() > 0) {
+    for(int j=0; j<grad.size(); j++) {
+      grad[j] = 0;
+    }
+
+    for(int j=0; j<ppc; j++) {
+      for(int k=0; k<pd; k++) {
+        grad[i*cpts+j*pd+k] = innergrad[j*pd+k];
+      }
+    }
+  }
+  cout << "start diff: " << result << endl;
+  return result;
+
 }

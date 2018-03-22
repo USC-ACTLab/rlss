@@ -1,6 +1,7 @@
 #include <iostream>
 #include <nlopt.hpp>
 #include <armadillo>
+#include <fstream>
 #include <experimental/filesystem>
 #include <vector>
 #include "csv/CSVparser.hpp"
@@ -43,6 +44,8 @@ int main(int argc, char** argv) {
   int max_continuity = 3;
   double continuity_tol = 0.001;
   bool set_max_time = false;
+  double hor = 5;
+  string outputfile("res");
 
   cxxopts::Options options("Path Replanner", "Path replanner for UAV swarms");
   options.add_options()
@@ -55,7 +58,9 @@ int main(int argc, char** argv) {
     ("ppc", "Points per curve", cxxopts::value<int>()->default_value("8"))
     ("cont", "Contiuity upto this degree", cxxopts::value<int>()->default_value("3"))
     ("tol", "Continuity tolerances for equality", cxxopts::value<double>()->default_value("0.001"))
-    ("setmt", "Set max time as dt", cxxopts::value<bool>()->default_value("false"))
+    ("setmt", "Set max time for optimization as dt", cxxopts::value<bool>()->default_value("false"))
+    ("output", "Output file", cxxopts::value<string>()->default_value("res"))
+    ("hor", "hor*dt is what optimization is done(time horizon)", cxxopts::value<double>()->default_value("5"))
     ("help", "Display help page");
 
   auto result = options.parse(argc, argv);
@@ -76,6 +81,8 @@ int main(int argc, char** argv) {
   continuity_tol = result["tol"].as<double>();
   ppc = result["ppc"].as<int>();
   set_max_time = result["setmt"].as<bool>();
+  outputfile = result["output"].as<string>();
+  hor = result["hor"].as<double>();
 
 
   /*cout << "initial_trajectories_path: " << initial_trajectories_path << endl
@@ -87,12 +94,14 @@ int main(int argc, char** argv) {
        << "points per curve: " << ppc << endl
        << "continuity upto: " << max_continuity << endl
        << "continuity tolerance: " << continuity_tol << endl
-       << "set max time: " << set_max_time << endl << endl;*/
+       << "set max time: " << set_max_time << endl
+       << "output file: " << outputfile << endl << endl;*/
 
   srand(time(NULL));
 
 
   vector<trajectory> trajectories;
+  ofstream out(outputfile);
 
 
   for (auto & p : fs::directory_iterator(initial_trajectories_path)) {
@@ -152,15 +161,15 @@ int main(int argc, char** argv) {
 
   vector<vectoreuc> positions(trajectories.size());
 
-  double printdt = 0.01;
+  double printdt = 0.001;
 
   for(double ct = 0; ct <= total_t; ct+=dt) {
     for(int i=0; i<trajectories.size(); i++) {
       positions[i] = trajectories[i].eval(ct);
-      cout << i << " (" << positions[i][0] << "," << positions[i][1] << ")" << endl;
+      out << i << " (" << positions[i][0] << "," << positions[i][1] << ")" << endl;
     }
 
-    for(int i=0; i<trajectories.size(); i++) {
+    for(int i=0; i<trajectories.size(); i++ ) {
 
       /*calculate voronoi hyperplanes for robot i*/
       vector<hyperplane> voronoi_hyperplanes = voronoi(positions, i);
@@ -177,11 +186,12 @@ int main(int argc, char** argv) {
       //nlopt::opt problem(nlopt::GN_ISRES, varcount);
       problem_data data;
       data.current_t = ct;
-      data.delta_t = dt;
+      data.delta_t = hor*dt;
       data.original_trajectory = &(orijinal_trajectories[i]);
       //data.original_trajectory = &(trajectories[i]);
       data.problem_dimension = problem_dimension;
       data.ppc = ppc;
+      data.tt = total_t;
 
       problem.set_min_objective(optimization::objective, (void*)&data);
 
@@ -207,7 +217,7 @@ int main(int argc, char** argv) {
 
 
         double current_time = ct;
-        double end_time  = ct+dt;
+        double end_time  = ct+hor*dt;
 
         int idx = 0;
 
@@ -251,9 +261,8 @@ int main(int argc, char** argv) {
         obstacle_data* od = new obstacle_data;
         od->pdata = &data;
         od->hps = &(obstacles[j].chplanes);
-        od->total_time = total_t;
 
-        problem.add_inequality_constraint(optimization::obstacle_constraint, (void*)od, 0);
+        problem.add_inequality_constraint(optimization::obstacle_constraint, (void*)od, 0.000001);
         obspts.push_back(od);
       }
 
@@ -264,28 +273,35 @@ int main(int argc, char** argv) {
         continuity_tolerances[i] = continuity_tol;
       }*/
       double current_time = ct;
-      double end_time = ct+dt;
+      double end_time = ct+hor*dt;
       int start_curve = 0;
       int end_curve = 0;
-      for(int j=0; j<trajectories[i].size(); j++) {
+      int j;
+      for(j=0; j<trajectories[i].size(); j++) {
         if(current_time > trajectories[i][j].duration) {
           current_time -= trajectories[i][j].duration;
           end_time -= trajectories[i][j].duration;
           start_curve++;
           end_curve++;
         } else {
-          if(end_time > trajectories[i][j].duration) {
-            end_time -= trajectories[i][j].duration;
-            end_curve++;
-          } else {
-            break;
-          }
+          break;
         }
       }
 
+      for(; j<trajectories[i].size(); j++) {
+        if(end_time > trajectories[i][j].duration) {
+          end_time -= trajectories[i][j].duration;
+          end_curve++;
+        } else {
+          break;
+        }
+      }
+
+      end_curve = min((int)trajectories[i].size()-1, end_curve);
+      start_curve = max(0, start_curve-1);
       for(int n=0; n<=max_continuity; n++) {
         // nth degree continuity
-        for(int j=start_curve; j<trajectories[i].size()-1; j++) {
+        for(int j=start_curve; j<min((int)trajectories[i].size()-1, end_curve); j++) {
           continuity_data* cd = new continuity_data;
           cd->pdata = &data;
           cd->n = n;
@@ -300,14 +316,24 @@ int main(int argc, char** argv) {
         }
       }
 
+      point_data* pd = new point_data;
+      pd->pdata = &data;
+      pd->pos = positions[i];
+      pd->time = ct;
+      /*
+        IS THIS REALLY NECESSARY??
+      */
+      problem.add_inequality_constraint(optimization::point_constraint, (void*)pd, 0.0000001);
+
       /* if integral is less than this value, stop.*/
       problem.set_stopval(integral_stopval);
 
       /* if objective function changes relatively less than this value, stop.*/
       problem.set_ftol_rel(relative_integral_stopval);
 
-      if(set_max_time)
+      if(set_max_time) {
         problem.set_maxtime(dt);
+      }
 
 
       vector<double> initial_values;
@@ -343,9 +369,9 @@ int main(int argc, char** argv) {
       try {
         res = problem.optimize(initial_values, opt_f);
       } catch(nlopt::roundoff_limited& e) {
-        //cout << "roundoff_limited" << endl;
+        cout << "roundoff_limited" << endl;
       } catch(std::runtime_error& e) {
-        //cout << "runtime error " << i << endl;
+        cout << "runtime error " << i << endl;
       }
 
       initidx = 0;
@@ -358,8 +384,8 @@ int main(int argc, char** argv) {
       }
 
 
-    /*  cout << "nlopt result: " << res << " objective value: " << opt_f << endl;
-      int a; cin >> a;*/
+      cout << "nlopt result: " << res << " objective value: " << opt_f << endl;
+      /*int a; cin >> a;*/
 
       /*initidx = 0;
       for(int j=0; j<trajectories[i].size(); j++) {
@@ -385,16 +411,19 @@ int main(int argc, char** argv) {
       for(int j=0; j<contpts.size(); j++) {
         delete contpts[j];
       }
+      delete pd;
     }
 
     for(double t = ct + printdt; t<ct+dt; t+=printdt) {
       for(int i=0; i<trajectories.size(); i++) {
         vectoreuc vec = trajectories[i].eval(t);
-        cout << i << " (" << vec[0] << "," << vec[1] << ")" << endl;
+        out << i << " (" << vec[0] << "," << vec[1] << ")" << endl;
       }
     }
   }
 
+
+  out.close();
   return 0;
 
 }

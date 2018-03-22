@@ -4,6 +4,7 @@
 #include "obstacle.h"
 #include <vector>
 #include "hyperplane.h"
+#include "vectoreuc.h"
 
 using namespace std;
 
@@ -12,6 +13,7 @@ class problem_data {
   public:
     double current_t;
     double delta_t;
+    double tt;
     trajectory* original_trajectory;
     int problem_dimension;
     int ppc;
@@ -32,7 +34,6 @@ class obstacle_data {
   public:
     problem_data* pdata;
     vector<hyperplane>* hps;
-    double total_time;
 };
 
 class continuity_data {
@@ -40,6 +41,13 @@ class continuity_data {
     problem_data* pdata;
     int n; // continuity degree
     int c; // first curve index. next curve is c+1
+};
+
+class point_data {
+  public:
+    problem_data* pdata;
+    vectoreuc pos;
+    double time;
 };
 
 class optimization {
@@ -51,6 +59,9 @@ class optimization {
     static void continuity_mconstraint(unsigned m, double* result, unsigned n, const double* x, double* grad, void* c_data);
     /* requires distance between two points to be zero, use it with add_equality_constraint*/
     static double continuity_constraint(const vector<double>& x, vector<double>& grad, void* c_data);
+
+    /* enforces being in the given point at the given time */
+    static double point_constraint(const vector<double>& x, vector<double>& grad, void* p_data);
 };
 
 

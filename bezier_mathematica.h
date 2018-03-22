@@ -30,4 +30,10 @@ double bezier_2d_8pts_continuity_euc(vector<double>& P, vector<double>& Q, int n
   grad is the gradient w.r.t. control points that shows the direction that increases distance most.
 */
 double bezier_2d_8pts_distance_from_plane(vector<vectoreuc>& P, hyperplane& plane, vector<double>& grad, double t);
+
+/*
+  what is the distance of bezier curve defined by control points P evaluated at time t from given point C
+  grad is the gradient w.r.t. control points that shows the direction that increases distance most.
+*/
+double bezier_2d_8pts_distance_from_point(vector<double>& P, vectoreuc& C, vector<double>& grad, double t);
 #endif
