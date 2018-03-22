@@ -1,0 +1,241 @@
+(* Content-type: application/vnd.wolfram.mathematica *)
+
+(*** Wolfram Notebook File ***)
+(* http://www.wolfram.com/nb *)
+
+(* CreatedBy='Mathematica 11.2' *)
+
+(*CacheID: 234*)
+(* Internal cache information:
+NotebookFileLineBreakTest
+NotebookFileLineBreakTest
+NotebookDataPosition[       158,          7]
+NotebookDataLength[      9988,        233]
+NotebookOptionsPosition[      9252,        212]
+NotebookOutlinePosition[      9591,        227]
+CellTagsIndexPosition[      9548,        224]
+WindowFrame->Normal*)
+
+(* Beginning of Notebook Content *)
+Notebook[{
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{"d", " ", "=", " ", "7"}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"Q", " ", "=", " ", "2"}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{
+   RowBox[{"f", "[", "t_", "]"}], " ", ":=", " ", 
+   RowBox[{"Table", "[", 
+    RowBox[{
+     RowBox[{"Sum", "[", 
+      RowBox[{
+       RowBox[{
+        RowBox[{"P", "[", 
+         RowBox[{"i", ",", "j"}], "]"}], "*", 
+        RowBox[{"Binomial", "[", 
+         RowBox[{"d", ",", "i"}], "]"}], "*", 
+        RowBox[{"t", "^", "i"}], "*", 
+        RowBox[{
+         RowBox[{"(", 
+          RowBox[{"1", "-", "t"}], ")"}], "^", 
+         RowBox[{"(", 
+          RowBox[{"d", "-", "i"}], ")"}]}]}], ",", " ", 
+       RowBox[{"{", 
+        RowBox[{"i", ",", " ", "0", ",", " ", "d"}], "}"}]}], "]"}], ",", " ", 
+     RowBox[{"{", 
+      RowBox[{"j", ",", " ", "0", ",", " ", 
+       RowBox[{"Q", "-", "1"}]}], "}"}]}], "]"}]}], 
+  ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"diffsq", " ", "=", " ", 
+   RowBox[{"Sum", "[", 
+    RowBox[{
+     RowBox[{
+      RowBox[{"(", 
+       RowBox[{
+        RowBox[{
+         RowBox[{"f", "[", "T", "]"}], "[", 
+         RowBox[{"[", "i", "]"}], "]"}], "-", 
+        RowBox[{"C", "[", 
+         RowBox[{"i", "-", "1"}], "]"}]}], ")"}], "^", "2"}], ",", " ", 
+     RowBox[{"{", 
+      RowBox[{"i", ",", "1", ",", "Q"}], "}"}]}], "]"}]}], 
+  ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"graddiffsq", " ", "=", " ", 
+   RowBox[{"Grad", "[", 
+    RowBox[{"diffsq", ",", " ", 
+     RowBox[{"Flatten", "[", 
+      RowBox[{"Table", "[", 
+       RowBox[{
+        RowBox[{"P", "[", 
+         RowBox[{"i", ",", "j"}], "]"}], ",", " ", 
+        RowBox[{"{", 
+         RowBox[{"i", ",", "0", ",", "d"}], "}"}], ",", " ", 
+        RowBox[{"{", 
+         RowBox[{"j", ",", "0", ",", 
+          RowBox[{"Q", "-", "1"}]}], "}"}]}], "]"}], "]"}]}], "]"}]}], 
+  ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"cdiffsq", " ", "=", " ", 
+   RowBox[{"CForm", "[", "diffsq", "]"}]}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"cgraddiffsq", " ", "=", " ", 
+   RowBox[{"CForm", "[", "graddiffsq", "]"}]}], ";"}]}], "Input",
+ CellChangeTimes->{{3.730661767185101*^9, 3.7306617711791162`*^9}, {
+  3.73066180430479*^9, 3.7306618690530977`*^9}, {3.73066191508639*^9, 
+  3.730662248146022*^9}, {3.730662306893168*^9, 3.730662316740169*^9}, {
+  3.730662354269869*^9, 3.730662354348442*^9}, {3.7306624051742268`*^9, 
+  3.730662422584284*^9}, {3.730662456842163*^9, 
+  3.730662493594802*^9}},ExpressionUUID->"92e2ceb7-9b99-4fc5-b432-\
+f01cb9dfc793"],
+
+Cell[CellGroupData[{
+
+Cell[BoxData["cdiffsq"], "Input",
+ CellChangeTimes->{{3.730662414847438*^9, 3.730662416214563*^9}, {
+  3.730662495400135*^9, 
+  3.7306624971154013`*^9}},ExpressionUUID->"93af7e63-2b15-46c1-b868-\
+21a87f200ab9"],
+
+Cell["\<\
+Power(-C(0) + Power(1 - T,7)*P(0,0) + 7*Power(1 - T,6)*T*P(1,0) + 21*Power(1 \
+- T,5)*Power(T,2)*P(2,0) + 35*Power(1 - T,4)*Power(T,3)*P(3,0) + 35*Power(1 - \
+T,3)*Power(T,4)*P(4,0) + 
+     21*Power(1 - T,2)*Power(T,5)*P(5,0) + 7*(1 - T)*Power(T,6)*P(6,0) + \
+Power(T,7)*P(7,0),2) + 
+   Power(-C(1) + Power(1 - T,7)*P(0,1) + 7*Power(1 - T,6)*T*P(1,1) + \
+21*Power(1 - T,5)*Power(T,2)*P(2,1) + 35*Power(1 - T,4)*Power(T,3)*P(3,1) + \
+35*Power(1 - T,3)*Power(T,4)*P(4,1) + 
+     21*Power(1 - T,2)*Power(T,5)*P(5,1) + 7*(1 - T)*Power(T,6)*P(6,1) + \
+Power(T,7)*P(7,1),2)\
+\>", "Output",
+ CellChangeTimes->{
+  3.730662497968893*^9},ExpressionUUID->"abd4e877-418e-4e7a-8a5d-\
+cb23af5b4cdc"]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell[BoxData["cgraddiffsq"], "Input",
+ CellChangeTimes->{{3.730662502443714*^9, 
+  3.730662504288806*^9}},ExpressionUUID->"acae801b-2185-4c57-977e-\
+359b5f7bfdd9"],
+
+Cell["\<\
+List(2*Power(1 - T,7)*(-C(0) + Power(1 - T,7)*P(0,0) + 7*Power(1 - \
+T,6)*T*P(1,0) + 21*Power(1 - T,5)*Power(T,2)*P(2,0) + 35*Power(1 - \
+T,4)*Power(T,3)*P(3,0) + 35*Power(1 - T,3)*Power(T,4)*P(4,0) + 
+      21*Power(1 - T,2)*Power(T,5)*P(5,0) + 7*(1 - T)*Power(T,6)*P(6,0) + \
+Power(T,7)*P(7,0)),
+   2*Power(1 - T,7)*(-C(1) + Power(1 - T,7)*P(0,1) + 7*Power(1 - \
+T,6)*T*P(1,1) + 21*Power(1 - T,5)*Power(T,2)*P(2,1) + 35*Power(1 - \
+T,4)*Power(T,3)*P(3,1) + 35*Power(1 - T,3)*Power(T,4)*P(4,1) + 
+      21*Power(1 - T,2)*Power(T,5)*P(5,1) + 7*(1 - T)*Power(T,6)*P(6,1) + \
+Power(T,7)*P(7,1)),
+   14*Power(1 - T,6)*T*(-C(0) + Power(1 - T,7)*P(0,0) + 7*Power(1 - \
+T,6)*T*P(1,0) + 21*Power(1 - T,5)*Power(T,2)*P(2,0) + 35*Power(1 - \
+T,4)*Power(T,3)*P(3,0) + 35*Power(1 - T,3)*Power(T,4)*P(4,0) + 
+      21*Power(1 - T,2)*Power(T,5)*P(5,0) + 7*(1 - T)*Power(T,6)*P(6,0) + \
+Power(T,7)*P(7,0)),
+   14*Power(1 - T,6)*T*(-C(1) + Power(1 - T,7)*P(0,1) + 7*Power(1 - \
+T,6)*T*P(1,1) + 21*Power(1 - T,5)*Power(T,2)*P(2,1) + 35*Power(1 - \
+T,4)*Power(T,3)*P(3,1) + 35*Power(1 - T,3)*Power(T,4)*P(4,1) + 
+      21*Power(1 - T,2)*Power(T,5)*P(5,1) + 7*(1 - T)*Power(T,6)*P(6,1) + \
+Power(T,7)*P(7,1)),
+   42*Power(1 - T,5)*Power(T,2)*(-C(0) + Power(1 - T,7)*P(0,0) + 7*Power(1 - \
+T,6)*T*P(1,0) + 21*Power(1 - T,5)*Power(T,2)*P(2,0) + 35*Power(1 - \
+T,4)*Power(T,3)*P(3,0) + 
+      35*Power(1 - T,3)*Power(T,4)*P(4,0) + 21*Power(1 - \
+T,2)*Power(T,5)*P(5,0) + 7*(1 - T)*Power(T,6)*P(6,0) + Power(T,7)*P(7,0)),
+   42*Power(1 - T,5)*Power(T,2)*(-C(1) + Power(1 - T,7)*P(0,1) + 7*Power(1 - \
+T,6)*T*P(1,1) + 21*Power(1 - T,5)*Power(T,2)*P(2,1) + 35*Power(1 - \
+T,4)*Power(T,3)*P(3,1) + 
+      35*Power(1 - T,3)*Power(T,4)*P(4,1) + 21*Power(1 - \
+T,2)*Power(T,5)*P(5,1) + 7*(1 - T)*Power(T,6)*P(6,1) + Power(T,7)*P(7,1)),
+   70*Power(1 - T,4)*Power(T,3)*(-C(0) + Power(1 - T,7)*P(0,0) + 7*Power(1 - \
+T,6)*T*P(1,0) + 21*Power(1 - T,5)*Power(T,2)*P(2,0) + 35*Power(1 - \
+T,4)*Power(T,3)*P(3,0) + 
+      35*Power(1 - T,3)*Power(T,4)*P(4,0) + 21*Power(1 - \
+T,2)*Power(T,5)*P(5,0) + 7*(1 - T)*Power(T,6)*P(6,0) + Power(T,7)*P(7,0)),
+   70*Power(1 - T,4)*Power(T,3)*(-C(1) + Power(1 - T,7)*P(0,1) + 7*Power(1 - \
+T,6)*T*P(1,1) + 21*Power(1 - T,5)*Power(T,2)*P(2,1) + 35*Power(1 - \
+T,4)*Power(T,3)*P(3,1) + 
+      35*Power(1 - T,3)*Power(T,4)*P(4,1) + 21*Power(1 - \
+T,2)*Power(T,5)*P(5,1) + 7*(1 - T)*Power(T,6)*P(6,1) + Power(T,7)*P(7,1)),
+   70*Power(1 - T,3)*Power(T,4)*(-C(0) + Power(1 - T,7)*P(0,0) + 7*Power(1 - \
+T,6)*T*P(1,0) + 21*Power(1 - T,5)*Power(T,2)*P(2,0) + 35*Power(1 - \
+T,4)*Power(T,3)*P(3,0) + 
+      35*Power(1 - T,3)*Power(T,4)*P(4,0) + 21*Power(1 - \
+T,2)*Power(T,5)*P(5,0) + 7*(1 - T)*Power(T,6)*P(6,0) + Power(T,7)*P(7,0)),
+   70*Power(1 - T,3)*Power(T,4)*(-C(1) + Power(1 - T,7)*P(0,1) + 7*Power(1 - \
+T,6)*T*P(1,1) + 21*Power(1 - T,5)*Power(T,2)*P(2,1) + 35*Power(1 - \
+T,4)*Power(T,3)*P(3,1) + 
+      35*Power(1 - T,3)*Power(T,4)*P(4,1) + 21*Power(1 - \
+T,2)*Power(T,5)*P(5,1) + 7*(1 - T)*Power(T,6)*P(6,1) + Power(T,7)*P(7,1)),
+   42*Power(1 - T,2)*Power(T,5)*(-C(0) + Power(1 - T,7)*P(0,0) + 7*Power(1 - \
+T,6)*T*P(1,0) + 21*Power(1 - T,5)*Power(T,2)*P(2,0) + 35*Power(1 - \
+T,4)*Power(T,3)*P(3,0) + 
+      35*Power(1 - T,3)*Power(T,4)*P(4,0) + 21*Power(1 - \
+T,2)*Power(T,5)*P(5,0) + 7*(1 - T)*Power(T,6)*P(6,0) + Power(T,7)*P(7,0)),
+   42*Power(1 - T,2)*Power(T,5)*(-C(1) + Power(1 - T,7)*P(0,1) + 7*Power(1 - \
+T,6)*T*P(1,1) + 21*Power(1 - T,5)*Power(T,2)*P(2,1) + 35*Power(1 - \
+T,4)*Power(T,3)*P(3,1) + 
+      35*Power(1 - T,3)*Power(T,4)*P(4,1) + 21*Power(1 - \
+T,2)*Power(T,5)*P(5,1) + 7*(1 - T)*Power(T,6)*P(6,1) + Power(T,7)*P(7,1)),
+   14*(1 - T)*Power(T,6)*(-C(0) + Power(1 - T,7)*P(0,0) + 7*Power(1 - \
+T,6)*T*P(1,0) + 21*Power(1 - T,5)*Power(T,2)*P(2,0) + 35*Power(1 - \
+T,4)*Power(T,3)*P(3,0) + 35*Power(1 - T,3)*Power(T,4)*P(4,0) + 
+      21*Power(1 - T,2)*Power(T,5)*P(5,0) + 7*(1 - T)*Power(T,6)*P(6,0) + \
+Power(T,7)*P(7,0)),
+   14*(1 - T)*Power(T,6)*(-C(1) + Power(1 - T,7)*P(0,1) + 7*Power(1 - \
+T,6)*T*P(1,1) + 21*Power(1 - T,5)*Power(T,2)*P(2,1) + 35*Power(1 - \
+T,4)*Power(T,3)*P(3,1) + 35*Power(1 - T,3)*Power(T,4)*P(4,1) + 
+      21*Power(1 - T,2)*Power(T,5)*P(5,1) + 7*(1 - T)*Power(T,6)*P(6,1) + \
+Power(T,7)*P(7,1)),
+   2*Power(T,7)*(-C(0) + Power(1 - T,7)*P(0,0) + 7*Power(1 - T,6)*T*P(1,0) + \
+21*Power(1 - T,5)*Power(T,2)*P(2,0) + 35*Power(1 - T,4)*Power(T,3)*P(3,0) + \
+35*Power(1 - T,3)*Power(T,4)*P(4,0) + 
+      21*Power(1 - T,2)*Power(T,5)*P(5,0) + 7*(1 - T)*Power(T,6)*P(6,0) + \
+Power(T,7)*P(7,0)),
+   2*Power(T,7)*(-C(1) + Power(1 - T,7)*P(0,1) + 7*Power(1 - T,6)*T*P(1,1) + \
+21*Power(1 - T,5)*Power(T,2)*P(2,1) + 35*Power(1 - T,4)*Power(T,3)*P(3,1) + \
+35*Power(1 - T,3)*Power(T,4)*P(4,1) + 
+      21*Power(1 - T,2)*Power(T,5)*P(5,1) + 7*(1 - T)*Power(T,6)*P(6,1) + \
+Power(T,7)*P(7,1)))\
+\>", "Output",
+ CellChangeTimes->{
+  3.730662504556003*^9},ExpressionUUID->"23bd743e-1498-415b-876f-\
+85e23ccbc157"]
+}, Open  ]]
+},
+WindowSize->{1855, 1056},
+WindowMargins->{{0, Automatic}, {Automatic, 0}},
+FrontEndVersion->"11.2 for Linux x86 (64-bit) (September 10, 2017)",
+StyleDefinitions->"Default.nb"
+]
+(* End of Notebook Content *)
+
+(* Internal cache information *)
+(*CellTagsOutline
+CellTagsIndex->{}
+*)
+(*CellTagsIndex
+CellTagsIndex->{}
+*)
+(*NotebookFileOutline
+Notebook[{
+Cell[558, 20, 2573, 71, 170, "Input",ExpressionUUID->"92e2ceb7-9b99-4fc5-b432-f01cb9dfc793"],
+Cell[CellGroupData[{
+Cell[3156, 95, 210, 4, 31, "Input",ExpressionUUID->"93af7e63-2b15-46c1-b868-21a87f200ab9"],
+Cell[3369, 101, 695, 14, 107, "Output",ExpressionUUID->"abd4e877-418e-4e7a-8a5d-cb23af5b4cdc"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[4101, 120, 163, 3, 31, "Input",ExpressionUUID->"acae801b-2185-4c57-977e-359b5f7bfdd9"],
+Cell[4267, 125, 4969, 84, 639, "Output",ExpressionUUID->"23bd743e-1498-415b-876f-85e23ccbc157"]
+}, Open  ]]
+}
+]
+*)
+
