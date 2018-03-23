@@ -18,6 +18,7 @@
 #include "obstacle.h"
 #include "optimization.h"
 #include "cxxopts.hpp"
+#include "json.hpp"
 
 #define PATHREPLAN_EPSILON 0.00001
 
@@ -34,33 +35,11 @@ double frand(double fMin, double fMax)
 
 int main(int argc, char** argv) {
 
-  string initial_trajectories_path = "../../initial_trajectories/";
-  string obstacles_path = "../../obstacles/";
-  double dt = 0.2;
-  double integral_stopval = 0.0001;
-  double relative_integral_stopval = 0.001;
-  int problem_dimension = 2;
-  int ppc = 8;
-  int max_continuity = 3;
-  double continuity_tol = 0.001;
-  bool set_max_time = false;
-  double hor = 5;
-  string outputfile("res");
 
+  string config_path;
   cxxopts::Options options("Path Replanner", "Path replanner for UAV swarms");
   options.add_options()
-    ("trajectories", "Folder that contains trajectories", cxxopts::value<std::string>()->default_value("../../initial_trajectories/"))
-    ("obstacles", "Folder that contains obstacles", cxxopts::value<std::string>()->default_value("../../obstacles/"))
-    ("dt", "Delta time for each planning iteration", cxxopts::value<double>()->default_value("0.2"))
-    ("is", "Integral stop value", cxxopts::value<double>()->default_value("0.0001"))
-    ("ris", "Relative integral stop ratio", cxxopts::value<double>()->default_value("0.001"))
-    ("dimension", "Problem dimension", cxxopts::value<int>()->default_value("2"))
-    ("ppc", "Points per curve", cxxopts::value<int>()->default_value("8"))
-    ("cont", "Contiuity upto this degree", cxxopts::value<int>()->default_value("3"))
-    ("tol", "Continuity tolerances for equality", cxxopts::value<double>()->default_value("0.001"))
-    ("setmt", "Set max time for optimization as dt", cxxopts::value<bool>()->default_value("false"))
-    ("output", "Output file", cxxopts::value<string>()->default_value("res"))
-    ("hor", "Time horizon for planning", cxxopts::value<double>()->default_value("5"))
+    ("cfg", "Config file", cxxopts::value<std::string>()->default_value("../config.json")),
     ("help", "Display help page");
 
   auto result = options.parse(argc, argv);
@@ -70,19 +49,47 @@ int main(int argc, char** argv) {
     return 0;
   }
 
+  config_path = result["cfg"].as<string>();
 
-  initial_trajectories_path = result["trajectories"].as<string>();
-  obstacles_path = result["obstacles"].as<string>();
-  dt = result["dt"].as<double>();
-  integral_stopval = result["is"].as<double>();
-  relative_integral_stopval = result["ris"].as<double>();
-  problem_dimension = result["dimension"].as<int>();
-  max_continuity = result["cont"].as<int>();
-  continuity_tol = result["tol"].as<double>();
-  ppc = result["ppc"].as<int>();
-  set_max_time = result["setmt"].as<bool>();
-  outputfile = result["output"].as<string>();
-  hor = result["hor"].as<double>();
+  ifstream cfg(config_path);
+
+  nlohmann::json jsn = nlohmann::json::parse(cfg);
+
+  string initial_trajectories_path = jsn["trajectories"];
+  string obstacles_path = jsn["obstacles"];
+  double dt = jsn["replan_period"];
+  double integral_stopval = jsn["objective_stop_value"];
+  double relative_integral_stopval = jsn["objective_relative_stop_value"];
+  int problem_dimension = jsn["problem_dimension"];
+  int ppc = jsn["points_per_curve"];
+  int max_continuity = jsn["continuity_upto_degree"];
+  bool set_max_time = jsn["set_max_time_as_replan_period"];
+  double hor = jsn["planning_horizon"];
+  string outputfile = jsn["output_file"];
+
+
+  vector<double> continuity_tols;
+  if(max_continuity >= 0) {
+    continuity_tols.resize(max_continuity+1);
+    for(int i=0; i<=max_continuity; i++) {
+      continuity_tols[i] = jsn["continuity_tolerances"][i];
+    }
+  }
+
+  int max_initial_point_degree = jsn["initial_point_constraints_upto_degree"];
+  vector<double> initial_point_tols;
+  if(max_initial_point_degree >= 0) {
+    initial_point_tols.resize(max_initial_point_degree+1);
+    for(int i=0; i<=max_initial_point_degree; i++) {
+      initial_point_tols[i] = jsn["initial_point_tolerances"][i];
+    }
+  }
+
+  double obstacle_tolerance = jsn["obstacle_tolerance"];
+
+  bool enable_voronoi = jsn["enable_voronoi"];
+
+
 
 
   /*cout << "initial_trajectories_path: " << initial_trajectories_path << endl
@@ -93,10 +100,10 @@ int main(int argc, char** argv) {
        << "problem_dimension: " << problem_dimension << endl
        << "points per curve: " << ppc << endl
        << "continuity upto: " << max_continuity << endl
-       << "continuity tolerance: " << continuity_tol << endl
        << "set max time: " << set_max_time << endl
-       << "output file: " << outputfile << endl << endl;*/
+       << "output file: " << outputfile << endl << endl;
 
+       int a; cin >> a;*/
   srand(time(NULL));
 
 
@@ -172,8 +179,10 @@ int main(int argc, char** argv) {
     for(int i=0; i<trajectories.size(); i++ ) {
 
       /*calculate voronoi hyperplanes for robot i*/
-      vector<hyperplane> voronoi_hyperplanes = voronoi(positions, i);
-
+      vector<hyperplane> voronoi_hyperplanes;
+      if(enable_voronoi) {
+        voronoi_hyperplanes = voronoi(positions,i);
+      }
 
       /*
         number of curves \times number of points per curve \times problem_dimension
@@ -217,7 +226,7 @@ int main(int argc, char** argv) {
 
 
         double current_time = ct;
-        double end_time  = ct+hor;
+        double end_time  = ct+dt;
 
         int idx = 0;
 
@@ -262,7 +271,7 @@ int main(int argc, char** argv) {
         od->pdata = &data;
         od->hps = &(obstacles[j].chplanes);
 
-        problem.add_inequality_constraint(optimization::obstacle_constraint, (void*)od, 0.000001);
+        problem.add_inequality_constraint(optimization::obstacle_constraint, (void*)od, obstacle_tolerance);
         obspts.push_back(od);
       }
 
@@ -301,46 +310,32 @@ int main(int argc, char** argv) {
       start_curve = max(0, start_curve-1);
       for(int n=0; n<=max_continuity; n++) {
         // nth degree continuity
-        for(int j=start_curve; j<min((int)trajectories[i].size()-1, end_curve); j++) {
+        for(int j=start_curve; j < end_curve; j++) {
           continuity_data* cd = new continuity_data;
           cd->pdata = &data;
           cd->n = n;
           cd->c = j;
 
-          //problem.add_equality_mconstraint(optimization::continuity_mconstraint, (void*)cd, continuity_tolerances);
-          //problem.add_equality_constraint(optimization::continuity_constraint, (void*)cd, continuity_tol);
-          problem.add_inequality_constraint(optimization::continuity_constraint, (void*)cd, continuity_tol);
+          problem.add_inequality_constraint(optimization::continuity_constraint, (void*)cd, continuity_tols[n]);
           contpts.push_back(cd);
 
 
         }
       }
 
-      point_data* pd = new point_data;
-      pd->pdata = &data;
-      pd->point = positions[i];
-      pd->time = ct;
-      pd->degree = 0;
-      /*
-        IS THIS REALLY NECESSARY??
-      */
-      problem.add_inequality_constraint(optimization::point_constraint, (void*)pd, 0.001);
+      vector<point_data*> pointpts;
 
+      for(int j=0; j<=max_initial_point_degree; j++) {
+        point_data* pd = new point_data;
+        pd->pdata = &data;
+        pd->point = trajectories[i].neval(ct, j);
+        pd->time = ct;
+        pd->degree = j;
 
-      point_data* pd2 = new point_data;
-      pd2->pdata = &data;
-      pd2->point = trajectories[i].neval(ct, 1);
-      pd2->time = ct;
-      pd2->degree = 1;
-      problem.add_inequality_constraint(optimization::point_constraint, (void*)pd2, 0.001);
+        problem.add_inequality_constraint(optimization::point_constraint, (void*)pd, initial_point_tols[j]);
+        pointpts.push_back(pd);
+      }
 
-
-      point_data* pd3 = new point_data;
-      pd3->pdata = &data;
-      pd3->point = trajectories[i].neval(ct, 2);
-      pd3->time = ct;
-      pd3->degree = 2;
-      problem.add_inequality_constraint(optimization::point_constraint, (void*)pd3, 0.001);
       /* if integral is less than this value, stop.*/
       problem.set_stopval(integral_stopval);
 
@@ -427,9 +422,9 @@ int main(int argc, char** argv) {
       for(int j=0; j<contpts.size(); j++) {
         delete contpts[j];
       }
-      delete pd;
-      delete pd2;
-      delete pd3;
+      for(int j=0; j<pointpts.size(); j++) {
+        delete pointpts[j];
+      }
     }
 
     for(double t = ct + printdt; t<ct+dt; t+=printdt) {

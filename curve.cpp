@@ -63,7 +63,24 @@ vectoreuc curve::eval(double t) {
 /*DEPENDENT ON 2D 8PTS CAUTION!!!*/
 vectoreuc curve::neval(double t, int n) {
   if(n==0) {
-    return eval(t);
+    vectoreuc res(2);
+    res[0] = pow(1 - t/duration,7)*cpts[0][0] +
+    (7*t*pow(1 - t/duration,6)*cpts[1][0])/duration +
+    (21*pow(t,2)*pow(1 - t/duration,5)*cpts[2][0])/pow(duration,2) +
+    (35*pow(t,3)*pow(1 - t/duration,4)*cpts[3][0])/pow(duration,3) +
+    (35*pow(t,4)*pow(1 - t/duration,3)*cpts[4][0])/pow(duration,4) +
+    (21*pow(t,5)*pow(1 - t/duration,2)*cpts[5][0])/pow(duration,5) +
+    (7*pow(t,6)*(1 - t/duration)*cpts[6][0])/pow(duration,6) +
+    (pow(t,7)*cpts[7][0])/pow(duration,7);
+    res[1] = pow(1 - t/duration,7)*cpts[0][1] +
+    (7*t*pow(1 - t/duration,6)*cpts[1][1])/duration +
+    (21*pow(t,2)*pow(1 - t/duration,5)*cpts[2][1])/pow(duration,2) +
+    (35*pow(t,3)*pow(1 - t/duration,4)*cpts[3][1])/pow(duration,3) +
+    (35*pow(t,4)*pow(1 - t/duration,3)*cpts[4][1])/pow(duration,4) +
+    (21*pow(t,5)*pow(1 - t/duration,2)*cpts[5][1])/pow(duration,5) +
+    (7*pow(t,6)*(1 - t/duration)*cpts[6][1])/pow(duration,6) +
+    (pow(t,7)*cpts[7][1])/pow(duration,7);
+    return res;
   } else if(n==1) {
     vectoreuc res(2);
     res[0] = (-7*pow(1 - t/duration,6)*cpts[0][0])/duration - (42*t*pow(1 - t/duration,5)*cpts[1][0])/pow(duration,2) + (7*pow(1 - t/duration,6)*cpts[1][0])/duration -
@@ -93,6 +110,7 @@ vectoreuc curve::neval(double t, int n) {
    (84*pow(t,5)*cpts[6][1])/pow(duration,7) + (210*pow(t,4)*(1 - t/duration)*cpts[6][1])/pow(duration,6) + (42*pow(t,5)*cpts[7][1])/pow(duration,7);
    return res;
  }
+ throw "not implemented";
 }
 
 int curve::comb(int n, int i) {

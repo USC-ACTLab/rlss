@@ -2,6 +2,7 @@
 #define PATHREPLAN_VECTOREUC_H
 #include <vector>
 #include <cmath>
+#include <ostream>
 using namespace std;
 
 class vectoreuc {
@@ -16,5 +17,8 @@ class vectoreuc {
     vectoreuc operator/(const double& s);
     vectoreuc normalized();
     double dot(vectoreuc& rhs);
+    friend ostream& operator<<(ostream& out, const vectoreuc& vec);
 };
+
+
 #endif

@@ -60,3 +60,13 @@ double vectoreuc::dot(vectoreuc& rhs) {
   }
   return res;
 }
+
+
+ostream& operator<<(ostream& out, const vectoreuc& vec) {
+  out << "(";
+  for(int i=0; i<vec.crds.size()-1; i++) {
+    out << vec.crds[i] << ",";
+  }
+  out << vec.crds[vec.crds.size()-1] <<  ")";
+  return out;
+}
