@@ -10,7 +10,7 @@ double optimization::objective(const vector<double>& x, vector<double>& grad, vo
   problem_data& pdata = *((problem_data*)f_data);
 
   double ct = pdata.current_t;
-  double dt = pdata.delta_t;
+  double T = pdata.time_horizon;
   trajectory& ot = *(pdata.original_trajectory);
   int pd = pdata.problem_dimension;
   int ppc = pdata.ppc;
@@ -38,7 +38,7 @@ double optimization::objective(const vector<double>& x, vector<double>& grad, vo
   }
 
   nt -= ot;
-  double result = nt.integrate(ct, ct+dt, grad);
+  double result = nt.integrate(ct, ct+T, grad);
   cout << "obj end: " << result << endl;
   return result;
 }
@@ -48,7 +48,7 @@ double optimization::voronoi_constraint(const vector<double>& x, vector<double>&
   problem_data& pdata = *(vd.pdata);
 
   double ct = pdata.current_t;
-  double dt = pdata.delta_t;
+  double T = pdata.time_horizon;
   trajectory& ot = *(pdata.original_trajectory);
   int pd = pdata.problem_dimension;
   hyperplane& plane = vd.plane;
@@ -87,7 +87,7 @@ double optimization::obstacle_constraint(const vector<double>& x, vector<double>
   //cout << hps.size() << endl;
   trajectory& ot = *(pdata.original_trajectory);
   double ct = pdata.current_t;
-  double dt = pdata.delta_t;
+  double T = pdata.time_horizon;
   double tt = pdata.tt;
   int pd = pdata.problem_dimension;
   int ppc = pdata.ppc;
@@ -116,7 +116,7 @@ double optimization::obstacle_constraint(const vector<double>& x, vector<double>
   double constraint_result = 0;
 
   double obsdt = 0.0001;
-  for(double t = ct; t<=ct+dt; t+=obsdt) {
+  for(double t = ct; t<=ct+T; t+=obsdt) {
     int curveidx;
     double curvet;
     vectoreuc cur = nt.eval(t, curveidx, curvet);
@@ -164,43 +164,6 @@ double optimization::obstacle_constraint(const vector<double>& x, vector<double>
   return constraint_result;
 }
 
-void optimization::continuity_mconstraint(unsigned m, double* result, unsigned n, const double* x, double* grad, void* c_data) {
-  continuity_data& cd = *((continuity_data*)c_data);
-  problem_data& pdata = *(cd.pdata);
-
-  int continuity_degree = cd.n;
-  int c = cd.c;
-  int ppc = pdata.ppc; //pts per curve
-  int pd = pdata.problem_dimension;
-
-  const double* P = x + ppc * pd * c;
-  const double* Q = x + ppc* pd * (c+1);
-
-  vector<vector<double> > gradvec;
-  if(grad)
-    gradvec.resize(pd);
-
-  bezier_2d_8pts_continuity(P, Q, continuity_degree, gradvec, result);
-  if(grad) {
-    for(int i=0; i<pd; i++) {
-      for(int j=0; j<n; j++) {
-        grad[i*n + j] = 0;
-      }
-    }
-
-
-    for(int i=0; i<pd; i++) {
-      for(int j=0; j<ppc; j++) {
-        for(int k=0; k<pd; k++) {
-          grad[n*i + ppc*pd*c+j*pd+k] = gradvec[i][j*pd + k];
-          grad[n*i + ppc*pd*(c+1)+j*pd+k] = gradvec[i][ppc*pd + j*pd+k];
-        }
-      }
-    }
-  }
-
-}
-
 double optimization::continuity_constraint(const vector<double>& x, vector<double>& grad, void* c_data) {
   continuity_data& cd = *((continuity_data*)c_data);
   problem_data& pdata = *(cd.pdata);
@@ -209,6 +172,7 @@ double optimization::continuity_constraint(const vector<double>& x, vector<doubl
   int c = cd.c;
   int ppc = pdata.ppc; //pts per curve
   int pd = pdata.problem_dimension;
+  trajectory& ot = *(pdata.original_trajectory);
   int cpts = ppc * pd;
 
   vector<double> P(cpts);
@@ -227,7 +191,7 @@ double optimization::continuity_constraint(const vector<double>& x, vector<doubl
     innergrad.resize(cpts*2);
   }
 
-  double result = bezier_2d_8pts_continuity_euc(P, Q, continuity_degree, innergrad);
+  double result = bezier_2d_8pts_continuity_euc(P, Q, continuity_degree, innergrad, ot[c].duration, ot[c+1].duration);
 
   if(grad.size() > 0) {
     for(int i=0; i<grad.size(); i++) {
@@ -253,8 +217,9 @@ double optimization::point_constraint(const vector<double>& x, vector<double>& g
 
   trajectory& ot = *(pdata.original_trajectory);
 
-  vectoreuc& pos = poidata.pos;
+  vectoreuc& point = poidata.point;
   double T = poidata.time;
+  int degree = poidata.degree;
 
   int i = 0;
   while(i<ot.curves.size() && ot.curves[i].duration < T) {
@@ -266,7 +231,6 @@ double optimization::point_constraint(const vector<double>& x, vector<double>& g
     T = ot.curves[i].duration;
   }
 
-  T /= ot.curves[i].duration;
 
   vector<double> ccurve(cpts);
 
@@ -282,7 +246,7 @@ double optimization::point_constraint(const vector<double>& x, vector<double>& g
     innergrad.resize(cpts);
   }
 
-  double result = bezier_2d_8pts_distance_from_point(ccurve, pos, innergrad, T);
+  double result = bezier_2d_8pts_ndistance_from_point(ccurve, point, innergrad, T, degree, ot.curves[i].duration);
 
   if(grad.size() > 0) {
     for(int j=0; j<grad.size(); j++) {
@@ -295,7 +259,7 @@ double optimization::point_constraint(const vector<double>& x, vector<double>& g
       }
     }
   }
-  cout << "start diff: " << result << endl;
+  cout << "start diff "<< degree << ": " << result << endl;
   return result;
 
 }

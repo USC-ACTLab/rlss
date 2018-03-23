@@ -51,7 +51,7 @@ int main(int argc, char** argv) {
   options.add_options()
     ("trajectories", "Folder that contains trajectories", cxxopts::value<std::string>()->default_value("../../initial_trajectories/"))
     ("obstacles", "Folder that contains obstacles", cxxopts::value<std::string>()->default_value("../../obstacles/"))
-    ("dt", "Delta time", cxxopts::value<double>()->default_value("0.2"))
+    ("dt", "Delta time for each planning iteration", cxxopts::value<double>()->default_value("0.2"))
     ("is", "Integral stop value", cxxopts::value<double>()->default_value("0.0001"))
     ("ris", "Relative integral stop ratio", cxxopts::value<double>()->default_value("0.001"))
     ("dimension", "Problem dimension", cxxopts::value<int>()->default_value("2"))
@@ -60,7 +60,7 @@ int main(int argc, char** argv) {
     ("tol", "Continuity tolerances for equality", cxxopts::value<double>()->default_value("0.001"))
     ("setmt", "Set max time for optimization as dt", cxxopts::value<bool>()->default_value("false"))
     ("output", "Output file", cxxopts::value<string>()->default_value("res"))
-    ("hor", "hor*dt is what optimization is done(time horizon)", cxxopts::value<double>()->default_value("5"))
+    ("hor", "Time horizon for planning", cxxopts::value<double>()->default_value("5"))
     ("help", "Display help page");
 
   auto result = options.parse(argc, argv);
@@ -186,7 +186,7 @@ int main(int argc, char** argv) {
       //nlopt::opt problem(nlopt::GN_ISRES, varcount);
       problem_data data;
       data.current_t = ct;
-      data.delta_t = hor*dt;
+      data.time_horizon = hor;
       data.original_trajectory = &(orijinal_trajectories[i]);
       //data.original_trajectory = &(trajectories[i]);
       data.problem_dimension = problem_dimension;
@@ -217,7 +217,7 @@ int main(int argc, char** argv) {
 
 
         double current_time = ct;
-        double end_time  = ct+hor*dt;
+        double end_time  = ct+hor;
 
         int idx = 0;
 
@@ -273,7 +273,7 @@ int main(int argc, char** argv) {
         continuity_tolerances[i] = continuity_tol;
       }*/
       double current_time = ct;
-      double end_time = ct+hor*dt;
+      double end_time = ct+hor;
       int start_curve = 0;
       int end_curve = 0;
       int j;
@@ -318,13 +318,29 @@ int main(int argc, char** argv) {
 
       point_data* pd = new point_data;
       pd->pdata = &data;
-      pd->pos = positions[i];
+      pd->point = positions[i];
       pd->time = ct;
+      pd->degree = 0;
       /*
         IS THIS REALLY NECESSARY??
       */
-      problem.add_inequality_constraint(optimization::point_constraint, (void*)pd, 0.0000001);
+      problem.add_inequality_constraint(optimization::point_constraint, (void*)pd, 0.001);
 
+
+      point_data* pd2 = new point_data;
+      pd2->pdata = &data;
+      pd2->point = trajectories[i].neval(ct, 1);
+      pd2->time = ct;
+      pd2->degree = 1;
+      problem.add_inequality_constraint(optimization::point_constraint, (void*)pd2, 0.001);
+
+
+      point_data* pd3 = new point_data;
+      pd3->pdata = &data;
+      pd3->point = trajectories[i].neval(ct, 2);
+      pd3->time = ct;
+      pd3->degree = 2;
+      problem.add_inequality_constraint(optimization::point_constraint, (void*)pd3, 0.001);
       /* if integral is less than this value, stop.*/
       problem.set_stopval(integral_stopval);
 
@@ -412,6 +428,8 @@ int main(int argc, char** argv) {
         delete contpts[j];
       }
       delete pd;
+      delete pd2;
+      delete pd3;
     }
 
     for(double t = ct + printdt; t<ct+dt; t+=printdt) {

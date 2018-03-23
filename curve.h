@@ -22,6 +22,7 @@ class curve {
     vectoreuc& operator[](int idx);
     void set_duration(double dur);
     vectoreuc eval(double t);
+    vectoreuc neval(double t, int n);
     static int comb(int n, int i);
     double integrate(double from, double to, vector<double>& grad);
     curve& operator-=(const curve& rhs);

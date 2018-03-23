@@ -60,6 +60,41 @@ vectoreuc curve::eval(double t) {
   return res;
 }
 
+/*DEPENDENT ON 2D 8PTS CAUTION!!!*/
+vectoreuc curve::neval(double t, int n) {
+  if(n==0) {
+    return eval(t);
+  } else if(n==1) {
+    vectoreuc res(2);
+    res[0] = (-7*pow(1 - t/duration,6)*cpts[0][0])/duration - (42*t*pow(1 - t/duration,5)*cpts[1][0])/pow(duration,2) + (7*pow(1 - t/duration,6)*cpts[1][0])/duration -
+   (105*pow(t,2)*pow(1 - t/duration,4)*cpts[2][0])/pow(duration,3) + (42*t*pow(1 - t/duration,5)*cpts[2][0])/pow(duration,2) - (140*pow(t,3)*pow(1 - t/duration,3)*cpts[3][0])/pow(duration,4) +
+   (105*pow(t,2)*pow(1 - t/duration,4)*cpts[3][0])/pow(duration,3) - (105*pow(t,4)*pow(1 - t/duration,2)*cpts[4][0])/pow(duration,5) +
+   (140*pow(t,3)*pow(1 - t/duration,3)*cpts[4][0])/pow(duration,4) - (42*pow(t,5)*(1 - t/duration)*cpts[5][0])/pow(duration,6) + (105*pow(t,4)*pow(1 - t/duration,2)*cpts[5][0])/pow(duration,5) -
+   (7*pow(t,6)*cpts[6][0])/pow(duration,7) + (42*pow(t,5)*(1 - t/duration)*cpts[6][0])/pow(duration,6) + (7*pow(t,6)*cpts[7][0])/pow(duration,7);
+   res[1] = (-7*pow(1 - t/duration,6)*cpts[0][1])/duration - (42*t*pow(1 - t/duration,5)*cpts[1][1])/pow(duration,2) + (7*pow(1 - t/duration,6)*cpts[1][1])/duration -
+   (105*pow(t,2)*pow(1 - t/duration,4)*cpts[2][1])/pow(duration,3) + (42*t*pow(1 - t/duration,5)*cpts[2][1])/pow(duration,2) - (140*pow(t,3)*pow(1 - t/duration,3)*cpts[3][1])/pow(duration,4) +
+   (105*pow(t,2)*pow(1 - t/duration,4)*cpts[3][1])/pow(duration,3) - (105*pow(t,4)*pow(1 - t/duration,2)*cpts[4][1])/pow(duration,5) +
+   (140*pow(t,3)*pow(1 - t/duration,3)*cpts[4][1])/pow(duration,4) - (42*pow(t,5)*(1 - t/duration)*cpts[5][1])/pow(duration,6) + (105*pow(t,4)*pow(1 - t/duration,2)*cpts[5][1])/pow(duration,5) -
+   (7*pow(t,6)*cpts[6][1])/pow(duration,7) + (42*pow(t,5)*(1 - t/duration)*cpts[6][1])/pow(duration,6) + (7*pow(t,6)*cpts[7][1])/pow(duration,7);
+   return res;
+ } else if(n==2) {
+   vectoreuc res(2);
+   res[0] = (42*pow(1 - t/duration,5)*cpts[0][0])/pow(duration,2) + (210*t*pow(1 - t/duration,4)*cpts[1][0])/pow(duration,3) - (84*pow(1 - t/duration,5)*cpts[1][0])/pow(duration,2) +
+   (420*pow(t,2)*pow(1 - t/duration,3)*cpts[2][0])/pow(duration,4) - (420*t*pow(1 - t/duration,4)*cpts[2][0])/pow(duration,3) + (42*pow(1 - t/duration,5)*cpts[2][0])/pow(duration,2) +
+   (420*pow(t,3)*pow(1 - t/duration,2)*cpts[3][0])/pow(duration,5) - (840*pow(t,2)*pow(1 - t/duration,3)*cpts[3][0])/pow(duration,4) + (210*t*pow(1 - t/duration,4)*cpts[3][0])/pow(duration,3) +
+   (210*pow(t,4)*(1 - t/duration)*cpts[4][0])/pow(duration,6) - (840*pow(t,3)*pow(1 - t/duration,2)*cpts[4][0])/pow(duration,5) + (420*pow(t,2)*pow(1 - t/duration,3)*cpts[4][0])/pow(duration,4) +
+   (42*pow(t,5)*cpts[5][0])/pow(duration,7) - (420*pow(t,4)*(1 - t/duration)*cpts[5][0])/pow(duration,6) + (420*pow(t,3)*pow(1 - t/duration,2)*cpts[5][0])/pow(duration,5) -
+   (84*pow(t,5)*cpts[6][0])/pow(duration,7) + (210*pow(t,4)*(1 - t/duration)*cpts[6][0])/pow(duration,6) + (42*pow(t,5)*cpts[7][0])/pow(duration,7);
+   res[1] = (42*pow(1 - t/duration,5)*cpts[0][1])/pow(duration,2) + (210*t*pow(1 - t/duration,4)*cpts[1][1])/pow(duration,3) - (84*pow(1 - t/duration,5)*cpts[1][1])/pow(duration,2) +
+   (420*pow(t,2)*pow(1 - t/duration,3)*cpts[2][1])/pow(duration,4) - (420*t*pow(1 - t/duration,4)*cpts[2][1])/pow(duration,3) + (42*pow(1 - t/duration,5)*cpts[2][1])/pow(duration,2) +
+   (420*pow(t,3)*pow(1 - t/duration,2)*cpts[3][1])/pow(duration,5) - (840*pow(t,2)*pow(1 - t/duration,3)*cpts[3][1])/pow(duration,4) + (210*t*pow(1 - t/duration,4)*cpts[3][1])/pow(duration,3) +
+   (210*pow(t,4)*(1 - t/duration)*cpts[4][1])/pow(duration,6) - (840*pow(t,3)*pow(1 - t/duration,2)*cpts[4][1])/pow(duration,5) + (420*pow(t,2)*pow(1 - t/duration,3)*cpts[4][1])/pow(duration,4) +
+   (42*pow(t,5)*cpts[5][1])/pow(duration,7) - (420*pow(t,4)*(1 - t/duration)*cpts[5][1])/pow(duration,6) + (420*pow(t,3)*pow(1 - t/duration,2)*cpts[5][1])/pow(duration,5) -
+   (84*pow(t,5)*cpts[6][1])/pow(duration,7) + (210*pow(t,4)*(1 - t/duration)*cpts[6][1])/pow(duration,6) + (42*pow(t,5)*cpts[7][1])/pow(duration,7);
+   return res;
+ }
+}
+
 int curve::comb(int n, int i) {
   if(i==0) {
     return 1;
@@ -80,8 +115,6 @@ int curve::comb(int n, int i) {
 double curve::integrate(double from, double to, vector<double>& grad) {
   double result = 0;
   int d = cpts.size() - 1;
-  from /= duration;
-  to /= duration;
 
 
   if(grad.size() > 0)

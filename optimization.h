@@ -12,7 +12,7 @@ using namespace std;
 class problem_data {
   public:
     double current_t;
-    double delta_t;
+    double time_horizon;
     double tt;
     trajectory* original_trajectory;
     int problem_dimension;
@@ -46,8 +46,9 @@ class continuity_data {
 class point_data {
   public:
     problem_data* pdata;
-    vectoreuc pos;
+    vectoreuc point;
     double time;
+    int degree;
 };
 
 class optimization {
@@ -55,8 +56,6 @@ class optimization {
     static double objective(const vector<double>& x, vector<double>& grad, void* f_data);
     static double voronoi_constraint(const vector<double>& x, vector<double>& grad, void* v_data);
     static double obstacle_constraint(const vector<double>& x, vector<double>& grad, void* o_data);
-    /* requires two points to be equal, use it with add_equality_mconstraint */
-    static void continuity_mconstraint(unsigned m, double* result, unsigned n, const double* x, double* grad, void* c_data);
     /* requires distance between two points to be zero, use it with add_equality_constraint*/
     static double continuity_constraint(const vector<double>& x, vector<double>& grad, void* c_data);
 
