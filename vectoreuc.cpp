@@ -70,3 +70,11 @@ ostream& operator<<(ostream& out, const vectoreuc& vec) {
   out << vec.crds[vec.crds.size()-1] <<  ")";
   return out;
 }
+
+double vectoreuc::L2norm() {
+  double length = 0;
+  for(int i=0; i<crds.size(); i++) {
+    length += crds[i] * crds[i];
+  }
+  return sqrt(length);
+}

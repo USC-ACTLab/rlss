@@ -3,6 +3,7 @@
 #include <algorithm>
 using namespace std;
 
+
 void obstacle2D::add_pt(vectoreuc& pt) {
   pts.push_back(pt);
 }
@@ -74,7 +75,6 @@ void obstacle2D::ch_planes() {
     hyperplane hp;
     vectoreuc& firstpt = pts[ch[i]];
     vectoreuc& secondpt = pts[ch[i+1]];
-    cout << firstpt[0] << " " << firstpt[1] << " " << secondpt[0] << " " << secondpt[1] << endl;
     vectoreuc normal(2);
     normal[0] = secondpt[1] - firstpt[1];
     normal[1] = firstpt[0] - secondpt[0];

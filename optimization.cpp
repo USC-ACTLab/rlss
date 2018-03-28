@@ -6,6 +6,7 @@
 using namespace std;
 
 
+
 double optimization::objective(const vector<double>& x, vector<double>& grad, void* f_data) {
   problem_data& pdata = *((problem_data*)f_data);
 
@@ -39,7 +40,7 @@ double optimization::objective(const vector<double>& x, vector<double>& grad, vo
 
   nt -= ot;
   double result = nt.integrate(ct, ct+T, grad);
-  cout << "obj end: " << result << endl;
+  //cout << "obj end: " << result << endl;
   return result;
 }
 
@@ -73,6 +74,7 @@ double optimization::voronoi_constraint(const vector<double>& x, vector<double>&
     }
   }
   double result = cur_pt.dot(plane.normal) - plane.distance;
+  //cout << "voro end: " << result << endl;
   return result;
 }
 
@@ -114,9 +116,11 @@ double optimization::obstacle_constraint(const vector<double>& x, vector<double>
   }
 
   double constraint_result = 0;
+  double prev_constraint_result = 0;
 
-  double obsdt = 0.0001;
+  double obsdt = 0.01;
   for(double t = ct; t<=ct+T; t+=obsdt) {
+    double velocity = nt.neval(t, 1).L2norm();
     int curveidx;
     double curvet;
     vectoreuc cur = nt.eval(t, curveidx, curvet);
@@ -145,22 +149,19 @@ double optimization::obstacle_constraint(const vector<double>& x, vector<double>
       }
       double dist = bezier_2d_8pts_distance_from_plane(nt[curveidx].cpts, hps[closest_hp], innergrad, curvet);
       // sum the gradient to the input grad, and distance to the result of constraint
-      constraint_result += dist * obsdt;
+      constraint_result += dist * obsdt * velocity;
+      prev_constraint_result += dist*obsdt;
       if(innergrad.size() > 0) {
         for(int i=0; i<ppc; i++) {
           for(int j=0; j<pd; j++) {
-            grad[curveidx * ppc * pd + i*pd + j] += innergrad[i*pd + j] * obsdt;
+            grad[curveidx * ppc * pd + i*pd + j] += innergrad[i*pd + j] * obsdt * velocity;
           }
         }
       }
 
     }
   }
-  /*cout << constraint_result << " " << &od << endl;
-  if(constraint_result>0) {
-    int a; cin >> a;
-  }*/
-  cout << "obs end: " << constraint_result << endl;
+  //cout << "obs end: " << constraint_result<< " prev: " << prev_constraint_result << endl;
   return constraint_result;
 }
 
@@ -204,7 +205,7 @@ double optimization::continuity_constraint(const vector<double>& x, vector<doubl
       }
     }
   }
-  cout << "con end: " << result << endl;
+  //cout << "con end: " << result << endl;
   return result;
 }
 
@@ -259,7 +260,7 @@ double optimization::point_constraint(const vector<double>& x, vector<double>& g
       }
     }
   }
-  cout << "start diff "<< degree << ": " << result << endl;
+  //cout << "start diff "<< degree << ": " << result << endl;
   return result;
 
 }

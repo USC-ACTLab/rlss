@@ -19,6 +19,9 @@
 #include "optimization.h"
 #include "cxxopts.hpp"
 #include "json.hpp"
+#include <chrono>
+
+
 
 #define PATHREPLAN_EPSILON 0.00001
 
@@ -26,15 +29,18 @@ namespace fs = std::experimental::filesystem::v1;
 using namespace std;
 using namespace boost::geometry;
 
+
+typedef chrono::high_resolution_clock Time;
+typedef chrono::milliseconds ms;
+typedef chrono::duration<float> fsec;
+
 double frand(double fMin, double fMax)
 {
     double f = (double)rand() / RAND_MAX;
     return fMin + f * (fMax - fMin);
 }
 
-
 int main(int argc, char** argv) {
-
 
   string config_path;
   cxxopts::Options options("Path Replanner", "Path replanner for UAV swarms");
@@ -89,6 +95,8 @@ int main(int argc, char** argv) {
 
   bool enable_voronoi = jsn["enable_voronoi"];
 
+
+  nlohmann::json output_json;
 
 
 
@@ -168,15 +176,26 @@ int main(int argc, char** argv) {
 
   vector<vectoreuc> positions(trajectories.size());
 
-  double printdt = 0.001;
+  double printdt = jsn["print_dt"];
+
+  output_json["dt"] = printdt;
+  output_json["number_of_robots"] = trajectories.size();
+  int output_iter = 0;
+
+
+  double total_time_for_opt = 0;
+  int total_count_for_opt = 0;
 
   for(double ct = 0; ct <= total_t; ct+=dt) {
     for(int i=0; i<trajectories.size(); i++) {
       positions[i] = trajectories[i].eval(ct);
-      out << i << " (" << positions[i][0] << "," << positions[i][1] << ")" << endl;
+      output_json["points"][output_iter].push_back(positions[i].crds);
+      //out << i << " (" << positions[i][0] << "," << positions[i][1] << ")" << endl;
     }
+    output_iter++;
 
     for(int i=0; i<trajectories.size(); i++ ) {
+      auto t0 = Time::now();
 
       /*calculate voronoi hyperplanes for robot i*/
       vector<hyperplane> voronoi_hyperplanes;
@@ -425,16 +444,26 @@ int main(int argc, char** argv) {
       for(int j=0; j<pointpts.size(); j++) {
         delete pointpts[j];
       }
+      auto t1 = Time::now();
+      fsec fs = t1 - t0;
+      ms d = chrono::duration_cast<ms>(fs);
+      total_time_for_opt += d.count();
+      total_count_for_opt++;
+      cout << "optimization time: " << d.count() << "ms" << endl;
     }
 
     for(double t = ct + printdt; t<ct+dt; t+=printdt) {
       for(int i=0; i<trajectories.size(); i++) {
         vectoreuc vec = trajectories[i].eval(t);
-        out << i << " (" << vec[0] << "," << vec[1] << ")" << endl;
+        output_json["points"][output_iter].push_back(vec.crds);
+        //out << i << " (" << vec[0] << "," << vec[1] << ")" << endl;
       }
+      output_iter++;
     }
   }
 
+  cout << "average opt time: " << total_time_for_opt / total_count_for_opt << "ms" << endl;
+  out << output_json << endl;
 
   out.close();
   return 0;
