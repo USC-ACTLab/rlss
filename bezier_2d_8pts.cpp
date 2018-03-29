@@ -1563,3 +1563,692 @@ double bezier_2d_8pts_ndistance_from_point(vector<double>& P, vectoreuc& C, vect
      }
    }
 }
+
+double bezier_2d_8pts_neval_l2normsq(vector<double>& P, vector<double>& grad, double t, int n, double dur) {
+  if(n==0) {
+    if(grad.size() > 0) {
+      grad = vector<double>{2*pow(1 - t/dur,7)*(pow(1 - t/dur,7)*P[0*2+0] + (7*t*pow(1 - t/dur,6)*P[1*2+0])/dur + (21*pow(t,2)*pow(1 - t/dur,5)*P[2*2+0])/pow(dur,2) +
+      (35*pow(t,3)*pow(1 - t/dur,4)*P[3*2+0])/pow(dur,3) + (35*pow(t,4)*pow(1 - t/dur,3)*P[4*2+0])/pow(dur,4) + (21*pow(t,5)*pow(1 - t/dur,2)*P[5*2+0])/pow(dur,5) +
+      (7*pow(t,6)*(1 - t/dur)*P[6*2+0])/pow(dur,6) + (pow(t,7)*P[7*2+0])/pow(dur,7)),
+   2*pow(1 - t/dur,7)*(pow(1 - t/dur,7)*P[0*2+1] + (7*t*pow(1 - t/dur,6)*P[1*2+1])/dur + (21*pow(t,2)*pow(1 - t/dur,5)*P[2*2+1])/pow(dur,2) + (35*pow(t,3)*pow(1 - t/dur,4)*P[3*2+1])/pow(dur,3) +
+      (35*pow(t,4)*pow(1 - t/dur,3)*P[4*2+1])/pow(dur,4) + (21*pow(t,5)*pow(1 - t/dur,2)*P[5*2+1])/pow(dur,5) + (7*pow(t,6)*(1 - t/dur)*P[6*2+1])/pow(dur,6) + (pow(t,7)*P[7*2+1])/pow(dur,7)),
+   (14*t*pow(1 - t/dur,6)*(pow(1 - t/dur,7)*P[0*2+0] + (7*t*pow(1 - t/dur,6)*P[1*2+0])/dur + (21*pow(t,2)*pow(1 - t/dur,5)*P[2*2+0])/pow(dur,2) +
+        (35*pow(t,3)*pow(1 - t/dur,4)*P[3*2+0])/pow(dur,3) + (35*pow(t,4)*pow(1 - t/dur,3)*P[4*2+0])/pow(dur,4) + (21*pow(t,5)*pow(1 - t/dur,2)*P[5*2+0])/pow(dur,5) +
+        (7*pow(t,6)*(1 - t/dur)*P[6*2+0])/pow(dur,6) + (pow(t,7)*P[7*2+0])/pow(dur,7)))/dur,
+   (14*t*pow(1 - t/dur,6)*(pow(1 - t/dur,7)*P[0*2+1] + (7*t*pow(1 - t/dur,6)*P[1*2+1])/dur + (21*pow(t,2)*pow(1 - t/dur,5)*P[2*2+1])/pow(dur,2) +
+        (35*pow(t,3)*pow(1 - t/dur,4)*P[3*2+1])/pow(dur,3) + (35*pow(t,4)*pow(1 - t/dur,3)*P[4*2+1])/pow(dur,4) + (21*pow(t,5)*pow(1 - t/dur,2)*P[5*2+1])/pow(dur,5) +
+        (7*pow(t,6)*(1 - t/dur)*P[6*2+1])/pow(dur,6) + (pow(t,7)*P[7*2+1])/pow(dur,7)))/dur,
+   (42*pow(t,2)*pow(1 - t/dur,5)*(pow(1 - t/dur,7)*P[0*2+0] + (7*t*pow(1 - t/dur,6)*P[1*2+0])/dur + (21*pow(t,2)*pow(1 - t/dur,5)*P[2*2+0])/pow(dur,2) +
+        (35*pow(t,3)*pow(1 - t/dur,4)*P[3*2+0])/pow(dur,3) + (35*pow(t,4)*pow(1 - t/dur,3)*P[4*2+0])/pow(dur,4) + (21*pow(t,5)*pow(1 - t/dur,2)*P[5*2+0])/pow(dur,5) +
+        (7*pow(t,6)*(1 - t/dur)*P[6*2+0])/pow(dur,6) + (pow(t,7)*P[7*2+0])/pow(dur,7)))/pow(dur,2),
+   (42*pow(t,2)*pow(1 - t/dur,5)*(pow(1 - t/dur,7)*P[0*2+1] + (7*t*pow(1 - t/dur,6)*P[1*2+1])/dur + (21*pow(t,2)*pow(1 - t/dur,5)*P[2*2+1])/pow(dur,2) +
+        (35*pow(t,3)*pow(1 - t/dur,4)*P[3*2+1])/pow(dur,3) + (35*pow(t,4)*pow(1 - t/dur,3)*P[4*2+1])/pow(dur,4) + (21*pow(t,5)*pow(1 - t/dur,2)*P[5*2+1])/pow(dur,5) +
+        (7*pow(t,6)*(1 - t/dur)*P[6*2+1])/pow(dur,6) + (pow(t,7)*P[7*2+1])/pow(dur,7)))/pow(dur,2),
+   (70*pow(t,3)*pow(1 - t/dur,4)*(pow(1 - t/dur,7)*P[0*2+0] + (7*t*pow(1 - t/dur,6)*P[1*2+0])/dur + (21*pow(t,2)*pow(1 - t/dur,5)*P[2*2+0])/pow(dur,2) +
+        (35*pow(t,3)*pow(1 - t/dur,4)*P[3*2+0])/pow(dur,3) + (35*pow(t,4)*pow(1 - t/dur,3)*P[4*2+0])/pow(dur,4) + (21*pow(t,5)*pow(1 - t/dur,2)*P[5*2+0])/pow(dur,5) +
+        (7*pow(t,6)*(1 - t/dur)*P[6*2+0])/pow(dur,6) + (pow(t,7)*P[7*2+0])/pow(dur,7)))/pow(dur,3),
+   (70*pow(t,3)*pow(1 - t/dur,4)*(pow(1 - t/dur,7)*P[0*2+1] + (7*t*pow(1 - t/dur,6)*P[1*2+1])/dur + (21*pow(t,2)*pow(1 - t/dur,5)*P[2*2+1])/pow(dur,2) +
+        (35*pow(t,3)*pow(1 - t/dur,4)*P[3*2+1])/pow(dur,3) + (35*pow(t,4)*pow(1 - t/dur,3)*P[4*2+1])/pow(dur,4) + (21*pow(t,5)*pow(1 - t/dur,2)*P[5*2+1])/pow(dur,5) +
+        (7*pow(t,6)*(1 - t/dur)*P[6*2+1])/pow(dur,6) + (pow(t,7)*P[7*2+1])/pow(dur,7)))/pow(dur,3),
+   (70*pow(t,4)*pow(1 - t/dur,3)*(pow(1 - t/dur,7)*P[0*2+0] + (7*t*pow(1 - t/dur,6)*P[1*2+0])/dur + (21*pow(t,2)*pow(1 - t/dur,5)*P[2*2+0])/pow(dur,2) +
+        (35*pow(t,3)*pow(1 - t/dur,4)*P[3*2+0])/pow(dur,3) + (35*pow(t,4)*pow(1 - t/dur,3)*P[4*2+0])/pow(dur,4) + (21*pow(t,5)*pow(1 - t/dur,2)*P[5*2+0])/pow(dur,5) +
+        (7*pow(t,6)*(1 - t/dur)*P[6*2+0])/pow(dur,6) + (pow(t,7)*P[7*2+0])/pow(dur,7)))/pow(dur,4),
+   (70*pow(t,4)*pow(1 - t/dur,3)*(pow(1 - t/dur,7)*P[0*2+1] + (7*t*pow(1 - t/dur,6)*P[1*2+1])/dur + (21*pow(t,2)*pow(1 - t/dur,5)*P[2*2+1])/pow(dur,2) +
+        (35*pow(t,3)*pow(1 - t/dur,4)*P[3*2+1])/pow(dur,3) + (35*pow(t,4)*pow(1 - t/dur,3)*P[4*2+1])/pow(dur,4) + (21*pow(t,5)*pow(1 - t/dur,2)*P[5*2+1])/pow(dur,5) +
+        (7*pow(t,6)*(1 - t/dur)*P[6*2+1])/pow(dur,6) + (pow(t,7)*P[7*2+1])/pow(dur,7)))/pow(dur,4),
+   (42*pow(t,5)*pow(1 - t/dur,2)*(pow(1 - t/dur,7)*P[0*2+0] + (7*t*pow(1 - t/dur,6)*P[1*2+0])/dur + (21*pow(t,2)*pow(1 - t/dur,5)*P[2*2+0])/pow(dur,2) +
+        (35*pow(t,3)*pow(1 - t/dur,4)*P[3*2+0])/pow(dur,3) + (35*pow(t,4)*pow(1 - t/dur,3)*P[4*2+0])/pow(dur,4) + (21*pow(t,5)*pow(1 - t/dur,2)*P[5*2+0])/pow(dur,5) +
+        (7*pow(t,6)*(1 - t/dur)*P[6*2+0])/pow(dur,6) + (pow(t,7)*P[7*2+0])/pow(dur,7)))/pow(dur,5),
+   (42*pow(t,5)*pow(1 - t/dur,2)*(pow(1 - t/dur,7)*P[0*2+1] + (7*t*pow(1 - t/dur,6)*P[1*2+1])/dur + (21*pow(t,2)*pow(1 - t/dur,5)*P[2*2+1])/pow(dur,2) +
+        (35*pow(t,3)*pow(1 - t/dur,4)*P[3*2+1])/pow(dur,3) + (35*pow(t,4)*pow(1 - t/dur,3)*P[4*2+1])/pow(dur,4) + (21*pow(t,5)*pow(1 - t/dur,2)*P[5*2+1])/pow(dur,5) +
+        (7*pow(t,6)*(1 - t/dur)*P[6*2+1])/pow(dur,6) + (pow(t,7)*P[7*2+1])/pow(dur,7)))/pow(dur,5),
+   (14*pow(t,6)*(1 - t/dur)*(pow(1 - t/dur,7)*P[0*2+0] + (7*t*pow(1 - t/dur,6)*P[1*2+0])/dur + (21*pow(t,2)*pow(1 - t/dur,5)*P[2*2+0])/pow(dur,2) +
+        (35*pow(t,3)*pow(1 - t/dur,4)*P[3*2+0])/pow(dur,3) + (35*pow(t,4)*pow(1 - t/dur,3)*P[4*2+0])/pow(dur,4) + (21*pow(t,5)*pow(1 - t/dur,2)*P[5*2+0])/pow(dur,5) +
+        (7*pow(t,6)*(1 - t/dur)*P[6*2+0])/pow(dur,6) + (pow(t,7)*P[7*2+0])/pow(dur,7)))/pow(dur,6),
+   (14*pow(t,6)*(1 - t/dur)*(pow(1 - t/dur,7)*P[0*2+1] + (7*t*pow(1 - t/dur,6)*P[1*2+1])/dur + (21*pow(t,2)*pow(1 - t/dur,5)*P[2*2+1])/pow(dur,2) +
+        (35*pow(t,3)*pow(1 - t/dur,4)*P[3*2+1])/pow(dur,3) + (35*pow(t,4)*pow(1 - t/dur,3)*P[4*2+1])/pow(dur,4) + (21*pow(t,5)*pow(1 - t/dur,2)*P[5*2+1])/pow(dur,5) +
+        (7*pow(t,6)*(1 - t/dur)*P[6*2+1])/pow(dur,6) + (pow(t,7)*P[7*2+1])/pow(dur,7)))/pow(dur,6),
+   (2*pow(t,7)*(pow(1 - t/dur,7)*P[0*2+0] + (7*t*pow(1 - t/dur,6)*P[1*2+0])/dur + (21*pow(t,2)*pow(1 - t/dur,5)*P[2*2+0])/pow(dur,2) + (35*pow(t,3)*pow(1 - t/dur,4)*P[3*2+0])/pow(dur,3) +
+        (35*pow(t,4)*pow(1 - t/dur,3)*P[4*2+0])/pow(dur,4) + (21*pow(t,5)*pow(1 - t/dur,2)*P[5*2+0])/pow(dur,5) + (7*pow(t,6)*(1 - t/dur)*P[6*2+0])/pow(dur,6) + (pow(t,7)*P[7*2+0])/pow(dur,7)))/
+    pow(dur,7),(2*pow(t,7)*(pow(1 - t/dur,7)*P[0*2+1] + (7*t*pow(1 - t/dur,6)*P[1*2+1])/dur + (21*pow(t,2)*pow(1 - t/dur,5)*P[2*2+1])/pow(dur,2) +
+        (35*pow(t,3)*pow(1 - t/dur,4)*P[3*2+1])/pow(dur,3) + (35*pow(t,4)*pow(1 - t/dur,3)*P[4*2+1])/pow(dur,4) + (21*pow(t,5)*pow(1 - t/dur,2)*P[5*2+1])/pow(dur,5) +
+        (7*pow(t,6)*(1 - t/dur)*P[6*2+1])/pow(dur,6) + (pow(t,7)*P[7*2+1])/pow(dur,7)))/pow(dur,7)};
+    }
+    return pow(pow(1 - t/dur,7)*P[0*2+0] + (7*t*pow(1 - t/dur,6)*P[1*2+0])/dur + (21*pow(t,2)*pow(1 - t/dur,5)*P[2*2+0])/pow(dur,2) + (35*pow(t,3)*pow(1 - t/dur,4)*P[3*2+0])/pow(dur,3) +
+     (35*pow(t,4)*pow(1 - t/dur,3)*P[4*2+0])/pow(dur,4) + (21*pow(t,5)*pow(1 - t/dur,2)*P[5*2+0])/pow(dur,5) + (7*pow(t,6)*(1 - t/dur)*P[6*2+0])/pow(dur,6) + (pow(t,7)*P[7*2+0])/pow(dur,7),2) +
+   pow(pow(1 - t/dur,7)*P[0*2+1] + (7*t*pow(1 - t/dur,6)*P[1*2+1])/dur + (21*pow(t,2)*pow(1 - t/dur,5)*P[2*2+1])/pow(dur,2) + (35*pow(t,3)*pow(1 - t/dur,4)*P[3*2+1])/pow(dur,3) +
+     (35*pow(t,4)*pow(1 - t/dur,3)*P[4*2+1])/pow(dur,4) + (21*pow(t,5)*pow(1 - t/dur,2)*P[5*2+1])/pow(dur,5) + (7*pow(t,6)*(1 - t/dur)*P[6*2+1])/pow(dur,6) + (pow(t,7)*P[7*2+1])/pow(dur,7),2);
+  } else if(n==1) {
+    if(grad.size()>0) {
+      grad = vector<double> {(-14*pow(1 - t/dur,6)*((-7*pow(1 - t/dur,6)*P[0*2+0])/dur - (42*t*pow(1 - t/dur,5)*P[1*2+0])/pow(dur,2) + (7*pow(1 - t/dur,6)*P[1*2+0])/dur -
+        (105*pow(t,2)*pow(1 - t/dur,4)*P[2*2+0])/pow(dur,3) + (42*t*pow(1 - t/dur,5)*P[2*2+0])/pow(dur,2) - (140*pow(t,3)*pow(1 - t/dur,3)*P[3*2+0])/pow(dur,4) +
+        (105*pow(t,2)*pow(1 - t/dur,4)*P[3*2+0])/pow(dur,3) - (105*pow(t,4)*pow(1 - t/dur,2)*P[4*2+0])/pow(dur,5) + (140*pow(t,3)*pow(1 - t/dur,3)*P[4*2+0])/pow(dur,4) -
+        (42*pow(t,5)*(1 - t/dur)*P[5*2+0])/pow(dur,6) + (105*pow(t,4)*pow(1 - t/dur,2)*P[5*2+0])/pow(dur,5) - (7*pow(t,6)*P[6*2+0])/pow(dur,7) + (42*pow(t,5)*(1 - t/dur)*P[6*2+0])/pow(dur,6) +
+        (7*pow(t,6)*P[7*2+0])/pow(dur,7)))/dur,(-14*pow(1 - t/dur,6)*((-7*pow(1 - t/dur,6)*P[0*2+1])/dur - (42*t*pow(1 - t/dur,5)*P[1*2+1])/pow(dur,2) + (7*pow(1 - t/dur,6)*P[1*2+1])/dur -
+        (105*pow(t,2)*pow(1 - t/dur,4)*P[2*2+1])/pow(dur,3) + (42*t*pow(1 - t/dur,5)*P[2*2+1])/pow(dur,2) - (140*pow(t,3)*pow(1 - t/dur,3)*P[3*2+1])/pow(dur,4) +
+        (105*pow(t,2)*pow(1 - t/dur,4)*P[3*2+1])/pow(dur,3) - (105*pow(t,4)*pow(1 - t/dur,2)*P[4*2+1])/pow(dur,5) + (140*pow(t,3)*pow(1 - t/dur,3)*P[4*2+1])/pow(dur,4) -
+        (42*pow(t,5)*(1 - t/dur)*P[5*2+1])/pow(dur,6) + (105*pow(t,4)*pow(1 - t/dur,2)*P[5*2+1])/pow(dur,5) - (7*pow(t,6)*P[6*2+1])/pow(dur,7) + (42*pow(t,5)*(1 - t/dur)*P[6*2+1])/pow(dur,6) +
+        (7*pow(t,6)*P[7*2+1])/pow(dur,7)))/dur,2*((-42*t*pow(1 - t/dur,5))/pow(dur,2) + (7*pow(1 - t/dur,6))/dur)*
+    ((-7*pow(1 - t/dur,6)*P[0*2+0])/dur - (42*t*pow(1 - t/dur,5)*P[1*2+0])/pow(dur,2) + (7*pow(1 - t/dur,6)*P[1*2+0])/dur - (105*pow(t,2)*pow(1 - t/dur,4)*P[2*2+0])/pow(dur,3) +
+      (42*t*pow(1 - t/dur,5)*P[2*2+0])/pow(dur,2) - (140*pow(t,3)*pow(1 - t/dur,3)*P[3*2+0])/pow(dur,4) + (105*pow(t,2)*pow(1 - t/dur,4)*P[3*2+0])/pow(dur,3) -
+      (105*pow(t,4)*pow(1 - t/dur,2)*P[4*2+0])/pow(dur,5) + (140*pow(t,3)*pow(1 - t/dur,3)*P[4*2+0])/pow(dur,4) - (42*pow(t,5)*(1 - t/dur)*P[5*2+0])/pow(dur,6) +
+      (105*pow(t,4)*pow(1 - t/dur,2)*P[5*2+0])/pow(dur,5) - (7*pow(t,6)*P[6*2+0])/pow(dur,7) + (42*pow(t,5)*(1 - t/dur)*P[6*2+0])/pow(dur,6) + (7*pow(t,6)*P[7*2+0])/pow(dur,7)),
+   2*((-42*t*pow(1 - t/dur,5))/pow(dur,2) + (7*pow(1 - t/dur,6))/dur)*((-7*pow(1 - t/dur,6)*P[0*2+1])/dur - (42*t*pow(1 - t/dur,5)*P[1*2+1])/pow(dur,2) + (7*pow(1 - t/dur,6)*P[1*2+1])/dur -
+      (105*pow(t,2)*pow(1 - t/dur,4)*P[2*2+1])/pow(dur,3) + (42*t*pow(1 - t/dur,5)*P[2*2+1])/pow(dur,2) - (140*pow(t,3)*pow(1 - t/dur,3)*P[3*2+1])/pow(dur,4) +
+      (105*pow(t,2)*pow(1 - t/dur,4)*P[3*2+1])/pow(dur,3) - (105*pow(t,4)*pow(1 - t/dur,2)*P[4*2+1])/pow(dur,5) + (140*pow(t,3)*pow(1 - t/dur,3)*P[4*2+1])/pow(dur,4) -
+      (42*pow(t,5)*(1 - t/dur)*P[5*2+1])/pow(dur,6) + (105*pow(t,4)*pow(1 - t/dur,2)*P[5*2+1])/pow(dur,5) - (7*pow(t,6)*P[6*2+1])/pow(dur,7) + (42*pow(t,5)*(1 - t/dur)*P[6*2+1])/pow(dur,6) +
+      (7*pow(t,6)*P[7*2+1])/pow(dur,7)),2*((-105*pow(t,2)*pow(1 - t/dur,4))/pow(dur,3) + (42*t*pow(1 - t/dur,5))/pow(dur,2))*
+    ((-7*pow(1 - t/dur,6)*P[0*2+0])/dur - (42*t*pow(1 - t/dur,5)*P[1*2+0])/pow(dur,2) + (7*pow(1 - t/dur,6)*P[1*2+0])/dur - (105*pow(t,2)*pow(1 - t/dur,4)*P[2*2+0])/pow(dur,3) +
+      (42*t*pow(1 - t/dur,5)*P[2*2+0])/pow(dur,2) - (140*pow(t,3)*pow(1 - t/dur,3)*P[3*2+0])/pow(dur,4) + (105*pow(t,2)*pow(1 - t/dur,4)*P[3*2+0])/pow(dur,3) -
+      (105*pow(t,4)*pow(1 - t/dur,2)*P[4*2+0])/pow(dur,5) + (140*pow(t,3)*pow(1 - t/dur,3)*P[4*2+0])/pow(dur,4) - (42*pow(t,5)*(1 - t/dur)*P[5*2+0])/pow(dur,6) +
+      (105*pow(t,4)*pow(1 - t/dur,2)*P[5*2+0])/pow(dur,5) - (7*pow(t,6)*P[6*2+0])/pow(dur,7) + (42*pow(t,5)*(1 - t/dur)*P[6*2+0])/pow(dur,6) + (7*pow(t,6)*P[7*2+0])/pow(dur,7)),
+   2*((-105*pow(t,2)*pow(1 - t/dur,4))/pow(dur,3) + (42*t*pow(1 - t/dur,5))/pow(dur,2))*
+    ((-7*pow(1 - t/dur,6)*P[0*2+1])/dur - (42*t*pow(1 - t/dur,5)*P[1*2+1])/pow(dur,2) + (7*pow(1 - t/dur,6)*P[1*2+1])/dur - (105*pow(t,2)*pow(1 - t/dur,4)*P[2*2+1])/pow(dur,3) +
+      (42*t*pow(1 - t/dur,5)*P[2*2+1])/pow(dur,2) - (140*pow(t,3)*pow(1 - t/dur,3)*P[3*2+1])/pow(dur,4) + (105*pow(t,2)*pow(1 - t/dur,4)*P[3*2+1])/pow(dur,3) -
+      (105*pow(t,4)*pow(1 - t/dur,2)*P[4*2+1])/pow(dur,5) + (140*pow(t,3)*pow(1 - t/dur,3)*P[4*2+1])/pow(dur,4) - (42*pow(t,5)*(1 - t/dur)*P[5*2+1])/pow(dur,6) +
+      (105*pow(t,4)*pow(1 - t/dur,2)*P[5*2+1])/pow(dur,5) - (7*pow(t,6)*P[6*2+1])/pow(dur,7) + (42*pow(t,5)*(1 - t/dur)*P[6*2+1])/pow(dur,6) + (7*pow(t,6)*P[7*2+1])/pow(dur,7)),
+   2*((-140*pow(t,3)*pow(1 - t/dur,3))/pow(dur,4) + (105*pow(t,2)*pow(1 - t/dur,4))/pow(dur,3))*
+    ((-7*pow(1 - t/dur,6)*P[0*2+0])/dur - (42*t*pow(1 - t/dur,5)*P[1*2+0])/pow(dur,2) + (7*pow(1 - t/dur,6)*P[1*2+0])/dur - (105*pow(t,2)*pow(1 - t/dur,4)*P[2*2+0])/pow(dur,3) +
+      (42*t*pow(1 - t/dur,5)*P[2*2+0])/pow(dur,2) - (140*pow(t,3)*pow(1 - t/dur,3)*P[3*2+0])/pow(dur,4) + (105*pow(t,2)*pow(1 - t/dur,4)*P[3*2+0])/pow(dur,3) -
+      (105*pow(t,4)*pow(1 - t/dur,2)*P[4*2+0])/pow(dur,5) + (140*pow(t,3)*pow(1 - t/dur,3)*P[4*2+0])/pow(dur,4) - (42*pow(t,5)*(1 - t/dur)*P[5*2+0])/pow(dur,6) +
+      (105*pow(t,4)*pow(1 - t/dur,2)*P[5*2+0])/pow(dur,5) - (7*pow(t,6)*P[6*2+0])/pow(dur,7) + (42*pow(t,5)*(1 - t/dur)*P[6*2+0])/pow(dur,6) + (7*pow(t,6)*P[7*2+0])/pow(dur,7)),
+   2*((-140*pow(t,3)*pow(1 - t/dur,3))/pow(dur,4) + (105*pow(t,2)*pow(1 - t/dur,4))/pow(dur,3))*
+    ((-7*pow(1 - t/dur,6)*P[0*2+1])/dur - (42*t*pow(1 - t/dur,5)*P[1*2+1])/pow(dur,2) + (7*pow(1 - t/dur,6)*P[1*2+1])/dur - (105*pow(t,2)*pow(1 - t/dur,4)*P[2*2+1])/pow(dur,3) +
+      (42*t*pow(1 - t/dur,5)*P[2*2+1])/pow(dur,2) - (140*pow(t,3)*pow(1 - t/dur,3)*P[3*2+1])/pow(dur,4) + (105*pow(t,2)*pow(1 - t/dur,4)*P[3*2+1])/pow(dur,3) -
+      (105*pow(t,4)*pow(1 - t/dur,2)*P[4*2+1])/pow(dur,5) + (140*pow(t,3)*pow(1 - t/dur,3)*P[4*2+1])/pow(dur,4) - (42*pow(t,5)*(1 - t/dur)*P[5*2+1])/pow(dur,6) +
+      (105*pow(t,4)*pow(1 - t/dur,2)*P[5*2+1])/pow(dur,5) - (7*pow(t,6)*P[6*2+1])/pow(dur,7) + (42*pow(t,5)*(1 - t/dur)*P[6*2+1])/pow(dur,6) + (7*pow(t,6)*P[7*2+1])/pow(dur,7)),
+   2*((-105*pow(t,4)*pow(1 - t/dur,2))/pow(dur,5) + (140*pow(t,3)*pow(1 - t/dur,3))/pow(dur,4))*
+    ((-7*pow(1 - t/dur,6)*P[0*2+0])/dur - (42*t*pow(1 - t/dur,5)*P[1*2+0])/pow(dur,2) + (7*pow(1 - t/dur,6)*P[1*2+0])/dur - (105*pow(t,2)*pow(1 - t/dur,4)*P[2*2+0])/pow(dur,3) +
+      (42*t*pow(1 - t/dur,5)*P[2*2+0])/pow(dur,2) - (140*pow(t,3)*pow(1 - t/dur,3)*P[3*2+0])/pow(dur,4) + (105*pow(t,2)*pow(1 - t/dur,4)*P[3*2+0])/pow(dur,3) -
+      (105*pow(t,4)*pow(1 - t/dur,2)*P[4*2+0])/pow(dur,5) + (140*pow(t,3)*pow(1 - t/dur,3)*P[4*2+0])/pow(dur,4) - (42*pow(t,5)*(1 - t/dur)*P[5*2+0])/pow(dur,6) +
+      (105*pow(t,4)*pow(1 - t/dur,2)*P[5*2+0])/pow(dur,5) - (7*pow(t,6)*P[6*2+0])/pow(dur,7) + (42*pow(t,5)*(1 - t/dur)*P[6*2+0])/pow(dur,6) + (7*pow(t,6)*P[7*2+0])/pow(dur,7)),
+   2*((-105*pow(t,4)*pow(1 - t/dur,2))/pow(dur,5) + (140*pow(t,3)*pow(1 - t/dur,3))/pow(dur,4))*
+    ((-7*pow(1 - t/dur,6)*P[0*2+1])/dur - (42*t*pow(1 - t/dur,5)*P[1*2+1])/pow(dur,2) + (7*pow(1 - t/dur,6)*P[1*2+1])/dur - (105*pow(t,2)*pow(1 - t/dur,4)*P[2*2+1])/pow(dur,3) +
+      (42*t*pow(1 - t/dur,5)*P[2*2+1])/pow(dur,2) - (140*pow(t,3)*pow(1 - t/dur,3)*P[3*2+1])/pow(dur,4) + (105*pow(t,2)*pow(1 - t/dur,4)*P[3*2+1])/pow(dur,3) -
+      (105*pow(t,4)*pow(1 - t/dur,2)*P[4*2+1])/pow(dur,5) + (140*pow(t,3)*pow(1 - t/dur,3)*P[4*2+1])/pow(dur,4) - (42*pow(t,5)*(1 - t/dur)*P[5*2+1])/pow(dur,6) +
+      (105*pow(t,4)*pow(1 - t/dur,2)*P[5*2+1])/pow(dur,5) - (7*pow(t,6)*P[6*2+1])/pow(dur,7) + (42*pow(t,5)*(1 - t/dur)*P[6*2+1])/pow(dur,6) + (7*pow(t,6)*P[7*2+1])/pow(dur,7)),
+   2*((-42*pow(t,5)*(1 - t/dur))/pow(dur,6) + (105*pow(t,4)*pow(1 - t/dur,2))/pow(dur,5))*
+    ((-7*pow(1 - t/dur,6)*P[0*2+0])/dur - (42*t*pow(1 - t/dur,5)*P[1*2+0])/pow(dur,2) + (7*pow(1 - t/dur,6)*P[1*2+0])/dur - (105*pow(t,2)*pow(1 - t/dur,4)*P[2*2+0])/pow(dur,3) +
+      (42*t*pow(1 - t/dur,5)*P[2*2+0])/pow(dur,2) - (140*pow(t,3)*pow(1 - t/dur,3)*P[3*2+0])/pow(dur,4) + (105*pow(t,2)*pow(1 - t/dur,4)*P[3*2+0])/pow(dur,3) -
+      (105*pow(t,4)*pow(1 - t/dur,2)*P[4*2+0])/pow(dur,5) + (140*pow(t,3)*pow(1 - t/dur,3)*P[4*2+0])/pow(dur,4) - (42*pow(t,5)*(1 - t/dur)*P[5*2+0])/pow(dur,6) +
+      (105*pow(t,4)*pow(1 - t/dur,2)*P[5*2+0])/pow(dur,5) - (7*pow(t,6)*P[6*2+0])/pow(dur,7) + (42*pow(t,5)*(1 - t/dur)*P[6*2+0])/pow(dur,6) + (7*pow(t,6)*P[7*2+0])/pow(dur,7)),
+   2*((-42*pow(t,5)*(1 - t/dur))/pow(dur,6) + (105*pow(t,4)*pow(1 - t/dur,2))/pow(dur,5))*
+    ((-7*pow(1 - t/dur,6)*P[0*2+1])/dur - (42*t*pow(1 - t/dur,5)*P[1*2+1])/pow(dur,2) + (7*pow(1 - t/dur,6)*P[1*2+1])/dur - (105*pow(t,2)*pow(1 - t/dur,4)*P[2*2+1])/pow(dur,3) +
+      (42*t*pow(1 - t/dur,5)*P[2*2+1])/pow(dur,2) - (140*pow(t,3)*pow(1 - t/dur,3)*P[3*2+1])/pow(dur,4) + (105*pow(t,2)*pow(1 - t/dur,4)*P[3*2+1])/pow(dur,3) -
+      (105*pow(t,4)*pow(1 - t/dur,2)*P[4*2+1])/pow(dur,5) + (140*pow(t,3)*pow(1 - t/dur,3)*P[4*2+1])/pow(dur,4) - (42*pow(t,5)*(1 - t/dur)*P[5*2+1])/pow(dur,6) +
+      (105*pow(t,4)*pow(1 - t/dur,2)*P[5*2+1])/pow(dur,5) - (7*pow(t,6)*P[6*2+1])/pow(dur,7) + (42*pow(t,5)*(1 - t/dur)*P[6*2+1])/pow(dur,6) + (7*pow(t,6)*P[7*2+1])/pow(dur,7)),
+   2*((-7*pow(t,6))/pow(dur,7) + (42*pow(t,5)*(1 - t/dur))/pow(dur,6))*((-7*pow(1 - t/dur,6)*P[0*2+0])/dur - (42*t*pow(1 - t/dur,5)*P[1*2+0])/pow(dur,2) + (7*pow(1 - t/dur,6)*P[1*2+0])/dur -
+      (105*pow(t,2)*pow(1 - t/dur,4)*P[2*2+0])/pow(dur,3) + (42*t*pow(1 - t/dur,5)*P[2*2+0])/pow(dur,2) - (140*pow(t,3)*pow(1 - t/dur,3)*P[3*2+0])/pow(dur,4) +
+      (105*pow(t,2)*pow(1 - t/dur,4)*P[3*2+0])/pow(dur,3) - (105*pow(t,4)*pow(1 - t/dur,2)*P[4*2+0])/pow(dur,5) + (140*pow(t,3)*pow(1 - t/dur,3)*P[4*2+0])/pow(dur,4) -
+      (42*pow(t,5)*(1 - t/dur)*P[5*2+0])/pow(dur,6) + (105*pow(t,4)*pow(1 - t/dur,2)*P[5*2+0])/pow(dur,5) - (7*pow(t,6)*P[6*2+0])/pow(dur,7) + (42*pow(t,5)*(1 - t/dur)*P[6*2+0])/pow(dur,6) +
+      (7*pow(t,6)*P[7*2+0])/pow(dur,7)),2*((-7*pow(t,6))/pow(dur,7) + (42*pow(t,5)*(1 - t/dur))/pow(dur,6))*
+    ((-7*pow(1 - t/dur,6)*P[0*2+1])/dur - (42*t*pow(1 - t/dur,5)*P[1*2+1])/pow(dur,2) + (7*pow(1 - t/dur,6)*P[1*2+1])/dur - (105*pow(t,2)*pow(1 - t/dur,4)*P[2*2+1])/pow(dur,3) +
+      (42*t*pow(1 - t/dur,5)*P[2*2+1])/pow(dur,2) - (140*pow(t,3)*pow(1 - t/dur,3)*P[3*2+1])/pow(dur,4) + (105*pow(t,2)*pow(1 - t/dur,4)*P[3*2+1])/pow(dur,3) -
+      (105*pow(t,4)*pow(1 - t/dur,2)*P[4*2+1])/pow(dur,5) + (140*pow(t,3)*pow(1 - t/dur,3)*P[4*2+1])/pow(dur,4) - (42*pow(t,5)*(1 - t/dur)*P[5*2+1])/pow(dur,6) +
+      (105*pow(t,4)*pow(1 - t/dur,2)*P[5*2+1])/pow(dur,5) - (7*pow(t,6)*P[6*2+1])/pow(dur,7) + (42*pow(t,5)*(1 - t/dur)*P[6*2+1])/pow(dur,6) + (7*pow(t,6)*P[7*2+1])/pow(dur,7)),
+   (14*pow(t,6)*((-7*pow(1 - t/dur,6)*P[0*2+0])/dur - (42*t*pow(1 - t/dur,5)*P[1*2+0])/pow(dur,2) + (7*pow(1 - t/dur,6)*P[1*2+0])/dur - (105*pow(t,2)*pow(1 - t/dur,4)*P[2*2+0])/pow(dur,3) +
+        (42*t*pow(1 - t/dur,5)*P[2*2+0])/pow(dur,2) - (140*pow(t,3)*pow(1 - t/dur,3)*P[3*2+0])/pow(dur,4) + (105*pow(t,2)*pow(1 - t/dur,4)*P[3*2+0])/pow(dur,3) -
+        (105*pow(t,4)*pow(1 - t/dur,2)*P[4*2+0])/pow(dur,5) + (140*pow(t,3)*pow(1 - t/dur,3)*P[4*2+0])/pow(dur,4) - (42*pow(t,5)*(1 - t/dur)*P[5*2+0])/pow(dur,6) +
+        (105*pow(t,4)*pow(1 - t/dur,2)*P[5*2+0])/pow(dur,5) - (7*pow(t,6)*P[6*2+0])/pow(dur,7) + (42*pow(t,5)*(1 - t/dur)*P[6*2+0])/pow(dur,6) + (7*pow(t,6)*P[7*2+0])/pow(dur,7)))/pow(dur,7),
+   (14*pow(t,6)*((-7*pow(1 - t/dur,6)*P[0*2+1])/dur - (42*t*pow(1 - t/dur,5)*P[1*2+1])/pow(dur,2) + (7*pow(1 - t/dur,6)*P[1*2+1])/dur - (105*pow(t,2)*pow(1 - t/dur,4)*P[2*2+1])/pow(dur,3) +
+        (42*t*pow(1 - t/dur,5)*P[2*2+1])/pow(dur,2) - (140*pow(t,3)*pow(1 - t/dur,3)*P[3*2+1])/pow(dur,4) + (105*pow(t,2)*pow(1 - t/dur,4)*P[3*2+1])/pow(dur,3) -
+        (105*pow(t,4)*pow(1 - t/dur,2)*P[4*2+1])/pow(dur,5) + (140*pow(t,3)*pow(1 - t/dur,3)*P[4*2+1])/pow(dur,4) - (42*pow(t,5)*(1 - t/dur)*P[5*2+1])/pow(dur,6) +
+        (105*pow(t,4)*pow(1 - t/dur,2)*P[5*2+1])/pow(dur,5) - (7*pow(t,6)*P[6*2+1])/pow(dur,7) + (42*pow(t,5)*(1 - t/dur)*P[6*2+1])/pow(dur,6) + (7*pow(t,6)*P[7*2+1])/pow(dur,7)))/pow(dur,7)};
+    }
+    return pow((-7*pow(1 - t/dur,6)*P[0*2+0])/dur - (42*t*pow(1 - t/dur,5)*P[1*2+0])/pow(dur,2) + (7*pow(1 - t/dur,6)*P[1*2+0])/dur - (105*pow(t,2)*pow(1 - t/dur,4)*P[2*2+0])/pow(dur,3) +
+     (42*t*pow(1 - t/dur,5)*P[2*2+0])/pow(dur,2) - (140*pow(t,3)*pow(1 - t/dur,3)*P[3*2+0])/pow(dur,4) + (105*pow(t,2)*pow(1 - t/dur,4)*P[3*2+0])/pow(dur,3) -
+     (105*pow(t,4)*pow(1 - t/dur,2)*P[4*2+0])/pow(dur,5) + (140*pow(t,3)*pow(1 - t/dur,3)*P[4*2+0])/pow(dur,4) - (42*pow(t,5)*(1 - t/dur)*P[5*2+0])/pow(dur,6) +
+     (105*pow(t,4)*pow(1 - t/dur,2)*P[5*2+0])/pow(dur,5) - (7*pow(t,6)*P[6*2+0])/pow(dur,7) + (42*pow(t,5)*(1 - t/dur)*P[6*2+0])/pow(dur,6) + (7*pow(t,6)*P[7*2+0])/pow(dur,7),2) +
+   pow((-7*pow(1 - t/dur,6)*P[0*2+1])/dur - (42*t*pow(1 - t/dur,5)*P[1*2+1])/pow(dur,2) + (7*pow(1 - t/dur,6)*P[1*2+1])/dur - (105*pow(t,2)*pow(1 - t/dur,4)*P[2*2+1])/pow(dur,3) +
+     (42*t*pow(1 - t/dur,5)*P[2*2+1])/pow(dur,2) - (140*pow(t,3)*pow(1 - t/dur,3)*P[3*2+1])/pow(dur,4) + (105*pow(t,2)*pow(1 - t/dur,4)*P[3*2+1])/pow(dur,3) -
+     (105*pow(t,4)*pow(1 - t/dur,2)*P[4*2+1])/pow(dur,5) + (140*pow(t,3)*pow(1 - t/dur,3)*P[4*2+1])/pow(dur,4) - (42*pow(t,5)*(1 - t/dur)*P[5*2+1])/pow(dur,6) +
+     (105*pow(t,4)*pow(1 - t/dur,2)*P[5*2+1])/pow(dur,5) - (7*pow(t,6)*P[6*2+1])/pow(dur,7) + (42*pow(t,5)*(1 - t/dur)*P[6*2+1])/pow(dur,6) + (7*pow(t,6)*P[7*2+1])/pow(dur,7),2);
+  } else if(n==2) {
+    if(grad.size()>0) {
+      grad = vector<double> {(84*pow(1 - t/dur,5)*((42*pow(1 - t/dur,5)*P[0*2+0])/pow(dur,2) + (210*t*pow(1 - t/dur,4)*P[1*2+0])/pow(dur,3) - (84*pow(1 - t/dur,5)*P[1*2+0])/pow(dur,2) +
+        (420*pow(t,2)*pow(1 - t/dur,3)*P[2*2+0])/pow(dur,4) - (420*t*pow(1 - t/dur,4)*P[2*2+0])/pow(dur,3) + (42*pow(1 - t/dur,5)*P[2*2+0])/pow(dur,2) +
+        (420*pow(t,3)*pow(1 - t/dur,2)*P[3*2+0])/pow(dur,5) - (840*pow(t,2)*pow(1 - t/dur,3)*P[3*2+0])/pow(dur,4) + (210*t*pow(1 - t/dur,4)*P[3*2+0])/pow(dur,3) +
+        (210*pow(t,4)*(1 - t/dur)*P[4*2+0])/pow(dur,6) - (840*pow(t,3)*pow(1 - t/dur,2)*P[4*2+0])/pow(dur,5) + (420*pow(t,2)*pow(1 - t/dur,3)*P[4*2+0])/pow(dur,4) +
+        (42*pow(t,5)*P[5*2+0])/pow(dur,7) - (420*pow(t,4)*(1 - t/dur)*P[5*2+0])/pow(dur,6) + (420*pow(t,3)*pow(1 - t/dur,2)*P[5*2+0])/pow(dur,5) - (84*pow(t,5)*P[6*2+0])/pow(dur,7) +
+        (210*pow(t,4)*(1 - t/dur)*P[6*2+0])/pow(dur,6) + (42*pow(t,5)*P[7*2+0])/pow(dur,7)))/pow(dur,2),
+   (84*pow(1 - t/dur,5)*((42*pow(1 - t/dur,5)*P[0*2+1])/pow(dur,2) + (210*t*pow(1 - t/dur,4)*P[1*2+1])/pow(dur,3) - (84*pow(1 - t/dur,5)*P[1*2+1])/pow(dur,2) +
+        (420*pow(t,2)*pow(1 - t/dur,3)*P[2*2+1])/pow(dur,4) - (420*t*pow(1 - t/dur,4)*P[2*2+1])/pow(dur,3) + (42*pow(1 - t/dur,5)*P[2*2+1])/pow(dur,2) +
+        (420*pow(t,3)*pow(1 - t/dur,2)*P[3*2+1])/pow(dur,5) - (840*pow(t,2)*pow(1 - t/dur,3)*P[3*2+1])/pow(dur,4) + (210*t*pow(1 - t/dur,4)*P[3*2+1])/pow(dur,3) +
+        (210*pow(t,4)*(1 - t/dur)*P[4*2+1])/pow(dur,6) - (840*pow(t,3)*pow(1 - t/dur,2)*P[4*2+1])/pow(dur,5) + (420*pow(t,2)*pow(1 - t/dur,3)*P[4*2+1])/pow(dur,4) +
+        (42*pow(t,5)*P[5*2+1])/pow(dur,7) - (420*pow(t,4)*(1 - t/dur)*P[5*2+1])/pow(dur,6) + (420*pow(t,3)*pow(1 - t/dur,2)*P[5*2+1])/pow(dur,5) - (84*pow(t,5)*P[6*2+1])/pow(dur,7) +
+        (210*pow(t,4)*(1 - t/dur)*P[6*2+1])/pow(dur,6) + (42*pow(t,5)*P[7*2+1])/pow(dur,7)))/pow(dur,2),
+   2*((210*t*pow(1 - t/dur,4))/pow(dur,3) - (84*pow(1 - t/dur,5))/pow(dur,2))*
+    ((42*pow(1 - t/dur,5)*P[0*2+0])/pow(dur,2) + (210*t*pow(1 - t/dur,4)*P[1*2+0])/pow(dur,3) - (84*pow(1 - t/dur,5)*P[1*2+0])/pow(dur,2) + (420*pow(t,2)*pow(1 - t/dur,3)*P[2*2+0])/pow(dur,4) -
+      (420*t*pow(1 - t/dur,4)*P[2*2+0])/pow(dur,3) + (42*pow(1 - t/dur,5)*P[2*2+0])/pow(dur,2) + (420*pow(t,3)*pow(1 - t/dur,2)*P[3*2+0])/pow(dur,5) -
+      (840*pow(t,2)*pow(1 - t/dur,3)*P[3*2+0])/pow(dur,4) + (210*t*pow(1 - t/dur,4)*P[3*2+0])/pow(dur,3) + (210*pow(t,4)*(1 - t/dur)*P[4*2+0])/pow(dur,6) -
+      (840*pow(t,3)*pow(1 - t/dur,2)*P[4*2+0])/pow(dur,5) + (420*pow(t,2)*pow(1 - t/dur,3)*P[4*2+0])/pow(dur,4) + (42*pow(t,5)*P[5*2+0])/pow(dur,7) -
+      (420*pow(t,4)*(1 - t/dur)*P[5*2+0])/pow(dur,6) + (420*pow(t,3)*pow(1 - t/dur,2)*P[5*2+0])/pow(dur,5) - (84*pow(t,5)*P[6*2+0])/pow(dur,7) + (210*pow(t,4)*(1 - t/dur)*P[6*2+0])/pow(dur,6) +
+      (42*pow(t,5)*P[7*2+0])/pow(dur,7)),2*((210*t*pow(1 - t/dur,4))/pow(dur,3) - (84*pow(1 - t/dur,5))/pow(dur,2))*
+    ((42*pow(1 - t/dur,5)*P[0*2+1])/pow(dur,2) + (210*t*pow(1 - t/dur,4)*P[1*2+1])/pow(dur,3) - (84*pow(1 - t/dur,5)*P[1*2+1])/pow(dur,2) + (420*pow(t,2)*pow(1 - t/dur,3)*P[2*2+1])/pow(dur,4) -
+      (420*t*pow(1 - t/dur,4)*P[2*2+1])/pow(dur,3) + (42*pow(1 - t/dur,5)*P[2*2+1])/pow(dur,2) + (420*pow(t,3)*pow(1 - t/dur,2)*P[3*2+1])/pow(dur,5) -
+      (840*pow(t,2)*pow(1 - t/dur,3)*P[3*2+1])/pow(dur,4) + (210*t*pow(1 - t/dur,4)*P[3*2+1])/pow(dur,3) + (210*pow(t,4)*(1 - t/dur)*P[4*2+1])/pow(dur,6) -
+      (840*pow(t,3)*pow(1 - t/dur,2)*P[4*2+1])/pow(dur,5) + (420*pow(t,2)*pow(1 - t/dur,3)*P[4*2+1])/pow(dur,4) + (42*pow(t,5)*P[5*2+1])/pow(dur,7) -
+      (420*pow(t,4)*(1 - t/dur)*P[5*2+1])/pow(dur,6) + (420*pow(t,3)*pow(1 - t/dur,2)*P[5*2+1])/pow(dur,5) - (84*pow(t,5)*P[6*2+1])/pow(dur,7) + (210*pow(t,4)*(1 - t/dur)*P[6*2+1])/pow(dur,6) +
+      (42*pow(t,5)*P[7*2+1])/pow(dur,7)),2*((420*pow(t,2)*pow(1 - t/dur,3))/pow(dur,4) - (420*t*pow(1 - t/dur,4))/pow(dur,3) + (42*pow(1 - t/dur,5))/pow(dur,2))*
+    ((42*pow(1 - t/dur,5)*P[0*2+0])/pow(dur,2) + (210*t*pow(1 - t/dur,4)*P[1*2+0])/pow(dur,3) - (84*pow(1 - t/dur,5)*P[1*2+0])/pow(dur,2) + (420*pow(t,2)*pow(1 - t/dur,3)*P[2*2+0])/pow(dur,4) -
+      (420*t*pow(1 - t/dur,4)*P[2*2+0])/pow(dur,3) + (42*pow(1 - t/dur,5)*P[2*2+0])/pow(dur,2) + (420*pow(t,3)*pow(1 - t/dur,2)*P[3*2+0])/pow(dur,5) -
+      (840*pow(t,2)*pow(1 - t/dur,3)*P[3*2+0])/pow(dur,4) + (210*t*pow(1 - t/dur,4)*P[3*2+0])/pow(dur,3) + (210*pow(t,4)*(1 - t/dur)*P[4*2+0])/pow(dur,6) -
+      (840*pow(t,3)*pow(1 - t/dur,2)*P[4*2+0])/pow(dur,5) + (420*pow(t,2)*pow(1 - t/dur,3)*P[4*2+0])/pow(dur,4) + (42*pow(t,5)*P[5*2+0])/pow(dur,7) -
+      (420*pow(t,4)*(1 - t/dur)*P[5*2+0])/pow(dur,6) + (420*pow(t,3)*pow(1 - t/dur,2)*P[5*2+0])/pow(dur,5) - (84*pow(t,5)*P[6*2+0])/pow(dur,7) + (210*pow(t,4)*(1 - t/dur)*P[6*2+0])/pow(dur,6) +
+      (42*pow(t,5)*P[7*2+0])/pow(dur,7)),2*((420*pow(t,2)*pow(1 - t/dur,3))/pow(dur,4) - (420*t*pow(1 - t/dur,4))/pow(dur,3) + (42*pow(1 - t/dur,5))/pow(dur,2))*
+    ((42*pow(1 - t/dur,5)*P[0*2+1])/pow(dur,2) + (210*t*pow(1 - t/dur,4)*P[1*2+1])/pow(dur,3) - (84*pow(1 - t/dur,5)*P[1*2+1])/pow(dur,2) + (420*pow(t,2)*pow(1 - t/dur,3)*P[2*2+1])/pow(dur,4) -
+      (420*t*pow(1 - t/dur,4)*P[2*2+1])/pow(dur,3) + (42*pow(1 - t/dur,5)*P[2*2+1])/pow(dur,2) + (420*pow(t,3)*pow(1 - t/dur,2)*P[3*2+1])/pow(dur,5) -
+      (840*pow(t,2)*pow(1 - t/dur,3)*P[3*2+1])/pow(dur,4) + (210*t*pow(1 - t/dur,4)*P[3*2+1])/pow(dur,3) + (210*pow(t,4)*(1 - t/dur)*P[4*2+1])/pow(dur,6) -
+      (840*pow(t,3)*pow(1 - t/dur,2)*P[4*2+1])/pow(dur,5) + (420*pow(t,2)*pow(1 - t/dur,3)*P[4*2+1])/pow(dur,4) + (42*pow(t,5)*P[5*2+1])/pow(dur,7) -
+      (420*pow(t,4)*(1 - t/dur)*P[5*2+1])/pow(dur,6) + (420*pow(t,3)*pow(1 - t/dur,2)*P[5*2+1])/pow(dur,5) - (84*pow(t,5)*P[6*2+1])/pow(dur,7) + (210*pow(t,4)*(1 - t/dur)*P[6*2+1])/pow(dur,6) +
+      (42*pow(t,5)*P[7*2+1])/pow(dur,7)),2*((420*pow(t,3)*pow(1 - t/dur,2))/pow(dur,5) - (840*pow(t,2)*pow(1 - t/dur,3))/pow(dur,4) + (210*t*pow(1 - t/dur,4))/pow(dur,3))*
+    ((42*pow(1 - t/dur,5)*P[0*2+0])/pow(dur,2) + (210*t*pow(1 - t/dur,4)*P[1*2+0])/pow(dur,3) - (84*pow(1 - t/dur,5)*P[1*2+0])/pow(dur,2) + (420*pow(t,2)*pow(1 - t/dur,3)*P[2*2+0])/pow(dur,4) -
+      (420*t*pow(1 - t/dur,4)*P[2*2+0])/pow(dur,3) + (42*pow(1 - t/dur,5)*P[2*2+0])/pow(dur,2) + (420*pow(t,3)*pow(1 - t/dur,2)*P[3*2+0])/pow(dur,5) -
+      (840*pow(t,2)*pow(1 - t/dur,3)*P[3*2+0])/pow(dur,4) + (210*t*pow(1 - t/dur,4)*P[3*2+0])/pow(dur,3) + (210*pow(t,4)*(1 - t/dur)*P[4*2+0])/pow(dur,6) -
+      (840*pow(t,3)*pow(1 - t/dur,2)*P[4*2+0])/pow(dur,5) + (420*pow(t,2)*pow(1 - t/dur,3)*P[4*2+0])/pow(dur,4) + (42*pow(t,5)*P[5*2+0])/pow(dur,7) -
+      (420*pow(t,4)*(1 - t/dur)*P[5*2+0])/pow(dur,6) + (420*pow(t,3)*pow(1 - t/dur,2)*P[5*2+0])/pow(dur,5) - (84*pow(t,5)*P[6*2+0])/pow(dur,7) + (210*pow(t,4)*(1 - t/dur)*P[6*2+0])/pow(dur,6) +
+      (42*pow(t,5)*P[7*2+0])/pow(dur,7)),2*((420*pow(t,3)*pow(1 - t/dur,2))/pow(dur,5) - (840*pow(t,2)*pow(1 - t/dur,3))/pow(dur,4) + (210*t*pow(1 - t/dur,4))/pow(dur,3))*
+    ((42*pow(1 - t/dur,5)*P[0*2+1])/pow(dur,2) + (210*t*pow(1 - t/dur,4)*P[1*2+1])/pow(dur,3) - (84*pow(1 - t/dur,5)*P[1*2+1])/pow(dur,2) + (420*pow(t,2)*pow(1 - t/dur,3)*P[2*2+1])/pow(dur,4) -
+      (420*t*pow(1 - t/dur,4)*P[2*2+1])/pow(dur,3) + (42*pow(1 - t/dur,5)*P[2*2+1])/pow(dur,2) + (420*pow(t,3)*pow(1 - t/dur,2)*P[3*2+1])/pow(dur,5) -
+      (840*pow(t,2)*pow(1 - t/dur,3)*P[3*2+1])/pow(dur,4) + (210*t*pow(1 - t/dur,4)*P[3*2+1])/pow(dur,3) + (210*pow(t,4)*(1 - t/dur)*P[4*2+1])/pow(dur,6) -
+      (840*pow(t,3)*pow(1 - t/dur,2)*P[4*2+1])/pow(dur,5) + (420*pow(t,2)*pow(1 - t/dur,3)*P[4*2+1])/pow(dur,4) + (42*pow(t,5)*P[5*2+1])/pow(dur,7) -
+      (420*pow(t,4)*(1 - t/dur)*P[5*2+1])/pow(dur,6) + (420*pow(t,3)*pow(1 - t/dur,2)*P[5*2+1])/pow(dur,5) - (84*pow(t,5)*P[6*2+1])/pow(dur,7) + (210*pow(t,4)*(1 - t/dur)*P[6*2+1])/pow(dur,6) +
+      (42*pow(t,5)*P[7*2+1])/pow(dur,7)),2*((210*pow(t,4)*(1 - t/dur))/pow(dur,6) - (840*pow(t,3)*pow(1 - t/dur,2))/pow(dur,5) + (420*pow(t,2)*pow(1 - t/dur,3))/pow(dur,4))*
+    ((42*pow(1 - t/dur,5)*P[0*2+0])/pow(dur,2) + (210*t*pow(1 - t/dur,4)*P[1*2+0])/pow(dur,3) - (84*pow(1 - t/dur,5)*P[1*2+0])/pow(dur,2) + (420*pow(t,2)*pow(1 - t/dur,3)*P[2*2+0])/pow(dur,4) -
+      (420*t*pow(1 - t/dur,4)*P[2*2+0])/pow(dur,3) + (42*pow(1 - t/dur,5)*P[2*2+0])/pow(dur,2) + (420*pow(t,3)*pow(1 - t/dur,2)*P[3*2+0])/pow(dur,5) -
+      (840*pow(t,2)*pow(1 - t/dur,3)*P[3*2+0])/pow(dur,4) + (210*t*pow(1 - t/dur,4)*P[3*2+0])/pow(dur,3) + (210*pow(t,4)*(1 - t/dur)*P[4*2+0])/pow(dur,6) -
+      (840*pow(t,3)*pow(1 - t/dur,2)*P[4*2+0])/pow(dur,5) + (420*pow(t,2)*pow(1 - t/dur,3)*P[4*2+0])/pow(dur,4) + (42*pow(t,5)*P[5*2+0])/pow(dur,7) -
+      (420*pow(t,4)*(1 - t/dur)*P[5*2+0])/pow(dur,6) + (420*pow(t,3)*pow(1 - t/dur,2)*P[5*2+0])/pow(dur,5) - (84*pow(t,5)*P[6*2+0])/pow(dur,7) + (210*pow(t,4)*(1 - t/dur)*P[6*2+0])/pow(dur,6) +
+      (42*pow(t,5)*P[7*2+0])/pow(dur,7)),2*((210*pow(t,4)*(1 - t/dur))/pow(dur,6) - (840*pow(t,3)*pow(1 - t/dur,2))/pow(dur,5) + (420*pow(t,2)*pow(1 - t/dur,3))/pow(dur,4))*
+    ((42*pow(1 - t/dur,5)*P[0*2+1])/pow(dur,2) + (210*t*pow(1 - t/dur,4)*P[1*2+1])/pow(dur,3) - (84*pow(1 - t/dur,5)*P[1*2+1])/pow(dur,2) + (420*pow(t,2)*pow(1 - t/dur,3)*P[2*2+1])/pow(dur,4) -
+      (420*t*pow(1 - t/dur,4)*P[2*2+1])/pow(dur,3) + (42*pow(1 - t/dur,5)*P[2*2+1])/pow(dur,2) + (420*pow(t,3)*pow(1 - t/dur,2)*P[3*2+1])/pow(dur,5) -
+      (840*pow(t,2)*pow(1 - t/dur,3)*P[3*2+1])/pow(dur,4) + (210*t*pow(1 - t/dur,4)*P[3*2+1])/pow(dur,3) + (210*pow(t,4)*(1 - t/dur)*P[4*2+1])/pow(dur,6) -
+      (840*pow(t,3)*pow(1 - t/dur,2)*P[4*2+1])/pow(dur,5) + (420*pow(t,2)*pow(1 - t/dur,3)*P[4*2+1])/pow(dur,4) + (42*pow(t,5)*P[5*2+1])/pow(dur,7) -
+      (420*pow(t,4)*(1 - t/dur)*P[5*2+1])/pow(dur,6) + (420*pow(t,3)*pow(1 - t/dur,2)*P[5*2+1])/pow(dur,5) - (84*pow(t,5)*P[6*2+1])/pow(dur,7) + (210*pow(t,4)*(1 - t/dur)*P[6*2+1])/pow(dur,6) +
+      (42*pow(t,5)*P[7*2+1])/pow(dur,7)),2*((42*pow(t,5))/pow(dur,7) - (420*pow(t,4)*(1 - t/dur))/pow(dur,6) + (420*pow(t,3)*pow(1 - t/dur,2))/pow(dur,5))*
+    ((42*pow(1 - t/dur,5)*P[0*2+0])/pow(dur,2) + (210*t*pow(1 - t/dur,4)*P[1*2+0])/pow(dur,3) - (84*pow(1 - t/dur,5)*P[1*2+0])/pow(dur,2) + (420*pow(t,2)*pow(1 - t/dur,3)*P[2*2+0])/pow(dur,4) -
+      (420*t*pow(1 - t/dur,4)*P[2*2+0])/pow(dur,3) + (42*pow(1 - t/dur,5)*P[2*2+0])/pow(dur,2) + (420*pow(t,3)*pow(1 - t/dur,2)*P[3*2+0])/pow(dur,5) -
+      (840*pow(t,2)*pow(1 - t/dur,3)*P[3*2+0])/pow(dur,4) + (210*t*pow(1 - t/dur,4)*P[3*2+0])/pow(dur,3) + (210*pow(t,4)*(1 - t/dur)*P[4*2+0])/pow(dur,6) -
+      (840*pow(t,3)*pow(1 - t/dur,2)*P[4*2+0])/pow(dur,5) + (420*pow(t,2)*pow(1 - t/dur,3)*P[4*2+0])/pow(dur,4) + (42*pow(t,5)*P[5*2+0])/pow(dur,7) -
+      (420*pow(t,4)*(1 - t/dur)*P[5*2+0])/pow(dur,6) + (420*pow(t,3)*pow(1 - t/dur,2)*P[5*2+0])/pow(dur,5) - (84*pow(t,5)*P[6*2+0])/pow(dur,7) + (210*pow(t,4)*(1 - t/dur)*P[6*2+0])/pow(dur,6) +
+      (42*pow(t,5)*P[7*2+0])/pow(dur,7)),2*((42*pow(t,5))/pow(dur,7) - (420*pow(t,4)*(1 - t/dur))/pow(dur,6) + (420*pow(t,3)*pow(1 - t/dur,2))/pow(dur,5))*
+    ((42*pow(1 - t/dur,5)*P[0*2+1])/pow(dur,2) + (210*t*pow(1 - t/dur,4)*P[1*2+1])/pow(dur,3) - (84*pow(1 - t/dur,5)*P[1*2+1])/pow(dur,2) + (420*pow(t,2)*pow(1 - t/dur,3)*P[2*2+1])/pow(dur,4) -
+      (420*t*pow(1 - t/dur,4)*P[2*2+1])/pow(dur,3) + (42*pow(1 - t/dur,5)*P[2*2+1])/pow(dur,2) + (420*pow(t,3)*pow(1 - t/dur,2)*P[3*2+1])/pow(dur,5) -
+      (840*pow(t,2)*pow(1 - t/dur,3)*P[3*2+1])/pow(dur,4) + (210*t*pow(1 - t/dur,4)*P[3*2+1])/pow(dur,3) + (210*pow(t,4)*(1 - t/dur)*P[4*2+1])/pow(dur,6) -
+      (840*pow(t,3)*pow(1 - t/dur,2)*P[4*2+1])/pow(dur,5) + (420*pow(t,2)*pow(1 - t/dur,3)*P[4*2+1])/pow(dur,4) + (42*pow(t,5)*P[5*2+1])/pow(dur,7) -
+      (420*pow(t,4)*(1 - t/dur)*P[5*2+1])/pow(dur,6) + (420*pow(t,3)*pow(1 - t/dur,2)*P[5*2+1])/pow(dur,5) - (84*pow(t,5)*P[6*2+1])/pow(dur,7) + (210*pow(t,4)*(1 - t/dur)*P[6*2+1])/pow(dur,6) +
+      (42*pow(t,5)*P[7*2+1])/pow(dur,7)),2*((-84*pow(t,5))/pow(dur,7) + (210*pow(t,4)*(1 - t/dur))/pow(dur,6))*
+    ((42*pow(1 - t/dur,5)*P[0*2+0])/pow(dur,2) + (210*t*pow(1 - t/dur,4)*P[1*2+0])/pow(dur,3) - (84*pow(1 - t/dur,5)*P[1*2+0])/pow(dur,2) + (420*pow(t,2)*pow(1 - t/dur,3)*P[2*2+0])/pow(dur,4) -
+      (420*t*pow(1 - t/dur,4)*P[2*2+0])/pow(dur,3) + (42*pow(1 - t/dur,5)*P[2*2+0])/pow(dur,2) + (420*pow(t,3)*pow(1 - t/dur,2)*P[3*2+0])/pow(dur,5) -
+      (840*pow(t,2)*pow(1 - t/dur,3)*P[3*2+0])/pow(dur,4) + (210*t*pow(1 - t/dur,4)*P[3*2+0])/pow(dur,3) + (210*pow(t,4)*(1 - t/dur)*P[4*2+0])/pow(dur,6) -
+      (840*pow(t,3)*pow(1 - t/dur,2)*P[4*2+0])/pow(dur,5) + (420*pow(t,2)*pow(1 - t/dur,3)*P[4*2+0])/pow(dur,4) + (42*pow(t,5)*P[5*2+0])/pow(dur,7) -
+      (420*pow(t,4)*(1 - t/dur)*P[5*2+0])/pow(dur,6) + (420*pow(t,3)*pow(1 - t/dur,2)*P[5*2+0])/pow(dur,5) - (84*pow(t,5)*P[6*2+0])/pow(dur,7) + (210*pow(t,4)*(1 - t/dur)*P[6*2+0])/pow(dur,6) +
+      (42*pow(t,5)*P[7*2+0])/pow(dur,7)),2*((-84*pow(t,5))/pow(dur,7) + (210*pow(t,4)*(1 - t/dur))/pow(dur,6))*
+    ((42*pow(1 - t/dur,5)*P[0*2+1])/pow(dur,2) + (210*t*pow(1 - t/dur,4)*P[1*2+1])/pow(dur,3) - (84*pow(1 - t/dur,5)*P[1*2+1])/pow(dur,2) + (420*pow(t,2)*pow(1 - t/dur,3)*P[2*2+1])/pow(dur,4) -
+      (420*t*pow(1 - t/dur,4)*P[2*2+1])/pow(dur,3) + (42*pow(1 - t/dur,5)*P[2*2+1])/pow(dur,2) + (420*pow(t,3)*pow(1 - t/dur,2)*P[3*2+1])/pow(dur,5) -
+      (840*pow(t,2)*pow(1 - t/dur,3)*P[3*2+1])/pow(dur,4) + (210*t*pow(1 - t/dur,4)*P[3*2+1])/pow(dur,3) + (210*pow(t,4)*(1 - t/dur)*P[4*2+1])/pow(dur,6) -
+      (840*pow(t,3)*pow(1 - t/dur,2)*P[4*2+1])/pow(dur,5) + (420*pow(t,2)*pow(1 - t/dur,3)*P[4*2+1])/pow(dur,4) + (42*pow(t,5)*P[5*2+1])/pow(dur,7) -
+      (420*pow(t,4)*(1 - t/dur)*P[5*2+1])/pow(dur,6) + (420*pow(t,3)*pow(1 - t/dur,2)*P[5*2+1])/pow(dur,5) - (84*pow(t,5)*P[6*2+1])/pow(dur,7) + (210*pow(t,4)*(1 - t/dur)*P[6*2+1])/pow(dur,6) +
+      (42*pow(t,5)*P[7*2+1])/pow(dur,7)),(84*pow(t,5)*((42*pow(1 - t/dur,5)*P[0*2+0])/pow(dur,2) + (210*t*pow(1 - t/dur,4)*P[1*2+0])/pow(dur,3) - (84*pow(1 - t/dur,5)*P[1*2+0])/pow(dur,2) +
+        (420*pow(t,2)*pow(1 - t/dur,3)*P[2*2+0])/pow(dur,4) - (420*t*pow(1 - t/dur,4)*P[2*2+0])/pow(dur,3) + (42*pow(1 - t/dur,5)*P[2*2+0])/pow(dur,2) +
+        (420*pow(t,3)*pow(1 - t/dur,2)*P[3*2+0])/pow(dur,5) - (840*pow(t,2)*pow(1 - t/dur,3)*P[3*2+0])/pow(dur,4) + (210*t*pow(1 - t/dur,4)*P[3*2+0])/pow(dur,3) +
+        (210*pow(t,4)*(1 - t/dur)*P[4*2+0])/pow(dur,6) - (840*pow(t,3)*pow(1 - t/dur,2)*P[4*2+0])/pow(dur,5) + (420*pow(t,2)*pow(1 - t/dur,3)*P[4*2+0])/pow(dur,4) +
+        (42*pow(t,5)*P[5*2+0])/pow(dur,7) - (420*pow(t,4)*(1 - t/dur)*P[5*2+0])/pow(dur,6) + (420*pow(t,3)*pow(1 - t/dur,2)*P[5*2+0])/pow(dur,5) - (84*pow(t,5)*P[6*2+0])/pow(dur,7) +
+        (210*pow(t,4)*(1 - t/dur)*P[6*2+0])/pow(dur,6) + (42*pow(t,5)*P[7*2+0])/pow(dur,7)))/pow(dur,7),
+   (84*pow(t,5)*((42*pow(1 - t/dur,5)*P[0*2+1])/pow(dur,2) + (210*t*pow(1 - t/dur,4)*P[1*2+1])/pow(dur,3) - (84*pow(1 - t/dur,5)*P[1*2+1])/pow(dur,2) +
+        (420*pow(t,2)*pow(1 - t/dur,3)*P[2*2+1])/pow(dur,4) - (420*t*pow(1 - t/dur,4)*P[2*2+1])/pow(dur,3) + (42*pow(1 - t/dur,5)*P[2*2+1])/pow(dur,2) +
+        (420*pow(t,3)*pow(1 - t/dur,2)*P[3*2+1])/pow(dur,5) - (840*pow(t,2)*pow(1 - t/dur,3)*P[3*2+1])/pow(dur,4) + (210*t*pow(1 - t/dur,4)*P[3*2+1])/pow(dur,3) +
+        (210*pow(t,4)*(1 - t/dur)*P[4*2+1])/pow(dur,6) - (840*pow(t,3)*pow(1 - t/dur,2)*P[4*2+1])/pow(dur,5) + (420*pow(t,2)*pow(1 - t/dur,3)*P[4*2+1])/pow(dur,4) +
+        (42*pow(t,5)*P[5*2+1])/pow(dur,7) - (420*pow(t,4)*(1 - t/dur)*P[5*2+1])/pow(dur,6) + (420*pow(t,3)*pow(1 - t/dur,2)*P[5*2+1])/pow(dur,5) - (84*pow(t,5)*P[6*2+1])/pow(dur,7) +
+        (210*pow(t,4)*(1 - t/dur)*P[6*2+1])/pow(dur,6) + (42*pow(t,5)*P[7*2+1])/pow(dur,7)))/pow(dur,7)};
+    }
+    return pow((42*pow(1 - t/dur,5)*P[0*2+0])/pow(dur,2) + (210*t*pow(1 - t/dur,4)*P[1*2+0])/pow(dur,3) - (84*pow(1 - t/dur,5)*P[1*2+0])/pow(dur,2) + (420*pow(t,2)*pow(1 - t/dur,3)*P[2*2+0])/pow(dur,4) -
+     (420*t*pow(1 - t/dur,4)*P[2*2+0])/pow(dur,3) + (42*pow(1 - t/dur,5)*P[2*2+0])/pow(dur,2) + (420*pow(t,3)*pow(1 - t/dur,2)*P[3*2+0])/pow(dur,5) -
+     (840*pow(t,2)*pow(1 - t/dur,3)*P[3*2+0])/pow(dur,4) + (210*t*pow(1 - t/dur,4)*P[3*2+0])/pow(dur,3) + (210*pow(t,4)*(1 - t/dur)*P[4*2+0])/pow(dur,6) -
+     (840*pow(t,3)*pow(1 - t/dur,2)*P[4*2+0])/pow(dur,5) + (420*pow(t,2)*pow(1 - t/dur,3)*P[4*2+0])/pow(dur,4) + (42*pow(t,5)*P[5*2+0])/pow(dur,7) -
+     (420*pow(t,4)*(1 - t/dur)*P[5*2+0])/pow(dur,6) + (420*pow(t,3)*pow(1 - t/dur,2)*P[5*2+0])/pow(dur,5) - (84*pow(t,5)*P[6*2+0])/pow(dur,7) + (210*pow(t,4)*(1 - t/dur)*P[6*2+0])/pow(dur,6) +
+     (42*pow(t,5)*P[7*2+0])/pow(dur,7),2) + pow((42*pow(1 - t/dur,5)*P[0*2+1])/pow(dur,2) + (210*t*pow(1 - t/dur,4)*P[1*2+1])/pow(dur,3) - (84*pow(1 - t/dur,5)*P[1*2+1])/pow(dur,2) +
+     (420*pow(t,2)*pow(1 - t/dur,3)*P[2*2+1])/pow(dur,4) - (420*t*pow(1 - t/dur,4)*P[2*2+1])/pow(dur,3) + (42*pow(1 - t/dur,5)*P[2*2+1])/pow(dur,2) +
+     (420*pow(t,3)*pow(1 - t/dur,2)*P[3*2+1])/pow(dur,5) - (840*pow(t,2)*pow(1 - t/dur,3)*P[3*2+1])/pow(dur,4) + (210*t*pow(1 - t/dur,4)*P[3*2+1])/pow(dur,3) +
+     (210*pow(t,4)*(1 - t/dur)*P[4*2+1])/pow(dur,6) - (840*pow(t,3)*pow(1 - t/dur,2)*P[4*2+1])/pow(dur,5) + (420*pow(t,2)*pow(1 - t/dur,3)*P[4*2+1])/pow(dur,4) +
+     (42*pow(t,5)*P[5*2+1])/pow(dur,7) - (420*pow(t,4)*(1 - t/dur)*P[5*2+1])/pow(dur,6) + (420*pow(t,3)*pow(1 - t/dur,2)*P[5*2+1])/pow(dur,5) - (84*pow(t,5)*P[6*2+1])/pow(dur,7) +
+     (210*pow(t,4)*(1 - t/dur)*P[6*2+1])/pow(dur,6) + (42*pow(t,5)*P[7*2+1])/pow(dur,7),2);
+  } else if(n==3) {
+    if(grad.size()>0) {
+      grad = vector<double> {(-420*pow(1 - t/dur,4)*((-210*pow(1 - t/dur,4)*P[0*2+0])/pow(dur,3) - (840*t*pow(1 - t/dur,3)*P[1*2+0])/pow(dur,4) + (630*pow(1 - t/dur,4)*P[1*2+0])/pow(dur,3) -
+        (1260*pow(t,2)*pow(1 - t/dur,2)*P[2*2+0])/pow(dur,5) + (2520*t*pow(1 - t/dur,3)*P[2*2+0])/pow(dur,4) - (630*pow(1 - t/dur,4)*P[2*2+0])/pow(dur,3) -
+        (840*pow(t,3)*(1 - t/dur)*P[3*2+0])/pow(dur,6) + (3780*pow(t,2)*pow(1 - t/dur,2)*P[3*2+0])/pow(dur,5) - (2520*t*pow(1 - t/dur,3)*P[3*2+0])/pow(dur,4) +
+        (210*pow(1 - t/dur,4)*P[3*2+0])/pow(dur,3) - (210*pow(t,4)*P[4*2+0])/pow(dur,7) + (2520*pow(t,3)*(1 - t/dur)*P[4*2+0])/pow(dur,6) - (3780*pow(t,2)*pow(1 - t/dur,2)*P[4*2+0])/pow(dur,5) +
+        (840*t*pow(1 - t/dur,3)*P[4*2+0])/pow(dur,4) + (630*pow(t,4)*P[5*2+0])/pow(dur,7) - (2520*pow(t,3)*(1 - t/dur)*P[5*2+0])/pow(dur,6) +
+        (1260*pow(t,2)*pow(1 - t/dur,2)*P[5*2+0])/pow(dur,5) - (630*pow(t,4)*P[6*2+0])/pow(dur,7) + (840*pow(t,3)*(1 - t/dur)*P[6*2+0])/pow(dur,6) + (210*pow(t,4)*P[7*2+0])/pow(dur,7)))/
+    pow(dur,3),(-420*pow(1 - t/dur,4)*((-210*pow(1 - t/dur,4)*P[0*2+1])/pow(dur,3) - (840*t*pow(1 - t/dur,3)*P[1*2+1])/pow(dur,4) + (630*pow(1 - t/dur,4)*P[1*2+1])/pow(dur,3) -
+        (1260*pow(t,2)*pow(1 - t/dur,2)*P[2*2+1])/pow(dur,5) + (2520*t*pow(1 - t/dur,3)*P[2*2+1])/pow(dur,4) - (630*pow(1 - t/dur,4)*P[2*2+1])/pow(dur,3) -
+        (840*pow(t,3)*(1 - t/dur)*P[3*2+1])/pow(dur,6) + (3780*pow(t,2)*pow(1 - t/dur,2)*P[3*2+1])/pow(dur,5) - (2520*t*pow(1 - t/dur,3)*P[3*2+1])/pow(dur,4) +
+        (210*pow(1 - t/dur,4)*P[3*2+1])/pow(dur,3) - (210*pow(t,4)*P[4*2+1])/pow(dur,7) + (2520*pow(t,3)*(1 - t/dur)*P[4*2+1])/pow(dur,6) - (3780*pow(t,2)*pow(1 - t/dur,2)*P[4*2+1])/pow(dur,5) +
+        (840*t*pow(1 - t/dur,3)*P[4*2+1])/pow(dur,4) + (630*pow(t,4)*P[5*2+1])/pow(dur,7) - (2520*pow(t,3)*(1 - t/dur)*P[5*2+1])/pow(dur,6) +
+        (1260*pow(t,2)*pow(1 - t/dur,2)*P[5*2+1])/pow(dur,5) - (630*pow(t,4)*P[6*2+1])/pow(dur,7) + (840*pow(t,3)*(1 - t/dur)*P[6*2+1])/pow(dur,6) + (210*pow(t,4)*P[7*2+1])/pow(dur,7)))/
+    pow(dur,3),2*((-840*t*pow(1 - t/dur,3))/pow(dur,4) + (630*pow(1 - t/dur,4))/pow(dur,3))*
+    ((-210*pow(1 - t/dur,4)*P[0*2+0])/pow(dur,3) - (840*t*pow(1 - t/dur,3)*P[1*2+0])/pow(dur,4) + (630*pow(1 - t/dur,4)*P[1*2+0])/pow(dur,3) -
+      (1260*pow(t,2)*pow(1 - t/dur,2)*P[2*2+0])/pow(dur,5) + (2520*t*pow(1 - t/dur,3)*P[2*2+0])/pow(dur,4) - (630*pow(1 - t/dur,4)*P[2*2+0])/pow(dur,3) -
+      (840*pow(t,3)*(1 - t/dur)*P[3*2+0])/pow(dur,6) + (3780*pow(t,2)*pow(1 - t/dur,2)*P[3*2+0])/pow(dur,5) - (2520*t*pow(1 - t/dur,3)*P[3*2+0])/pow(dur,4) +
+      (210*pow(1 - t/dur,4)*P[3*2+0])/pow(dur,3) - (210*pow(t,4)*P[4*2+0])/pow(dur,7) + (2520*pow(t,3)*(1 - t/dur)*P[4*2+0])/pow(dur,6) - (3780*pow(t,2)*pow(1 - t/dur,2)*P[4*2+0])/pow(dur,5) +
+      (840*t*pow(1 - t/dur,3)*P[4*2+0])/pow(dur,4) + (630*pow(t,4)*P[5*2+0])/pow(dur,7) - (2520*pow(t,3)*(1 - t/dur)*P[5*2+0])/pow(dur,6) + (1260*pow(t,2)*pow(1 - t/dur,2)*P[5*2+0])/pow(dur,5) -
+      (630*pow(t,4)*P[6*2+0])/pow(dur,7) + (840*pow(t,3)*(1 - t/dur)*P[6*2+0])/pow(dur,6) + (210*pow(t,4)*P[7*2+0])/pow(dur,7)),
+   2*((-840*t*pow(1 - t/dur,3))/pow(dur,4) + (630*pow(1 - t/dur,4))/pow(dur,3))*
+    ((-210*pow(1 - t/dur,4)*P[0*2+1])/pow(dur,3) - (840*t*pow(1 - t/dur,3)*P[1*2+1])/pow(dur,4) + (630*pow(1 - t/dur,4)*P[1*2+1])/pow(dur,3) -
+      (1260*pow(t,2)*pow(1 - t/dur,2)*P[2*2+1])/pow(dur,5) + (2520*t*pow(1 - t/dur,3)*P[2*2+1])/pow(dur,4) - (630*pow(1 - t/dur,4)*P[2*2+1])/pow(dur,3) -
+      (840*pow(t,3)*(1 - t/dur)*P[3*2+1])/pow(dur,6) + (3780*pow(t,2)*pow(1 - t/dur,2)*P[3*2+1])/pow(dur,5) - (2520*t*pow(1 - t/dur,3)*P[3*2+1])/pow(dur,4) +
+      (210*pow(1 - t/dur,4)*P[3*2+1])/pow(dur,3) - (210*pow(t,4)*P[4*2+1])/pow(dur,7) + (2520*pow(t,3)*(1 - t/dur)*P[4*2+1])/pow(dur,6) - (3780*pow(t,2)*pow(1 - t/dur,2)*P[4*2+1])/pow(dur,5) +
+      (840*t*pow(1 - t/dur,3)*P[4*2+1])/pow(dur,4) + (630*pow(t,4)*P[5*2+1])/pow(dur,7) - (2520*pow(t,3)*(1 - t/dur)*P[5*2+1])/pow(dur,6) + (1260*pow(t,2)*pow(1 - t/dur,2)*P[5*2+1])/pow(dur,5) -
+      (630*pow(t,4)*P[6*2+1])/pow(dur,7) + (840*pow(t,3)*(1 - t/dur)*P[6*2+1])/pow(dur,6) + (210*pow(t,4)*P[7*2+1])/pow(dur,7)),
+   2*((-1260*pow(t,2)*pow(1 - t/dur,2))/pow(dur,5) + (2520*t*pow(1 - t/dur,3))/pow(dur,4) - (630*pow(1 - t/dur,4))/pow(dur,3))*
+    ((-210*pow(1 - t/dur,4)*P[0*2+0])/pow(dur,3) - (840*t*pow(1 - t/dur,3)*P[1*2+0])/pow(dur,4) + (630*pow(1 - t/dur,4)*P[1*2+0])/pow(dur,3) -
+      (1260*pow(t,2)*pow(1 - t/dur,2)*P[2*2+0])/pow(dur,5) + (2520*t*pow(1 - t/dur,3)*P[2*2+0])/pow(dur,4) - (630*pow(1 - t/dur,4)*P[2*2+0])/pow(dur,3) -
+      (840*pow(t,3)*(1 - t/dur)*P[3*2+0])/pow(dur,6) + (3780*pow(t,2)*pow(1 - t/dur,2)*P[3*2+0])/pow(dur,5) - (2520*t*pow(1 - t/dur,3)*P[3*2+0])/pow(dur,4) +
+      (210*pow(1 - t/dur,4)*P[3*2+0])/pow(dur,3) - (210*pow(t,4)*P[4*2+0])/pow(dur,7) + (2520*pow(t,3)*(1 - t/dur)*P[4*2+0])/pow(dur,6) - (3780*pow(t,2)*pow(1 - t/dur,2)*P[4*2+0])/pow(dur,5) +
+      (840*t*pow(1 - t/dur,3)*P[4*2+0])/pow(dur,4) + (630*pow(t,4)*P[5*2+0])/pow(dur,7) - (2520*pow(t,3)*(1 - t/dur)*P[5*2+0])/pow(dur,6) + (1260*pow(t,2)*pow(1 - t/dur,2)*P[5*2+0])/pow(dur,5) -
+      (630*pow(t,4)*P[6*2+0])/pow(dur,7) + (840*pow(t,3)*(1 - t/dur)*P[6*2+0])/pow(dur,6) + (210*pow(t,4)*P[7*2+0])/pow(dur,7)),
+   2*((-1260*pow(t,2)*pow(1 - t/dur,2))/pow(dur,5) + (2520*t*pow(1 - t/dur,3))/pow(dur,4) - (630*pow(1 - t/dur,4))/pow(dur,3))*
+    ((-210*pow(1 - t/dur,4)*P[0*2+1])/pow(dur,3) - (840*t*pow(1 - t/dur,3)*P[1*2+1])/pow(dur,4) + (630*pow(1 - t/dur,4)*P[1*2+1])/pow(dur,3) -
+      (1260*pow(t,2)*pow(1 - t/dur,2)*P[2*2+1])/pow(dur,5) + (2520*t*pow(1 - t/dur,3)*P[2*2+1])/pow(dur,4) - (630*pow(1 - t/dur,4)*P[2*2+1])/pow(dur,3) -
+      (840*pow(t,3)*(1 - t/dur)*P[3*2+1])/pow(dur,6) + (3780*pow(t,2)*pow(1 - t/dur,2)*P[3*2+1])/pow(dur,5) - (2520*t*pow(1 - t/dur,3)*P[3*2+1])/pow(dur,4) +
+      (210*pow(1 - t/dur,4)*P[3*2+1])/pow(dur,3) - (210*pow(t,4)*P[4*2+1])/pow(dur,7) + (2520*pow(t,3)*(1 - t/dur)*P[4*2+1])/pow(dur,6) - (3780*pow(t,2)*pow(1 - t/dur,2)*P[4*2+1])/pow(dur,5) +
+      (840*t*pow(1 - t/dur,3)*P[4*2+1])/pow(dur,4) + (630*pow(t,4)*P[5*2+1])/pow(dur,7) - (2520*pow(t,3)*(1 - t/dur)*P[5*2+1])/pow(dur,6) + (1260*pow(t,2)*pow(1 - t/dur,2)*P[5*2+1])/pow(dur,5) -
+      (630*pow(t,4)*P[6*2+1])/pow(dur,7) + (840*pow(t,3)*(1 - t/dur)*P[6*2+1])/pow(dur,6) + (210*pow(t,4)*P[7*2+1])/pow(dur,7)),
+   2*((-840*pow(t,3)*(1 - t/dur))/pow(dur,6) + (3780*pow(t,2)*pow(1 - t/dur,2))/pow(dur,5) - (2520*t*pow(1 - t/dur,3))/pow(dur,4) + (210*pow(1 - t/dur,4))/pow(dur,3))*
+    ((-210*pow(1 - t/dur,4)*P[0*2+0])/pow(dur,3) - (840*t*pow(1 - t/dur,3)*P[1*2+0])/pow(dur,4) + (630*pow(1 - t/dur,4)*P[1*2+0])/pow(dur,3) -
+      (1260*pow(t,2)*pow(1 - t/dur,2)*P[2*2+0])/pow(dur,5) + (2520*t*pow(1 - t/dur,3)*P[2*2+0])/pow(dur,4) - (630*pow(1 - t/dur,4)*P[2*2+0])/pow(dur,3) -
+      (840*pow(t,3)*(1 - t/dur)*P[3*2+0])/pow(dur,6) + (3780*pow(t,2)*pow(1 - t/dur,2)*P[3*2+0])/pow(dur,5) - (2520*t*pow(1 - t/dur,3)*P[3*2+0])/pow(dur,4) +
+      (210*pow(1 - t/dur,4)*P[3*2+0])/pow(dur,3) - (210*pow(t,4)*P[4*2+0])/pow(dur,7) + (2520*pow(t,3)*(1 - t/dur)*P[4*2+0])/pow(dur,6) - (3780*pow(t,2)*pow(1 - t/dur,2)*P[4*2+0])/pow(dur,5) +
+      (840*t*pow(1 - t/dur,3)*P[4*2+0])/pow(dur,4) + (630*pow(t,4)*P[5*2+0])/pow(dur,7) - (2520*pow(t,3)*(1 - t/dur)*P[5*2+0])/pow(dur,6) + (1260*pow(t,2)*pow(1 - t/dur,2)*P[5*2+0])/pow(dur,5) -
+      (630*pow(t,4)*P[6*2+0])/pow(dur,7) + (840*pow(t,3)*(1 - t/dur)*P[6*2+0])/pow(dur,6) + (210*pow(t,4)*P[7*2+0])/pow(dur,7)),
+   2*((-840*pow(t,3)*(1 - t/dur))/pow(dur,6) + (3780*pow(t,2)*pow(1 - t/dur,2))/pow(dur,5) - (2520*t*pow(1 - t/dur,3))/pow(dur,4) + (210*pow(1 - t/dur,4))/pow(dur,3))*
+    ((-210*pow(1 - t/dur,4)*P[0*2+1])/pow(dur,3) - (840*t*pow(1 - t/dur,3)*P[1*2+1])/pow(dur,4) + (630*pow(1 - t/dur,4)*P[1*2+1])/pow(dur,3) -
+      (1260*pow(t,2)*pow(1 - t/dur,2)*P[2*2+1])/pow(dur,5) + (2520*t*pow(1 - t/dur,3)*P[2*2+1])/pow(dur,4) - (630*pow(1 - t/dur,4)*P[2*2+1])/pow(dur,3) -
+      (840*pow(t,3)*(1 - t/dur)*P[3*2+1])/pow(dur,6) + (3780*pow(t,2)*pow(1 - t/dur,2)*P[3*2+1])/pow(dur,5) - (2520*t*pow(1 - t/dur,3)*P[3*2+1])/pow(dur,4) +
+      (210*pow(1 - t/dur,4)*P[3*2+1])/pow(dur,3) - (210*pow(t,4)*P[4*2+1])/pow(dur,7) + (2520*pow(t,3)*(1 - t/dur)*P[4*2+1])/pow(dur,6) - (3780*pow(t,2)*pow(1 - t/dur,2)*P[4*2+1])/pow(dur,5) +
+      (840*t*pow(1 - t/dur,3)*P[4*2+1])/pow(dur,4) + (630*pow(t,4)*P[5*2+1])/pow(dur,7) - (2520*pow(t,3)*(1 - t/dur)*P[5*2+1])/pow(dur,6) + (1260*pow(t,2)*pow(1 - t/dur,2)*P[5*2+1])/pow(dur,5) -
+      (630*pow(t,4)*P[6*2+1])/pow(dur,7) + (840*pow(t,3)*(1 - t/dur)*P[6*2+1])/pow(dur,6) + (210*pow(t,4)*P[7*2+1])/pow(dur,7)),
+   2*((-210*pow(t,4))/pow(dur,7) + (2520*pow(t,3)*(1 - t/dur))/pow(dur,6) - (3780*pow(t,2)*pow(1 - t/dur,2))/pow(dur,5) + (840*t*pow(1 - t/dur,3))/pow(dur,4))*
+    ((-210*pow(1 - t/dur,4)*P[0*2+0])/pow(dur,3) - (840*t*pow(1 - t/dur,3)*P[1*2+0])/pow(dur,4) + (630*pow(1 - t/dur,4)*P[1*2+0])/pow(dur,3) -
+      (1260*pow(t,2)*pow(1 - t/dur,2)*P[2*2+0])/pow(dur,5) + (2520*t*pow(1 - t/dur,3)*P[2*2+0])/pow(dur,4) - (630*pow(1 - t/dur,4)*P[2*2+0])/pow(dur,3) -
+      (840*pow(t,3)*(1 - t/dur)*P[3*2+0])/pow(dur,6) + (3780*pow(t,2)*pow(1 - t/dur,2)*P[3*2+0])/pow(dur,5) - (2520*t*pow(1 - t/dur,3)*P[3*2+0])/pow(dur,4) +
+      (210*pow(1 - t/dur,4)*P[3*2+0])/pow(dur,3) - (210*pow(t,4)*P[4*2+0])/pow(dur,7) + (2520*pow(t,3)*(1 - t/dur)*P[4*2+0])/pow(dur,6) - (3780*pow(t,2)*pow(1 - t/dur,2)*P[4*2+0])/pow(dur,5) +
+      (840*t*pow(1 - t/dur,3)*P[4*2+0])/pow(dur,4) + (630*pow(t,4)*P[5*2+0])/pow(dur,7) - (2520*pow(t,3)*(1 - t/dur)*P[5*2+0])/pow(dur,6) + (1260*pow(t,2)*pow(1 - t/dur,2)*P[5*2+0])/pow(dur,5) -
+      (630*pow(t,4)*P[6*2+0])/pow(dur,7) + (840*pow(t,3)*(1 - t/dur)*P[6*2+0])/pow(dur,6) + (210*pow(t,4)*P[7*2+0])/pow(dur,7)),
+   2*((-210*pow(t,4))/pow(dur,7) + (2520*pow(t,3)*(1 - t/dur))/pow(dur,6) - (3780*pow(t,2)*pow(1 - t/dur,2))/pow(dur,5) + (840*t*pow(1 - t/dur,3))/pow(dur,4))*
+    ((-210*pow(1 - t/dur,4)*P[0*2+1])/pow(dur,3) - (840*t*pow(1 - t/dur,3)*P[1*2+1])/pow(dur,4) + (630*pow(1 - t/dur,4)*P[1*2+1])/pow(dur,3) -
+      (1260*pow(t,2)*pow(1 - t/dur,2)*P[2*2+1])/pow(dur,5) + (2520*t*pow(1 - t/dur,3)*P[2*2+1])/pow(dur,4) - (630*pow(1 - t/dur,4)*P[2*2+1])/pow(dur,3) -
+      (840*pow(t,3)*(1 - t/dur)*P[3*2+1])/pow(dur,6) + (3780*pow(t,2)*pow(1 - t/dur,2)*P[3*2+1])/pow(dur,5) - (2520*t*pow(1 - t/dur,3)*P[3*2+1])/pow(dur,4) +
+      (210*pow(1 - t/dur,4)*P[3*2+1])/pow(dur,3) - (210*pow(t,4)*P[4*2+1])/pow(dur,7) + (2520*pow(t,3)*(1 - t/dur)*P[4*2+1])/pow(dur,6) - (3780*pow(t,2)*pow(1 - t/dur,2)*P[4*2+1])/pow(dur,5) +
+      (840*t*pow(1 - t/dur,3)*P[4*2+1])/pow(dur,4) + (630*pow(t,4)*P[5*2+1])/pow(dur,7) - (2520*pow(t,3)*(1 - t/dur)*P[5*2+1])/pow(dur,6) + (1260*pow(t,2)*pow(1 - t/dur,2)*P[5*2+1])/pow(dur,5) -
+      (630*pow(t,4)*P[6*2+1])/pow(dur,7) + (840*pow(t,3)*(1 - t/dur)*P[6*2+1])/pow(dur,6) + (210*pow(t,4)*P[7*2+1])/pow(dur,7)),
+   2*((630*pow(t,4))/pow(dur,7) - (2520*pow(t,3)*(1 - t/dur))/pow(dur,6) + (1260*pow(t,2)*pow(1 - t/dur,2))/pow(dur,5))*
+    ((-210*pow(1 - t/dur,4)*P[0*2+0])/pow(dur,3) - (840*t*pow(1 - t/dur,3)*P[1*2+0])/pow(dur,4) + (630*pow(1 - t/dur,4)*P[1*2+0])/pow(dur,3) -
+      (1260*pow(t,2)*pow(1 - t/dur,2)*P[2*2+0])/pow(dur,5) + (2520*t*pow(1 - t/dur,3)*P[2*2+0])/pow(dur,4) - (630*pow(1 - t/dur,4)*P[2*2+0])/pow(dur,3) -
+      (840*pow(t,3)*(1 - t/dur)*P[3*2+0])/pow(dur,6) + (3780*pow(t,2)*pow(1 - t/dur,2)*P[3*2+0])/pow(dur,5) - (2520*t*pow(1 - t/dur,3)*P[3*2+0])/pow(dur,4) +
+      (210*pow(1 - t/dur,4)*P[3*2+0])/pow(dur,3) - (210*pow(t,4)*P[4*2+0])/pow(dur,7) + (2520*pow(t,3)*(1 - t/dur)*P[4*2+0])/pow(dur,6) - (3780*pow(t,2)*pow(1 - t/dur,2)*P[4*2+0])/pow(dur,5) +
+      (840*t*pow(1 - t/dur,3)*P[4*2+0])/pow(dur,4) + (630*pow(t,4)*P[5*2+0])/pow(dur,7) - (2520*pow(t,3)*(1 - t/dur)*P[5*2+0])/pow(dur,6) + (1260*pow(t,2)*pow(1 - t/dur,2)*P[5*2+0])/pow(dur,5) -
+      (630*pow(t,4)*P[6*2+0])/pow(dur,7) + (840*pow(t,3)*(1 - t/dur)*P[6*2+0])/pow(dur,6) + (210*pow(t,4)*P[7*2+0])/pow(dur,7)),
+   2*((630*pow(t,4))/pow(dur,7) - (2520*pow(t,3)*(1 - t/dur))/pow(dur,6) + (1260*pow(t,2)*pow(1 - t/dur,2))/pow(dur,5))*
+    ((-210*pow(1 - t/dur,4)*P[0*2+1])/pow(dur,3) - (840*t*pow(1 - t/dur,3)*P[1*2+1])/pow(dur,4) + (630*pow(1 - t/dur,4)*P[1*2+1])/pow(dur,3) -
+      (1260*pow(t,2)*pow(1 - t/dur,2)*P[2*2+1])/pow(dur,5) + (2520*t*pow(1 - t/dur,3)*P[2*2+1])/pow(dur,4) - (630*pow(1 - t/dur,4)*P[2*2+1])/pow(dur,3) -
+      (840*pow(t,3)*(1 - t/dur)*P[3*2+1])/pow(dur,6) + (3780*pow(t,2)*pow(1 - t/dur,2)*P[3*2+1])/pow(dur,5) - (2520*t*pow(1 - t/dur,3)*P[3*2+1])/pow(dur,4) +
+      (210*pow(1 - t/dur,4)*P[3*2+1])/pow(dur,3) - (210*pow(t,4)*P[4*2+1])/pow(dur,7) + (2520*pow(t,3)*(1 - t/dur)*P[4*2+1])/pow(dur,6) - (3780*pow(t,2)*pow(1 - t/dur,2)*P[4*2+1])/pow(dur,5) +
+      (840*t*pow(1 - t/dur,3)*P[4*2+1])/pow(dur,4) + (630*pow(t,4)*P[5*2+1])/pow(dur,7) - (2520*pow(t,3)*(1 - t/dur)*P[5*2+1])/pow(dur,6) + (1260*pow(t,2)*pow(1 - t/dur,2)*P[5*2+1])/pow(dur,5) -
+      (630*pow(t,4)*P[6*2+1])/pow(dur,7) + (840*pow(t,3)*(1 - t/dur)*P[6*2+1])/pow(dur,6) + (210*pow(t,4)*P[7*2+1])/pow(dur,7)),
+   2*((-630*pow(t,4))/pow(dur,7) + (840*pow(t,3)*(1 - t/dur))/pow(dur,6))*((-210*pow(1 - t/dur,4)*P[0*2+0])/pow(dur,3) - (840*t*pow(1 - t/dur,3)*P[1*2+0])/pow(dur,4) +
+      (630*pow(1 - t/dur,4)*P[1*2+0])/pow(dur,3) - (1260*pow(t,2)*pow(1 - t/dur,2)*P[2*2+0])/pow(dur,5) + (2520*t*pow(1 - t/dur,3)*P[2*2+0])/pow(dur,4) -
+      (630*pow(1 - t/dur,4)*P[2*2+0])/pow(dur,3) - (840*pow(t,3)*(1 - t/dur)*P[3*2+0])/pow(dur,6) + (3780*pow(t,2)*pow(1 - t/dur,2)*P[3*2+0])/pow(dur,5) -
+      (2520*t*pow(1 - t/dur,3)*P[3*2+0])/pow(dur,4) + (210*pow(1 - t/dur,4)*P[3*2+0])/pow(dur,3) - (210*pow(t,4)*P[4*2+0])/pow(dur,7) + (2520*pow(t,3)*(1 - t/dur)*P[4*2+0])/pow(dur,6) -
+      (3780*pow(t,2)*pow(1 - t/dur,2)*P[4*2+0])/pow(dur,5) + (840*t*pow(1 - t/dur,3)*P[4*2+0])/pow(dur,4) + (630*pow(t,4)*P[5*2+0])/pow(dur,7) - (2520*pow(t,3)*(1 - t/dur)*P[5*2+0])/pow(dur,6) +
+      (1260*pow(t,2)*pow(1 - t/dur,2)*P[5*2+0])/pow(dur,5) - (630*pow(t,4)*P[6*2+0])/pow(dur,7) + (840*pow(t,3)*(1 - t/dur)*P[6*2+0])/pow(dur,6) + (210*pow(t,4)*P[7*2+0])/pow(dur,7)),
+   2*((-630*pow(t,4))/pow(dur,7) + (840*pow(t,3)*(1 - t/dur))/pow(dur,6))*((-210*pow(1 - t/dur,4)*P[0*2+1])/pow(dur,3) - (840*t*pow(1 - t/dur,3)*P[1*2+1])/pow(dur,4) +
+      (630*pow(1 - t/dur,4)*P[1*2+1])/pow(dur,3) - (1260*pow(t,2)*pow(1 - t/dur,2)*P[2*2+1])/pow(dur,5) + (2520*t*pow(1 - t/dur,3)*P[2*2+1])/pow(dur,4) -
+      (630*pow(1 - t/dur,4)*P[2*2+1])/pow(dur,3) - (840*pow(t,3)*(1 - t/dur)*P[3*2+1])/pow(dur,6) + (3780*pow(t,2)*pow(1 - t/dur,2)*P[3*2+1])/pow(dur,5) -
+      (2520*t*pow(1 - t/dur,3)*P[3*2+1])/pow(dur,4) + (210*pow(1 - t/dur,4)*P[3*2+1])/pow(dur,3) - (210*pow(t,4)*P[4*2+1])/pow(dur,7) + (2520*pow(t,3)*(1 - t/dur)*P[4*2+1])/pow(dur,6) -
+      (3780*pow(t,2)*pow(1 - t/dur,2)*P[4*2+1])/pow(dur,5) + (840*t*pow(1 - t/dur,3)*P[4*2+1])/pow(dur,4) + (630*pow(t,4)*P[5*2+1])/pow(dur,7) - (2520*pow(t,3)*(1 - t/dur)*P[5*2+1])/pow(dur,6) +
+      (1260*pow(t,2)*pow(1 - t/dur,2)*P[5*2+1])/pow(dur,5) - (630*pow(t,4)*P[6*2+1])/pow(dur,7) + (840*pow(t,3)*(1 - t/dur)*P[6*2+1])/pow(dur,6) + (210*pow(t,4)*P[7*2+1])/pow(dur,7)),
+   (420*pow(t,4)*((-210*pow(1 - t/dur,4)*P[0*2+0])/pow(dur,3) - (840*t*pow(1 - t/dur,3)*P[1*2+0])/pow(dur,4) + (630*pow(1 - t/dur,4)*P[1*2+0])/pow(dur,3) -
+        (1260*pow(t,2)*pow(1 - t/dur,2)*P[2*2+0])/pow(dur,5) + (2520*t*pow(1 - t/dur,3)*P[2*2+0])/pow(dur,4) - (630*pow(1 - t/dur,4)*P[2*2+0])/pow(dur,3) -
+        (840*pow(t,3)*(1 - t/dur)*P[3*2+0])/pow(dur,6) + (3780*pow(t,2)*pow(1 - t/dur,2)*P[3*2+0])/pow(dur,5) - (2520*t*pow(1 - t/dur,3)*P[3*2+0])/pow(dur,4) +
+        (210*pow(1 - t/dur,4)*P[3*2+0])/pow(dur,3) - (210*pow(t,4)*P[4*2+0])/pow(dur,7) + (2520*pow(t,3)*(1 - t/dur)*P[4*2+0])/pow(dur,6) - (3780*pow(t,2)*pow(1 - t/dur,2)*P[4*2+0])/pow(dur,5) +
+        (840*t*pow(1 - t/dur,3)*P[4*2+0])/pow(dur,4) + (630*pow(t,4)*P[5*2+0])/pow(dur,7) - (2520*pow(t,3)*(1 - t/dur)*P[5*2+0])/pow(dur,6) +
+        (1260*pow(t,2)*pow(1 - t/dur,2)*P[5*2+0])/pow(dur,5) - (630*pow(t,4)*P[6*2+0])/pow(dur,7) + (840*pow(t,3)*(1 - t/dur)*P[6*2+0])/pow(dur,6) + (210*pow(t,4)*P[7*2+0])/pow(dur,7)))/
+    pow(dur,7),(420*pow(t,4)*((-210*pow(1 - t/dur,4)*P[0*2+1])/pow(dur,3) - (840*t*pow(1 - t/dur,3)*P[1*2+1])/pow(dur,4) + (630*pow(1 - t/dur,4)*P[1*2+1])/pow(dur,3) -
+        (1260*pow(t,2)*pow(1 - t/dur,2)*P[2*2+1])/pow(dur,5) + (2520*t*pow(1 - t/dur,3)*P[2*2+1])/pow(dur,4) - (630*pow(1 - t/dur,4)*P[2*2+1])/pow(dur,3) -
+        (840*pow(t,3)*(1 - t/dur)*P[3*2+1])/pow(dur,6) + (3780*pow(t,2)*pow(1 - t/dur,2)*P[3*2+1])/pow(dur,5) - (2520*t*pow(1 - t/dur,3)*P[3*2+1])/pow(dur,4) +
+        (210*pow(1 - t/dur,4)*P[3*2+1])/pow(dur,3) - (210*pow(t,4)*P[4*2+1])/pow(dur,7) + (2520*pow(t,3)*(1 - t/dur)*P[4*2+1])/pow(dur,6) - (3780*pow(t,2)*pow(1 - t/dur,2)*P[4*2+1])/pow(dur,5) +
+        (840*t*pow(1 - t/dur,3)*P[4*2+1])/pow(dur,4) + (630*pow(t,4)*P[5*2+1])/pow(dur,7) - (2520*pow(t,3)*(1 - t/dur)*P[5*2+1])/pow(dur,6) +
+        (1260*pow(t,2)*pow(1 - t/dur,2)*P[5*2+1])/pow(dur,5) - (630*pow(t,4)*P[6*2+1])/pow(dur,7) + (840*pow(t,3)*(1 - t/dur)*P[6*2+1])/pow(dur,6) + (210*pow(t,4)*P[7*2+1])/pow(dur,7)))/
+    pow(dur,7)};
+    }
+    return pow((-210*pow(1 - t/dur,4)*P[0*2+0])/pow(dur,3) - (840*t*pow(1 - t/dur,3)*P[1*2+0])/pow(dur,4) + (630*pow(1 - t/dur,4)*P[1*2+0])/pow(dur,3) -
+     (1260*pow(t,2)*pow(1 - t/dur,2)*P[2*2+0])/pow(dur,5) + (2520*t*pow(1 - t/dur,3)*P[2*2+0])/pow(dur,4) - (630*pow(1 - t/dur,4)*P[2*2+0])/pow(dur,3) -
+     (840*pow(t,3)*(1 - t/dur)*P[3*2+0])/pow(dur,6) + (3780*pow(t,2)*pow(1 - t/dur,2)*P[3*2+0])/pow(dur,5) - (2520*t*pow(1 - t/dur,3)*P[3*2+0])/pow(dur,4) +
+     (210*pow(1 - t/dur,4)*P[3*2+0])/pow(dur,3) - (210*pow(t,4)*P[4*2+0])/pow(dur,7) + (2520*pow(t,3)*(1 - t/dur)*P[4*2+0])/pow(dur,6) - (3780*pow(t,2)*pow(1 - t/dur,2)*P[4*2+0])/pow(dur,5) +
+     (840*t*pow(1 - t/dur,3)*P[4*2+0])/pow(dur,4) + (630*pow(t,4)*P[5*2+0])/pow(dur,7) - (2520*pow(t,3)*(1 - t/dur)*P[5*2+0])/pow(dur,6) + (1260*pow(t,2)*pow(1 - t/dur,2)*P[5*2+0])/pow(dur,5) -
+     (630*pow(t,4)*P[6*2+0])/pow(dur,7) + (840*pow(t,3)*(1 - t/dur)*P[6*2+0])/pow(dur,6) + (210*pow(t,4)*P[7*2+0])/pow(dur,7),2) +
+   pow((-210*pow(1 - t/dur,4)*P[0*2+1])/pow(dur,3) - (840*t*pow(1 - t/dur,3)*P[1*2+1])/pow(dur,4) + (630*pow(1 - t/dur,4)*P[1*2+1])/pow(dur,3) -
+     (1260*pow(t,2)*pow(1 - t/dur,2)*P[2*2+1])/pow(dur,5) + (2520*t*pow(1 - t/dur,3)*P[2*2+1])/pow(dur,4) - (630*pow(1 - t/dur,4)*P[2*2+1])/pow(dur,3) -
+     (840*pow(t,3)*(1 - t/dur)*P[3*2+1])/pow(dur,6) + (3780*pow(t,2)*pow(1 - t/dur,2)*P[3*2+1])/pow(dur,5) - (2520*t*pow(1 - t/dur,3)*P[3*2+1])/pow(dur,4) +
+     (210*pow(1 - t/dur,4)*P[3*2+1])/pow(dur,3) - (210*pow(t,4)*P[4*2+1])/pow(dur,7) + (2520*pow(t,3)*(1 - t/dur)*P[4*2+1])/pow(dur,6) - (3780*pow(t,2)*pow(1 - t/dur,2)*P[4*2+1])/pow(dur,5) +
+     (840*t*pow(1 - t/dur,3)*P[4*2+1])/pow(dur,4) + (630*pow(t,4)*P[5*2+1])/pow(dur,7) - (2520*pow(t,3)*(1 - t/dur)*P[5*2+1])/pow(dur,6) + (1260*pow(t,2)*pow(1 - t/dur,2)*P[5*2+1])/pow(dur,5) -
+     (630*pow(t,4)*P[6*2+1])/pow(dur,7) + (840*pow(t,3)*(1 - t/dur)*P[6*2+1])/pow(dur,6) + (210*pow(t,4)*P[7*2+1])/pow(dur,7),2);
+  } else if(n==4) {
+    if(grad.size()>0) {
+      grad = vector<double> {(1680*pow(1 - t/dur,3)*((840*pow(1 - t/dur,3)*P[0*2+0])/pow(dur,4) + (2520*t*pow(1 - t/dur,2)*P[1*2+0])/pow(dur,5) - (3360*pow(1 - t/dur,3)*P[1*2+0])/pow(dur,4) +
+        (2520*pow(t,2)*(1 - t/dur)*P[2*2+0])/pow(dur,6) - (10080*t*pow(1 - t/dur,2)*P[2*2+0])/pow(dur,5) + (5040*pow(1 - t/dur,3)*P[2*2+0])/pow(dur,4) + (840*pow(t,3)*P[3*2+0])/pow(dur,7) -
+        (10080*pow(t,2)*(1 - t/dur)*P[3*2+0])/pow(dur,6) + (15120*t*pow(1 - t/dur,2)*P[3*2+0])/pow(dur,5) - (3360*pow(1 - t/dur,3)*P[3*2+0])/pow(dur,4) - (3360*pow(t,3)*P[4*2+0])/pow(dur,7) +
+        (15120*pow(t,2)*(1 - t/dur)*P[4*2+0])/pow(dur,6) - (10080*t*pow(1 - t/dur,2)*P[4*2+0])/pow(dur,5) + (840*pow(1 - t/dur,3)*P[4*2+0])/pow(dur,4) + (5040*pow(t,3)*P[5*2+0])/pow(dur,7) -
+        (10080*pow(t,2)*(1 - t/dur)*P[5*2+0])/pow(dur,6) + (2520*t*pow(1 - t/dur,2)*P[5*2+0])/pow(dur,5) - (3360*pow(t,3)*P[6*2+0])/pow(dur,7) + (2520*pow(t,2)*(1 - t/dur)*P[6*2+0])/pow(dur,6) +
+        (840*pow(t,3)*P[7*2+0])/pow(dur,7)))/pow(dur,4),(1680*pow(1 - t/dur,3)*
+      ((840*pow(1 - t/dur,3)*P[0*2+1])/pow(dur,4) + (2520*t*pow(1 - t/dur,2)*P[1*2+1])/pow(dur,5) - (3360*pow(1 - t/dur,3)*P[1*2+1])/pow(dur,4) + (2520*pow(t,2)*(1 - t/dur)*P[2*2+1])/pow(dur,6) -
+        (10080*t*pow(1 - t/dur,2)*P[2*2+1])/pow(dur,5) + (5040*pow(1 - t/dur,3)*P[2*2+1])/pow(dur,4) + (840*pow(t,3)*P[3*2+1])/pow(dur,7) - (10080*pow(t,2)*(1 - t/dur)*P[3*2+1])/pow(dur,6) +
+        (15120*t*pow(1 - t/dur,2)*P[3*2+1])/pow(dur,5) - (3360*pow(1 - t/dur,3)*P[3*2+1])/pow(dur,4) - (3360*pow(t,3)*P[4*2+1])/pow(dur,7) + (15120*pow(t,2)*(1 - t/dur)*P[4*2+1])/pow(dur,6) -
+        (10080*t*pow(1 - t/dur,2)*P[4*2+1])/pow(dur,5) + (840*pow(1 - t/dur,3)*P[4*2+1])/pow(dur,4) + (5040*pow(t,3)*P[5*2+1])/pow(dur,7) - (10080*pow(t,2)*(1 - t/dur)*P[5*2+1])/pow(dur,6) +
+        (2520*t*pow(1 - t/dur,2)*P[5*2+1])/pow(dur,5) - (3360*pow(t,3)*P[6*2+1])/pow(dur,7) + (2520*pow(t,2)*(1 - t/dur)*P[6*2+1])/pow(dur,6) + (840*pow(t,3)*P[7*2+1])/pow(dur,7)))/pow(dur,4),
+   2*((2520*t*pow(1 - t/dur,2))/pow(dur,5) - (3360*pow(1 - t/dur,3))/pow(dur,4))*
+    ((840*pow(1 - t/dur,3)*P[0*2+0])/pow(dur,4) + (2520*t*pow(1 - t/dur,2)*P[1*2+0])/pow(dur,5) - (3360*pow(1 - t/dur,3)*P[1*2+0])/pow(dur,4) + (2520*pow(t,2)*(1 - t/dur)*P[2*2+0])/pow(dur,6) -
+      (10080*t*pow(1 - t/dur,2)*P[2*2+0])/pow(dur,5) + (5040*pow(1 - t/dur,3)*P[2*2+0])/pow(dur,4) + (840*pow(t,3)*P[3*2+0])/pow(dur,7) - (10080*pow(t,2)*(1 - t/dur)*P[3*2+0])/pow(dur,6) +
+      (15120*t*pow(1 - t/dur,2)*P[3*2+0])/pow(dur,5) - (3360*pow(1 - t/dur,3)*P[3*2+0])/pow(dur,4) - (3360*pow(t,3)*P[4*2+0])/pow(dur,7) + (15120*pow(t,2)*(1 - t/dur)*P[4*2+0])/pow(dur,6) -
+      (10080*t*pow(1 - t/dur,2)*P[4*2+0])/pow(dur,5) + (840*pow(1 - t/dur,3)*P[4*2+0])/pow(dur,4) + (5040*pow(t,3)*P[5*2+0])/pow(dur,7) - (10080*pow(t,2)*(1 - t/dur)*P[5*2+0])/pow(dur,6) +
+      (2520*t*pow(1 - t/dur,2)*P[5*2+0])/pow(dur,5) - (3360*pow(t,3)*P[6*2+0])/pow(dur,7) + (2520*pow(t,2)*(1 - t/dur)*P[6*2+0])/pow(dur,6) + (840*pow(t,3)*P[7*2+0])/pow(dur,7)),
+   2*((2520*t*pow(1 - t/dur,2))/pow(dur,5) - (3360*pow(1 - t/dur,3))/pow(dur,4))*
+    ((840*pow(1 - t/dur,3)*P[0*2+1])/pow(dur,4) + (2520*t*pow(1 - t/dur,2)*P[1*2+1])/pow(dur,5) - (3360*pow(1 - t/dur,3)*P[1*2+1])/pow(dur,4) + (2520*pow(t,2)*(1 - t/dur)*P[2*2+1])/pow(dur,6) -
+      (10080*t*pow(1 - t/dur,2)*P[2*2+1])/pow(dur,5) + (5040*pow(1 - t/dur,3)*P[2*2+1])/pow(dur,4) + (840*pow(t,3)*P[3*2+1])/pow(dur,7) - (10080*pow(t,2)*(1 - t/dur)*P[3*2+1])/pow(dur,6) +
+      (15120*t*pow(1 - t/dur,2)*P[3*2+1])/pow(dur,5) - (3360*pow(1 - t/dur,3)*P[3*2+1])/pow(dur,4) - (3360*pow(t,3)*P[4*2+1])/pow(dur,7) + (15120*pow(t,2)*(1 - t/dur)*P[4*2+1])/pow(dur,6) -
+      (10080*t*pow(1 - t/dur,2)*P[4*2+1])/pow(dur,5) + (840*pow(1 - t/dur,3)*P[4*2+1])/pow(dur,4) + (5040*pow(t,3)*P[5*2+1])/pow(dur,7) - (10080*pow(t,2)*(1 - t/dur)*P[5*2+1])/pow(dur,6) +
+      (2520*t*pow(1 - t/dur,2)*P[5*2+1])/pow(dur,5) - (3360*pow(t,3)*P[6*2+1])/pow(dur,7) + (2520*pow(t,2)*(1 - t/dur)*P[6*2+1])/pow(dur,6) + (840*pow(t,3)*P[7*2+1])/pow(dur,7)),
+   2*((2520*pow(t,2)*(1 - t/dur))/pow(dur,6) - (10080*t*pow(1 - t/dur,2))/pow(dur,5) + (5040*pow(1 - t/dur,3))/pow(dur,4))*
+    ((840*pow(1 - t/dur,3)*P[0*2+0])/pow(dur,4) + (2520*t*pow(1 - t/dur,2)*P[1*2+0])/pow(dur,5) - (3360*pow(1 - t/dur,3)*P[1*2+0])/pow(dur,4) + (2520*pow(t,2)*(1 - t/dur)*P[2*2+0])/pow(dur,6) -
+      (10080*t*pow(1 - t/dur,2)*P[2*2+0])/pow(dur,5) + (5040*pow(1 - t/dur,3)*P[2*2+0])/pow(dur,4) + (840*pow(t,3)*P[3*2+0])/pow(dur,7) - (10080*pow(t,2)*(1 - t/dur)*P[3*2+0])/pow(dur,6) +
+      (15120*t*pow(1 - t/dur,2)*P[3*2+0])/pow(dur,5) - (3360*pow(1 - t/dur,3)*P[3*2+0])/pow(dur,4) - (3360*pow(t,3)*P[4*2+0])/pow(dur,7) + (15120*pow(t,2)*(1 - t/dur)*P[4*2+0])/pow(dur,6) -
+      (10080*t*pow(1 - t/dur,2)*P[4*2+0])/pow(dur,5) + (840*pow(1 - t/dur,3)*P[4*2+0])/pow(dur,4) + (5040*pow(t,3)*P[5*2+0])/pow(dur,7) - (10080*pow(t,2)*(1 - t/dur)*P[5*2+0])/pow(dur,6) +
+      (2520*t*pow(1 - t/dur,2)*P[5*2+0])/pow(dur,5) - (3360*pow(t,3)*P[6*2+0])/pow(dur,7) + (2520*pow(t,2)*(1 - t/dur)*P[6*2+0])/pow(dur,6) + (840*pow(t,3)*P[7*2+0])/pow(dur,7)),
+   2*((2520*pow(t,2)*(1 - t/dur))/pow(dur,6) - (10080*t*pow(1 - t/dur,2))/pow(dur,5) + (5040*pow(1 - t/dur,3))/pow(dur,4))*
+    ((840*pow(1 - t/dur,3)*P[0*2+1])/pow(dur,4) + (2520*t*pow(1 - t/dur,2)*P[1*2+1])/pow(dur,5) - (3360*pow(1 - t/dur,3)*P[1*2+1])/pow(dur,4) + (2520*pow(t,2)*(1 - t/dur)*P[2*2+1])/pow(dur,6) -
+      (10080*t*pow(1 - t/dur,2)*P[2*2+1])/pow(dur,5) + (5040*pow(1 - t/dur,3)*P[2*2+1])/pow(dur,4) + (840*pow(t,3)*P[3*2+1])/pow(dur,7) - (10080*pow(t,2)*(1 - t/dur)*P[3*2+1])/pow(dur,6) +
+      (15120*t*pow(1 - t/dur,2)*P[3*2+1])/pow(dur,5) - (3360*pow(1 - t/dur,3)*P[3*2+1])/pow(dur,4) - (3360*pow(t,3)*P[4*2+1])/pow(dur,7) + (15120*pow(t,2)*(1 - t/dur)*P[4*2+1])/pow(dur,6) -
+      (10080*t*pow(1 - t/dur,2)*P[4*2+1])/pow(dur,5) + (840*pow(1 - t/dur,3)*P[4*2+1])/pow(dur,4) + (5040*pow(t,3)*P[5*2+1])/pow(dur,7) - (10080*pow(t,2)*(1 - t/dur)*P[5*2+1])/pow(dur,6) +
+      (2520*t*pow(1 - t/dur,2)*P[5*2+1])/pow(dur,5) - (3360*pow(t,3)*P[6*2+1])/pow(dur,7) + (2520*pow(t,2)*(1 - t/dur)*P[6*2+1])/pow(dur,6) + (840*pow(t,3)*P[7*2+1])/pow(dur,7)),
+   2*((840*pow(t,3))/pow(dur,7) - (10080*pow(t,2)*(1 - t/dur))/pow(dur,6) + (15120*t*pow(1 - t/dur,2))/pow(dur,5) - (3360*pow(1 - t/dur,3))/pow(dur,4))*
+    ((840*pow(1 - t/dur,3)*P[0*2+0])/pow(dur,4) + (2520*t*pow(1 - t/dur,2)*P[1*2+0])/pow(dur,5) - (3360*pow(1 - t/dur,3)*P[1*2+0])/pow(dur,4) + (2520*pow(t,2)*(1 - t/dur)*P[2*2+0])/pow(dur,6) -
+      (10080*t*pow(1 - t/dur,2)*P[2*2+0])/pow(dur,5) + (5040*pow(1 - t/dur,3)*P[2*2+0])/pow(dur,4) + (840*pow(t,3)*P[3*2+0])/pow(dur,7) - (10080*pow(t,2)*(1 - t/dur)*P[3*2+0])/pow(dur,6) +
+      (15120*t*pow(1 - t/dur,2)*P[3*2+0])/pow(dur,5) - (3360*pow(1 - t/dur,3)*P[3*2+0])/pow(dur,4) - (3360*pow(t,3)*P[4*2+0])/pow(dur,7) + (15120*pow(t,2)*(1 - t/dur)*P[4*2+0])/pow(dur,6) -
+      (10080*t*pow(1 - t/dur,2)*P[4*2+0])/pow(dur,5) + (840*pow(1 - t/dur,3)*P[4*2+0])/pow(dur,4) + (5040*pow(t,3)*P[5*2+0])/pow(dur,7) - (10080*pow(t,2)*(1 - t/dur)*P[5*2+0])/pow(dur,6) +
+      (2520*t*pow(1 - t/dur,2)*P[5*2+0])/pow(dur,5) - (3360*pow(t,3)*P[6*2+0])/pow(dur,7) + (2520*pow(t,2)*(1 - t/dur)*P[6*2+0])/pow(dur,6) + (840*pow(t,3)*P[7*2+0])/pow(dur,7)),
+   2*((840*pow(t,3))/pow(dur,7) - (10080*pow(t,2)*(1 - t/dur))/pow(dur,6) + (15120*t*pow(1 - t/dur,2))/pow(dur,5) - (3360*pow(1 - t/dur,3))/pow(dur,4))*
+    ((840*pow(1 - t/dur,3)*P[0*2+1])/pow(dur,4) + (2520*t*pow(1 - t/dur,2)*P[1*2+1])/pow(dur,5) - (3360*pow(1 - t/dur,3)*P[1*2+1])/pow(dur,4) + (2520*pow(t,2)*(1 - t/dur)*P[2*2+1])/pow(dur,6) -
+      (10080*t*pow(1 - t/dur,2)*P[2*2+1])/pow(dur,5) + (5040*pow(1 - t/dur,3)*P[2*2+1])/pow(dur,4) + (840*pow(t,3)*P[3*2+1])/pow(dur,7) - (10080*pow(t,2)*(1 - t/dur)*P[3*2+1])/pow(dur,6) +
+      (15120*t*pow(1 - t/dur,2)*P[3*2+1])/pow(dur,5) - (3360*pow(1 - t/dur,3)*P[3*2+1])/pow(dur,4) - (3360*pow(t,3)*P[4*2+1])/pow(dur,7) + (15120*pow(t,2)*(1 - t/dur)*P[4*2+1])/pow(dur,6) -
+      (10080*t*pow(1 - t/dur,2)*P[4*2+1])/pow(dur,5) + (840*pow(1 - t/dur,3)*P[4*2+1])/pow(dur,4) + (5040*pow(t,3)*P[5*2+1])/pow(dur,7) - (10080*pow(t,2)*(1 - t/dur)*P[5*2+1])/pow(dur,6) +
+      (2520*t*pow(1 - t/dur,2)*P[5*2+1])/pow(dur,5) - (3360*pow(t,3)*P[6*2+1])/pow(dur,7) + (2520*pow(t,2)*(1 - t/dur)*P[6*2+1])/pow(dur,6) + (840*pow(t,3)*P[7*2+1])/pow(dur,7)),
+   2*((-3360*pow(t,3))/pow(dur,7) + (15120*pow(t,2)*(1 - t/dur))/pow(dur,6) - (10080*t*pow(1 - t/dur,2))/pow(dur,5) + (840*pow(1 - t/dur,3))/pow(dur,4))*
+    ((840*pow(1 - t/dur,3)*P[0*2+0])/pow(dur,4) + (2520*t*pow(1 - t/dur,2)*P[1*2+0])/pow(dur,5) - (3360*pow(1 - t/dur,3)*P[1*2+0])/pow(dur,4) + (2520*pow(t,2)*(1 - t/dur)*P[2*2+0])/pow(dur,6) -
+      (10080*t*pow(1 - t/dur,2)*P[2*2+0])/pow(dur,5) + (5040*pow(1 - t/dur,3)*P[2*2+0])/pow(dur,4) + (840*pow(t,3)*P[3*2+0])/pow(dur,7) - (10080*pow(t,2)*(1 - t/dur)*P[3*2+0])/pow(dur,6) +
+      (15120*t*pow(1 - t/dur,2)*P[3*2+0])/pow(dur,5) - (3360*pow(1 - t/dur,3)*P[3*2+0])/pow(dur,4) - (3360*pow(t,3)*P[4*2+0])/pow(dur,7) + (15120*pow(t,2)*(1 - t/dur)*P[4*2+0])/pow(dur,6) -
+      (10080*t*pow(1 - t/dur,2)*P[4*2+0])/pow(dur,5) + (840*pow(1 - t/dur,3)*P[4*2+0])/pow(dur,4) + (5040*pow(t,3)*P[5*2+0])/pow(dur,7) - (10080*pow(t,2)*(1 - t/dur)*P[5*2+0])/pow(dur,6) +
+      (2520*t*pow(1 - t/dur,2)*P[5*2+0])/pow(dur,5) - (3360*pow(t,3)*P[6*2+0])/pow(dur,7) + (2520*pow(t,2)*(1 - t/dur)*P[6*2+0])/pow(dur,6) + (840*pow(t,3)*P[7*2+0])/pow(dur,7)),
+   2*((-3360*pow(t,3))/pow(dur,7) + (15120*pow(t,2)*(1 - t/dur))/pow(dur,6) - (10080*t*pow(1 - t/dur,2))/pow(dur,5) + (840*pow(1 - t/dur,3))/pow(dur,4))*
+    ((840*pow(1 - t/dur,3)*P[0*2+1])/pow(dur,4) + (2520*t*pow(1 - t/dur,2)*P[1*2+1])/pow(dur,5) - (3360*pow(1 - t/dur,3)*P[1*2+1])/pow(dur,4) + (2520*pow(t,2)*(1 - t/dur)*P[2*2+1])/pow(dur,6) -
+      (10080*t*pow(1 - t/dur,2)*P[2*2+1])/pow(dur,5) + (5040*pow(1 - t/dur,3)*P[2*2+1])/pow(dur,4) + (840*pow(t,3)*P[3*2+1])/pow(dur,7) - (10080*pow(t,2)*(1 - t/dur)*P[3*2+1])/pow(dur,6) +
+      (15120*t*pow(1 - t/dur,2)*P[3*2+1])/pow(dur,5) - (3360*pow(1 - t/dur,3)*P[3*2+1])/pow(dur,4) - (3360*pow(t,3)*P[4*2+1])/pow(dur,7) + (15120*pow(t,2)*(1 - t/dur)*P[4*2+1])/pow(dur,6) -
+      (10080*t*pow(1 - t/dur,2)*P[4*2+1])/pow(dur,5) + (840*pow(1 - t/dur,3)*P[4*2+1])/pow(dur,4) + (5040*pow(t,3)*P[5*2+1])/pow(dur,7) - (10080*pow(t,2)*(1 - t/dur)*P[5*2+1])/pow(dur,6) +
+      (2520*t*pow(1 - t/dur,2)*P[5*2+1])/pow(dur,5) - (3360*pow(t,3)*P[6*2+1])/pow(dur,7) + (2520*pow(t,2)*(1 - t/dur)*P[6*2+1])/pow(dur,6) + (840*pow(t,3)*P[7*2+1])/pow(dur,7)),
+   2*((5040*pow(t,3))/pow(dur,7) - (10080*pow(t,2)*(1 - t/dur))/pow(dur,6) + (2520*t*pow(1 - t/dur,2))/pow(dur,5))*
+    ((840*pow(1 - t/dur,3)*P[0*2+0])/pow(dur,4) + (2520*t*pow(1 - t/dur,2)*P[1*2+0])/pow(dur,5) - (3360*pow(1 - t/dur,3)*P[1*2+0])/pow(dur,4) + (2520*pow(t,2)*(1 - t/dur)*P[2*2+0])/pow(dur,6) -
+      (10080*t*pow(1 - t/dur,2)*P[2*2+0])/pow(dur,5) + (5040*pow(1 - t/dur,3)*P[2*2+0])/pow(dur,4) + (840*pow(t,3)*P[3*2+0])/pow(dur,7) - (10080*pow(t,2)*(1 - t/dur)*P[3*2+0])/pow(dur,6) +
+      (15120*t*pow(1 - t/dur,2)*P[3*2+0])/pow(dur,5) - (3360*pow(1 - t/dur,3)*P[3*2+0])/pow(dur,4) - (3360*pow(t,3)*P[4*2+0])/pow(dur,7) + (15120*pow(t,2)*(1 - t/dur)*P[4*2+0])/pow(dur,6) -
+      (10080*t*pow(1 - t/dur,2)*P[4*2+0])/pow(dur,5) + (840*pow(1 - t/dur,3)*P[4*2+0])/pow(dur,4) + (5040*pow(t,3)*P[5*2+0])/pow(dur,7) - (10080*pow(t,2)*(1 - t/dur)*P[5*2+0])/pow(dur,6) +
+      (2520*t*pow(1 - t/dur,2)*P[5*2+0])/pow(dur,5) - (3360*pow(t,3)*P[6*2+0])/pow(dur,7) + (2520*pow(t,2)*(1 - t/dur)*P[6*2+0])/pow(dur,6) + (840*pow(t,3)*P[7*2+0])/pow(dur,7)),
+   2*((5040*pow(t,3))/pow(dur,7) - (10080*pow(t,2)*(1 - t/dur))/pow(dur,6) + (2520*t*pow(1 - t/dur,2))/pow(dur,5))*
+    ((840*pow(1 - t/dur,3)*P[0*2+1])/pow(dur,4) + (2520*t*pow(1 - t/dur,2)*P[1*2+1])/pow(dur,5) - (3360*pow(1 - t/dur,3)*P[1*2+1])/pow(dur,4) + (2520*pow(t,2)*(1 - t/dur)*P[2*2+1])/pow(dur,6) -
+      (10080*t*pow(1 - t/dur,2)*P[2*2+1])/pow(dur,5) + (5040*pow(1 - t/dur,3)*P[2*2+1])/pow(dur,4) + (840*pow(t,3)*P[3*2+1])/pow(dur,7) - (10080*pow(t,2)*(1 - t/dur)*P[3*2+1])/pow(dur,6) +
+      (15120*t*pow(1 - t/dur,2)*P[3*2+1])/pow(dur,5) - (3360*pow(1 - t/dur,3)*P[3*2+1])/pow(dur,4) - (3360*pow(t,3)*P[4*2+1])/pow(dur,7) + (15120*pow(t,2)*(1 - t/dur)*P[4*2+1])/pow(dur,6) -
+      (10080*t*pow(1 - t/dur,2)*P[4*2+1])/pow(dur,5) + (840*pow(1 - t/dur,3)*P[4*2+1])/pow(dur,4) + (5040*pow(t,3)*P[5*2+1])/pow(dur,7) - (10080*pow(t,2)*(1 - t/dur)*P[5*2+1])/pow(dur,6) +
+      (2520*t*pow(1 - t/dur,2)*P[5*2+1])/pow(dur,5) - (3360*pow(t,3)*P[6*2+1])/pow(dur,7) + (2520*pow(t,2)*(1 - t/dur)*P[6*2+1])/pow(dur,6) + (840*pow(t,3)*P[7*2+1])/pow(dur,7)),
+   2*((-3360*pow(t,3))/pow(dur,7) + (2520*pow(t,2)*(1 - t/dur))/pow(dur,6))*
+    ((840*pow(1 - t/dur,3)*P[0*2+0])/pow(dur,4) + (2520*t*pow(1 - t/dur,2)*P[1*2+0])/pow(dur,5) - (3360*pow(1 - t/dur,3)*P[1*2+0])/pow(dur,4) + (2520*pow(t,2)*(1 - t/dur)*P[2*2+0])/pow(dur,6) -
+      (10080*t*pow(1 - t/dur,2)*P[2*2+0])/pow(dur,5) + (5040*pow(1 - t/dur,3)*P[2*2+0])/pow(dur,4) + (840*pow(t,3)*P[3*2+0])/pow(dur,7) - (10080*pow(t,2)*(1 - t/dur)*P[3*2+0])/pow(dur,6) +
+      (15120*t*pow(1 - t/dur,2)*P[3*2+0])/pow(dur,5) - (3360*pow(1 - t/dur,3)*P[3*2+0])/pow(dur,4) - (3360*pow(t,3)*P[4*2+0])/pow(dur,7) + (15120*pow(t,2)*(1 - t/dur)*P[4*2+0])/pow(dur,6) -
+      (10080*t*pow(1 - t/dur,2)*P[4*2+0])/pow(dur,5) + (840*pow(1 - t/dur,3)*P[4*2+0])/pow(dur,4) + (5040*pow(t,3)*P[5*2+0])/pow(dur,7) - (10080*pow(t,2)*(1 - t/dur)*P[5*2+0])/pow(dur,6) +
+      (2520*t*pow(1 - t/dur,2)*P[5*2+0])/pow(dur,5) - (3360*pow(t,3)*P[6*2+0])/pow(dur,7) + (2520*pow(t,2)*(1 - t/dur)*P[6*2+0])/pow(dur,6) + (840*pow(t,3)*P[7*2+0])/pow(dur,7)),
+   2*((-3360*pow(t,3))/pow(dur,7) + (2520*pow(t,2)*(1 - t/dur))/pow(dur,6))*
+    ((840*pow(1 - t/dur,3)*P[0*2+1])/pow(dur,4) + (2520*t*pow(1 - t/dur,2)*P[1*2+1])/pow(dur,5) - (3360*pow(1 - t/dur,3)*P[1*2+1])/pow(dur,4) + (2520*pow(t,2)*(1 - t/dur)*P[2*2+1])/pow(dur,6) -
+      (10080*t*pow(1 - t/dur,2)*P[2*2+1])/pow(dur,5) + (5040*pow(1 - t/dur,3)*P[2*2+1])/pow(dur,4) + (840*pow(t,3)*P[3*2+1])/pow(dur,7) - (10080*pow(t,2)*(1 - t/dur)*P[3*2+1])/pow(dur,6) +
+      (15120*t*pow(1 - t/dur,2)*P[3*2+1])/pow(dur,5) - (3360*pow(1 - t/dur,3)*P[3*2+1])/pow(dur,4) - (3360*pow(t,3)*P[4*2+1])/pow(dur,7) + (15120*pow(t,2)*(1 - t/dur)*P[4*2+1])/pow(dur,6) -
+      (10080*t*pow(1 - t/dur,2)*P[4*2+1])/pow(dur,5) + (840*pow(1 - t/dur,3)*P[4*2+1])/pow(dur,4) + (5040*pow(t,3)*P[5*2+1])/pow(dur,7) - (10080*pow(t,2)*(1 - t/dur)*P[5*2+1])/pow(dur,6) +
+      (2520*t*pow(1 - t/dur,2)*P[5*2+1])/pow(dur,5) - (3360*pow(t,3)*P[6*2+1])/pow(dur,7) + (2520*pow(t,2)*(1 - t/dur)*P[6*2+1])/pow(dur,6) + (840*pow(t,3)*P[7*2+1])/pow(dur,7)),
+   (1680*pow(t,3)*((840*pow(1 - t/dur,3)*P[0*2+0])/pow(dur,4) + (2520*t*pow(1 - t/dur,2)*P[1*2+0])/pow(dur,5) - (3360*pow(1 - t/dur,3)*P[1*2+0])/pow(dur,4) +
+        (2520*pow(t,2)*(1 - t/dur)*P[2*2+0])/pow(dur,6) - (10080*t*pow(1 - t/dur,2)*P[2*2+0])/pow(dur,5) + (5040*pow(1 - t/dur,3)*P[2*2+0])/pow(dur,4) + (840*pow(t,3)*P[3*2+0])/pow(dur,7) -
+        (10080*pow(t,2)*(1 - t/dur)*P[3*2+0])/pow(dur,6) + (15120*t*pow(1 - t/dur,2)*P[3*2+0])/pow(dur,5) - (3360*pow(1 - t/dur,3)*P[3*2+0])/pow(dur,4) - (3360*pow(t,3)*P[4*2+0])/pow(dur,7) +
+        (15120*pow(t,2)*(1 - t/dur)*P[4*2+0])/pow(dur,6) - (10080*t*pow(1 - t/dur,2)*P[4*2+0])/pow(dur,5) + (840*pow(1 - t/dur,3)*P[4*2+0])/pow(dur,4) + (5040*pow(t,3)*P[5*2+0])/pow(dur,7) -
+        (10080*pow(t,2)*(1 - t/dur)*P[5*2+0])/pow(dur,6) + (2520*t*pow(1 - t/dur,2)*P[5*2+0])/pow(dur,5) - (3360*pow(t,3)*P[6*2+0])/pow(dur,7) + (2520*pow(t,2)*(1 - t/dur)*P[6*2+0])/pow(dur,6) +
+        (840*pow(t,3)*P[7*2+0])/pow(dur,7)))/pow(dur,7),(1680*pow(t,3)*((840*pow(1 - t/dur,3)*P[0*2+1])/pow(dur,4) + (2520*t*pow(1 - t/dur,2)*P[1*2+1])/pow(dur,5) -
+        (3360*pow(1 - t/dur,3)*P[1*2+1])/pow(dur,4) + (2520*pow(t,2)*(1 - t/dur)*P[2*2+1])/pow(dur,6) - (10080*t*pow(1 - t/dur,2)*P[2*2+1])/pow(dur,5) +
+        (5040*pow(1 - t/dur,3)*P[2*2+1])/pow(dur,4) + (840*pow(t,3)*P[3*2+1])/pow(dur,7) - (10080*pow(t,2)*(1 - t/dur)*P[3*2+1])/pow(dur,6) + (15120*t*pow(1 - t/dur,2)*P[3*2+1])/pow(dur,5) -
+        (3360*pow(1 - t/dur,3)*P[3*2+1])/pow(dur,4) - (3360*pow(t,3)*P[4*2+1])/pow(dur,7) + (15120*pow(t,2)*(1 - t/dur)*P[4*2+1])/pow(dur,6) - (10080*t*pow(1 - t/dur,2)*P[4*2+1])/pow(dur,5) +
+        (840*pow(1 - t/dur,3)*P[4*2+1])/pow(dur,4) + (5040*pow(t,3)*P[5*2+1])/pow(dur,7) - (10080*pow(t,2)*(1 - t/dur)*P[5*2+1])/pow(dur,6) + (2520*t*pow(1 - t/dur,2)*P[5*2+1])/pow(dur,5) -
+        (3360*pow(t,3)*P[6*2+1])/pow(dur,7) + (2520*pow(t,2)*(1 - t/dur)*P[6*2+1])/pow(dur,6) + (840*pow(t,3)*P[7*2+1])/pow(dur,7)))/pow(dur,7)};
+    }
+    return pow((840*pow(1 - t/dur,3)*P[0*2+0])/pow(dur,4) + (2520*t*pow(1 - t/dur,2)*P[1*2+0])/pow(dur,5) - (3360*pow(1 - t/dur,3)*P[1*2+0])/pow(dur,4) + (2520*pow(t,2)*(1 - t/dur)*P[2*2+0])/pow(dur,6) -
+     (10080*t*pow(1 - t/dur,2)*P[2*2+0])/pow(dur,5) + (5040*pow(1 - t/dur,3)*P[2*2+0])/pow(dur,4) + (840*pow(t,3)*P[3*2+0])/pow(dur,7) - (10080*pow(t,2)*(1 - t/dur)*P[3*2+0])/pow(dur,6) +
+     (15120*t*pow(1 - t/dur,2)*P[3*2+0])/pow(dur,5) - (3360*pow(1 - t/dur,3)*P[3*2+0])/pow(dur,4) - (3360*pow(t,3)*P[4*2+0])/pow(dur,7) + (15120*pow(t,2)*(1 - t/dur)*P[4*2+0])/pow(dur,6) -
+     (10080*t*pow(1 - t/dur,2)*P[4*2+0])/pow(dur,5) + (840*pow(1 - t/dur,3)*P[4*2+0])/pow(dur,4) + (5040*pow(t,3)*P[5*2+0])/pow(dur,7) - (10080*pow(t,2)*(1 - t/dur)*P[5*2+0])/pow(dur,6) +
+     (2520*t*pow(1 - t/dur,2)*P[5*2+0])/pow(dur,5) - (3360*pow(t,3)*P[6*2+0])/pow(dur,7) + (2520*pow(t,2)*(1 - t/dur)*P[6*2+0])/pow(dur,6) + (840*pow(t,3)*P[7*2+0])/pow(dur,7),2) +
+   pow((840*pow(1 - t/dur,3)*P[0*2+1])/pow(dur,4) + (2520*t*pow(1 - t/dur,2)*P[1*2+1])/pow(dur,5) - (3360*pow(1 - t/dur,3)*P[1*2+1])/pow(dur,4) + (2520*pow(t,2)*(1 - t/dur)*P[2*2+1])/pow(dur,6) -
+     (10080*t*pow(1 - t/dur,2)*P[2*2+1])/pow(dur,5) + (5040*pow(1 - t/dur,3)*P[2*2+1])/pow(dur,4) + (840*pow(t,3)*P[3*2+1])/pow(dur,7) - (10080*pow(t,2)*(1 - t/dur)*P[3*2+1])/pow(dur,6) +
+     (15120*t*pow(1 - t/dur,2)*P[3*2+1])/pow(dur,5) - (3360*pow(1 - t/dur,3)*P[3*2+1])/pow(dur,4) - (3360*pow(t,3)*P[4*2+1])/pow(dur,7) + (15120*pow(t,2)*(1 - t/dur)*P[4*2+1])/pow(dur,6) -
+     (10080*t*pow(1 - t/dur,2)*P[4*2+1])/pow(dur,5) + (840*pow(1 - t/dur,3)*P[4*2+1])/pow(dur,4) + (5040*pow(t,3)*P[5*2+1])/pow(dur,7) - (10080*pow(t,2)*(1 - t/dur)*P[5*2+1])/pow(dur,6) +
+     (2520*t*pow(1 - t/dur,2)*P[5*2+1])/pow(dur,5) - (3360*pow(t,3)*P[6*2+1])/pow(dur,7) + (2520*pow(t,2)*(1 - t/dur)*P[6*2+1])/pow(dur,6) + (840*pow(t,3)*P[7*2+1])/pow(dur,7),2);
+  } else if(n==5) {
+    if(grad.size()>0) {
+      grad = vector<double> {(-5040*pow(1 - t/dur,2)*((-2520*pow(1 - t/dur,2)*P[0*2+0])/pow(dur,5) - (5040*t*(1 - t/dur)*P[1*2+0])/pow(dur,6) + (12600*pow(1 - t/dur,2)*P[1*2+0])/pow(dur,5) -
+        (2520*pow(t,2)*P[2*2+0])/pow(dur,7) + (25200*t*(1 - t/dur)*P[2*2+0])/pow(dur,6) - (25200*pow(1 - t/dur,2)*P[2*2+0])/pow(dur,5) + (12600*pow(t,2)*P[3*2+0])/pow(dur,7) -
+        (50400*t*(1 - t/dur)*P[3*2+0])/pow(dur,6) + (25200*pow(1 - t/dur,2)*P[3*2+0])/pow(dur,5) - (25200*pow(t,2)*P[4*2+0])/pow(dur,7) + (50400*t*(1 - t/dur)*P[4*2+0])/pow(dur,6) -
+        (12600*pow(1 - t/dur,2)*P[4*2+0])/pow(dur,5) + (25200*pow(t,2)*P[5*2+0])/pow(dur,7) - (25200*t*(1 - t/dur)*P[5*2+0])/pow(dur,6) + (2520*pow(1 - t/dur,2)*P[5*2+0])/pow(dur,5) -
+        (12600*pow(t,2)*P[6*2+0])/pow(dur,7) + (5040*t*(1 - t/dur)*P[6*2+0])/pow(dur,6) + (2520*pow(t,2)*P[7*2+0])/pow(dur,7)))/pow(dur,5),
+   (-5040*pow(1 - t/dur,2)*((-2520*pow(1 - t/dur,2)*P[0*2+1])/pow(dur,5) - (5040*t*(1 - t/dur)*P[1*2+1])/pow(dur,6) + (12600*pow(1 - t/dur,2)*P[1*2+1])/pow(dur,5) -
+        (2520*pow(t,2)*P[2*2+1])/pow(dur,7) + (25200*t*(1 - t/dur)*P[2*2+1])/pow(dur,6) - (25200*pow(1 - t/dur,2)*P[2*2+1])/pow(dur,5) + (12600*pow(t,2)*P[3*2+1])/pow(dur,7) -
+        (50400*t*(1 - t/dur)*P[3*2+1])/pow(dur,6) + (25200*pow(1 - t/dur,2)*P[3*2+1])/pow(dur,5) - (25200*pow(t,2)*P[4*2+1])/pow(dur,7) + (50400*t*(1 - t/dur)*P[4*2+1])/pow(dur,6) -
+        (12600*pow(1 - t/dur,2)*P[4*2+1])/pow(dur,5) + (25200*pow(t,2)*P[5*2+1])/pow(dur,7) - (25200*t*(1 - t/dur)*P[5*2+1])/pow(dur,6) + (2520*pow(1 - t/dur,2)*P[5*2+1])/pow(dur,5) -
+        (12600*pow(t,2)*P[6*2+1])/pow(dur,7) + (5040*t*(1 - t/dur)*P[6*2+1])/pow(dur,6) + (2520*pow(t,2)*P[7*2+1])/pow(dur,7)))/pow(dur,5),
+   2*((-5040*t*(1 - t/dur))/pow(dur,6) + (12600*pow(1 - t/dur,2))/pow(dur,5))*
+    ((-2520*pow(1 - t/dur,2)*P[0*2+0])/pow(dur,5) - (5040*t*(1 - t/dur)*P[1*2+0])/pow(dur,6) + (12600*pow(1 - t/dur,2)*P[1*2+0])/pow(dur,5) - (2520*pow(t,2)*P[2*2+0])/pow(dur,7) +
+      (25200*t*(1 - t/dur)*P[2*2+0])/pow(dur,6) - (25200*pow(1 - t/dur,2)*P[2*2+0])/pow(dur,5) + (12600*pow(t,2)*P[3*2+0])/pow(dur,7) - (50400*t*(1 - t/dur)*P[3*2+0])/pow(dur,6) +
+      (25200*pow(1 - t/dur,2)*P[3*2+0])/pow(dur,5) - (25200*pow(t,2)*P[4*2+0])/pow(dur,7) + (50400*t*(1 - t/dur)*P[4*2+0])/pow(dur,6) - (12600*pow(1 - t/dur,2)*P[4*2+0])/pow(dur,5) +
+      (25200*pow(t,2)*P[5*2+0])/pow(dur,7) - (25200*t*(1 - t/dur)*P[5*2+0])/pow(dur,6) + (2520*pow(1 - t/dur,2)*P[5*2+0])/pow(dur,5) - (12600*pow(t,2)*P[6*2+0])/pow(dur,7) +
+      (5040*t*(1 - t/dur)*P[6*2+0])/pow(dur,6) + (2520*pow(t,2)*P[7*2+0])/pow(dur,7)),
+   2*((-5040*t*(1 - t/dur))/pow(dur,6) + (12600*pow(1 - t/dur,2))/pow(dur,5))*
+    ((-2520*pow(1 - t/dur,2)*P[0*2+1])/pow(dur,5) - (5040*t*(1 - t/dur)*P[1*2+1])/pow(dur,6) + (12600*pow(1 - t/dur,2)*P[1*2+1])/pow(dur,5) - (2520*pow(t,2)*P[2*2+1])/pow(dur,7) +
+      (25200*t*(1 - t/dur)*P[2*2+1])/pow(dur,6) - (25200*pow(1 - t/dur,2)*P[2*2+1])/pow(dur,5) + (12600*pow(t,2)*P[3*2+1])/pow(dur,7) - (50400*t*(1 - t/dur)*P[3*2+1])/pow(dur,6) +
+      (25200*pow(1 - t/dur,2)*P[3*2+1])/pow(dur,5) - (25200*pow(t,2)*P[4*2+1])/pow(dur,7) + (50400*t*(1 - t/dur)*P[4*2+1])/pow(dur,6) - (12600*pow(1 - t/dur,2)*P[4*2+1])/pow(dur,5) +
+      (25200*pow(t,2)*P[5*2+1])/pow(dur,7) - (25200*t*(1 - t/dur)*P[5*2+1])/pow(dur,6) + (2520*pow(1 - t/dur,2)*P[5*2+1])/pow(dur,5) - (12600*pow(t,2)*P[6*2+1])/pow(dur,7) +
+      (5040*t*(1 - t/dur)*P[6*2+1])/pow(dur,6) + (2520*pow(t,2)*P[7*2+1])/pow(dur,7)),
+   2*((-2520*pow(t,2))/pow(dur,7) + (25200*t*(1 - t/dur))/pow(dur,6) - (25200*pow(1 - t/dur,2))/pow(dur,5))*
+    ((-2520*pow(1 - t/dur,2)*P[0*2+0])/pow(dur,5) - (5040*t*(1 - t/dur)*P[1*2+0])/pow(dur,6) + (12600*pow(1 - t/dur,2)*P[1*2+0])/pow(dur,5) - (2520*pow(t,2)*P[2*2+0])/pow(dur,7) +
+      (25200*t*(1 - t/dur)*P[2*2+0])/pow(dur,6) - (25200*pow(1 - t/dur,2)*P[2*2+0])/pow(dur,5) + (12600*pow(t,2)*P[3*2+0])/pow(dur,7) - (50400*t*(1 - t/dur)*P[3*2+0])/pow(dur,6) +
+      (25200*pow(1 - t/dur,2)*P[3*2+0])/pow(dur,5) - (25200*pow(t,2)*P[4*2+0])/pow(dur,7) + (50400*t*(1 - t/dur)*P[4*2+0])/pow(dur,6) - (12600*pow(1 - t/dur,2)*P[4*2+0])/pow(dur,5) +
+      (25200*pow(t,2)*P[5*2+0])/pow(dur,7) - (25200*t*(1 - t/dur)*P[5*2+0])/pow(dur,6) + (2520*pow(1 - t/dur,2)*P[5*2+0])/pow(dur,5) - (12600*pow(t,2)*P[6*2+0])/pow(dur,7) +
+      (5040*t*(1 - t/dur)*P[6*2+0])/pow(dur,6) + (2520*pow(t,2)*P[7*2+0])/pow(dur,7)),
+   2*((-2520*pow(t,2))/pow(dur,7) + (25200*t*(1 - t/dur))/pow(dur,6) - (25200*pow(1 - t/dur,2))/pow(dur,5))*
+    ((-2520*pow(1 - t/dur,2)*P[0*2+1])/pow(dur,5) - (5040*t*(1 - t/dur)*P[1*2+1])/pow(dur,6) + (12600*pow(1 - t/dur,2)*P[1*2+1])/pow(dur,5) - (2520*pow(t,2)*P[2*2+1])/pow(dur,7) +
+      (25200*t*(1 - t/dur)*P[2*2+1])/pow(dur,6) - (25200*pow(1 - t/dur,2)*P[2*2+1])/pow(dur,5) + (12600*pow(t,2)*P[3*2+1])/pow(dur,7) - (50400*t*(1 - t/dur)*P[3*2+1])/pow(dur,6) +
+      (25200*pow(1 - t/dur,2)*P[3*2+1])/pow(dur,5) - (25200*pow(t,2)*P[4*2+1])/pow(dur,7) + (50400*t*(1 - t/dur)*P[4*2+1])/pow(dur,6) - (12600*pow(1 - t/dur,2)*P[4*2+1])/pow(dur,5) +
+      (25200*pow(t,2)*P[5*2+1])/pow(dur,7) - (25200*t*(1 - t/dur)*P[5*2+1])/pow(dur,6) + (2520*pow(1 - t/dur,2)*P[5*2+1])/pow(dur,5) - (12600*pow(t,2)*P[6*2+1])/pow(dur,7) +
+      (5040*t*(1 - t/dur)*P[6*2+1])/pow(dur,6) + (2520*pow(t,2)*P[7*2+1])/pow(dur,7)),
+   2*((12600*pow(t,2))/pow(dur,7) - (50400*t*(1 - t/dur))/pow(dur,6) + (25200*pow(1 - t/dur,2))/pow(dur,5))*
+    ((-2520*pow(1 - t/dur,2)*P[0*2+0])/pow(dur,5) - (5040*t*(1 - t/dur)*P[1*2+0])/pow(dur,6) + (12600*pow(1 - t/dur,2)*P[1*2+0])/pow(dur,5) - (2520*pow(t,2)*P[2*2+0])/pow(dur,7) +
+      (25200*t*(1 - t/dur)*P[2*2+0])/pow(dur,6) - (25200*pow(1 - t/dur,2)*P[2*2+0])/pow(dur,5) + (12600*pow(t,2)*P[3*2+0])/pow(dur,7) - (50400*t*(1 - t/dur)*P[3*2+0])/pow(dur,6) +
+      (25200*pow(1 - t/dur,2)*P[3*2+0])/pow(dur,5) - (25200*pow(t,2)*P[4*2+0])/pow(dur,7) + (50400*t*(1 - t/dur)*P[4*2+0])/pow(dur,6) - (12600*pow(1 - t/dur,2)*P[4*2+0])/pow(dur,5) +
+      (25200*pow(t,2)*P[5*2+0])/pow(dur,7) - (25200*t*(1 - t/dur)*P[5*2+0])/pow(dur,6) + (2520*pow(1 - t/dur,2)*P[5*2+0])/pow(dur,5) - (12600*pow(t,2)*P[6*2+0])/pow(dur,7) +
+      (5040*t*(1 - t/dur)*P[6*2+0])/pow(dur,6) + (2520*pow(t,2)*P[7*2+0])/pow(dur,7)),
+   2*((12600*pow(t,2))/pow(dur,7) - (50400*t*(1 - t/dur))/pow(dur,6) + (25200*pow(1 - t/dur,2))/pow(dur,5))*
+    ((-2520*pow(1 - t/dur,2)*P[0*2+1])/pow(dur,5) - (5040*t*(1 - t/dur)*P[1*2+1])/pow(dur,6) + (12600*pow(1 - t/dur,2)*P[1*2+1])/pow(dur,5) - (2520*pow(t,2)*P[2*2+1])/pow(dur,7) +
+      (25200*t*(1 - t/dur)*P[2*2+1])/pow(dur,6) - (25200*pow(1 - t/dur,2)*P[2*2+1])/pow(dur,5) + (12600*pow(t,2)*P[3*2+1])/pow(dur,7) - (50400*t*(1 - t/dur)*P[3*2+1])/pow(dur,6) +
+      (25200*pow(1 - t/dur,2)*P[3*2+1])/pow(dur,5) - (25200*pow(t,2)*P[4*2+1])/pow(dur,7) + (50400*t*(1 - t/dur)*P[4*2+1])/pow(dur,6) - (12600*pow(1 - t/dur,2)*P[4*2+1])/pow(dur,5) +
+      (25200*pow(t,2)*P[5*2+1])/pow(dur,7) - (25200*t*(1 - t/dur)*P[5*2+1])/pow(dur,6) + (2520*pow(1 - t/dur,2)*P[5*2+1])/pow(dur,5) - (12600*pow(t,2)*P[6*2+1])/pow(dur,7) +
+      (5040*t*(1 - t/dur)*P[6*2+1])/pow(dur,6) + (2520*pow(t,2)*P[7*2+1])/pow(dur,7)),
+   2*((-25200*pow(t,2))/pow(dur,7) + (50400*t*(1 - t/dur))/pow(dur,6) - (12600*pow(1 - t/dur,2))/pow(dur,5))*
+    ((-2520*pow(1 - t/dur,2)*P[0*2+0])/pow(dur,5) - (5040*t*(1 - t/dur)*P[1*2+0])/pow(dur,6) + (12600*pow(1 - t/dur,2)*P[1*2+0])/pow(dur,5) - (2520*pow(t,2)*P[2*2+0])/pow(dur,7) +
+      (25200*t*(1 - t/dur)*P[2*2+0])/pow(dur,6) - (25200*pow(1 - t/dur,2)*P[2*2+0])/pow(dur,5) + (12600*pow(t,2)*P[3*2+0])/pow(dur,7) - (50400*t*(1 - t/dur)*P[3*2+0])/pow(dur,6) +
+      (25200*pow(1 - t/dur,2)*P[3*2+0])/pow(dur,5) - (25200*pow(t,2)*P[4*2+0])/pow(dur,7) + (50400*t*(1 - t/dur)*P[4*2+0])/pow(dur,6) - (12600*pow(1 - t/dur,2)*P[4*2+0])/pow(dur,5) +
+      (25200*pow(t,2)*P[5*2+0])/pow(dur,7) - (25200*t*(1 - t/dur)*P[5*2+0])/pow(dur,6) + (2520*pow(1 - t/dur,2)*P[5*2+0])/pow(dur,5) - (12600*pow(t,2)*P[6*2+0])/pow(dur,7) +
+      (5040*t*(1 - t/dur)*P[6*2+0])/pow(dur,6) + (2520*pow(t,2)*P[7*2+0])/pow(dur,7)),
+   2*((-25200*pow(t,2))/pow(dur,7) + (50400*t*(1 - t/dur))/pow(dur,6) - (12600*pow(1 - t/dur,2))/pow(dur,5))*
+    ((-2520*pow(1 - t/dur,2)*P[0*2+1])/pow(dur,5) - (5040*t*(1 - t/dur)*P[1*2+1])/pow(dur,6) + (12600*pow(1 - t/dur,2)*P[1*2+1])/pow(dur,5) - (2520*pow(t,2)*P[2*2+1])/pow(dur,7) +
+      (25200*t*(1 - t/dur)*P[2*2+1])/pow(dur,6) - (25200*pow(1 - t/dur,2)*P[2*2+1])/pow(dur,5) + (12600*pow(t,2)*P[3*2+1])/pow(dur,7) - (50400*t*(1 - t/dur)*P[3*2+1])/pow(dur,6) +
+      (25200*pow(1 - t/dur,2)*P[3*2+1])/pow(dur,5) - (25200*pow(t,2)*P[4*2+1])/pow(dur,7) + (50400*t*(1 - t/dur)*P[4*2+1])/pow(dur,6) - (12600*pow(1 - t/dur,2)*P[4*2+1])/pow(dur,5) +
+      (25200*pow(t,2)*P[5*2+1])/pow(dur,7) - (25200*t*(1 - t/dur)*P[5*2+1])/pow(dur,6) + (2520*pow(1 - t/dur,2)*P[5*2+1])/pow(dur,5) - (12600*pow(t,2)*P[6*2+1])/pow(dur,7) +
+      (5040*t*(1 - t/dur)*P[6*2+1])/pow(dur,6) + (2520*pow(t,2)*P[7*2+1])/pow(dur,7)),
+   2*((25200*pow(t,2))/pow(dur,7) - (25200*t*(1 - t/dur))/pow(dur,6) + (2520*pow(1 - t/dur,2))/pow(dur,5))*
+    ((-2520*pow(1 - t/dur,2)*P[0*2+0])/pow(dur,5) - (5040*t*(1 - t/dur)*P[1*2+0])/pow(dur,6) + (12600*pow(1 - t/dur,2)*P[1*2+0])/pow(dur,5) - (2520*pow(t,2)*P[2*2+0])/pow(dur,7) +
+      (25200*t*(1 - t/dur)*P[2*2+0])/pow(dur,6) - (25200*pow(1 - t/dur,2)*P[2*2+0])/pow(dur,5) + (12600*pow(t,2)*P[3*2+0])/pow(dur,7) - (50400*t*(1 - t/dur)*P[3*2+0])/pow(dur,6) +
+      (25200*pow(1 - t/dur,2)*P[3*2+0])/pow(dur,5) - (25200*pow(t,2)*P[4*2+0])/pow(dur,7) + (50400*t*(1 - t/dur)*P[4*2+0])/pow(dur,6) - (12600*pow(1 - t/dur,2)*P[4*2+0])/pow(dur,5) +
+      (25200*pow(t,2)*P[5*2+0])/pow(dur,7) - (25200*t*(1 - t/dur)*P[5*2+0])/pow(dur,6) + (2520*pow(1 - t/dur,2)*P[5*2+0])/pow(dur,5) - (12600*pow(t,2)*P[6*2+0])/pow(dur,7) +
+      (5040*t*(1 - t/dur)*P[6*2+0])/pow(dur,6) + (2520*pow(t,2)*P[7*2+0])/pow(dur,7)),
+   2*((25200*pow(t,2))/pow(dur,7) - (25200*t*(1 - t/dur))/pow(dur,6) + (2520*pow(1 - t/dur,2))/pow(dur,5))*
+    ((-2520*pow(1 - t/dur,2)*P[0*2+1])/pow(dur,5) - (5040*t*(1 - t/dur)*P[1*2+1])/pow(dur,6) + (12600*pow(1 - t/dur,2)*P[1*2+1])/pow(dur,5) - (2520*pow(t,2)*P[2*2+1])/pow(dur,7) +
+      (25200*t*(1 - t/dur)*P[2*2+1])/pow(dur,6) - (25200*pow(1 - t/dur,2)*P[2*2+1])/pow(dur,5) + (12600*pow(t,2)*P[3*2+1])/pow(dur,7) - (50400*t*(1 - t/dur)*P[3*2+1])/pow(dur,6) +
+      (25200*pow(1 - t/dur,2)*P[3*2+1])/pow(dur,5) - (25200*pow(t,2)*P[4*2+1])/pow(dur,7) + (50400*t*(1 - t/dur)*P[4*2+1])/pow(dur,6) - (12600*pow(1 - t/dur,2)*P[4*2+1])/pow(dur,5) +
+      (25200*pow(t,2)*P[5*2+1])/pow(dur,7) - (25200*t*(1 - t/dur)*P[5*2+1])/pow(dur,6) + (2520*pow(1 - t/dur,2)*P[5*2+1])/pow(dur,5) - (12600*pow(t,2)*P[6*2+1])/pow(dur,7) +
+      (5040*t*(1 - t/dur)*P[6*2+1])/pow(dur,6) + (2520*pow(t,2)*P[7*2+1])/pow(dur,7)),
+   2*((-12600*pow(t,2))/pow(dur,7) + (5040*t*(1 - t/dur))/pow(dur,6))*((-2520*pow(1 - t/dur,2)*P[0*2+0])/pow(dur,5) - (5040*t*(1 - t/dur)*P[1*2+0])/pow(dur,6) +
+      (12600*pow(1 - t/dur,2)*P[1*2+0])/pow(dur,5) - (2520*pow(t,2)*P[2*2+0])/pow(dur,7) + (25200*t*(1 - t/dur)*P[2*2+0])/pow(dur,6) - (25200*pow(1 - t/dur,2)*P[2*2+0])/pow(dur,5) +
+      (12600*pow(t,2)*P[3*2+0])/pow(dur,7) - (50400*t*(1 - t/dur)*P[3*2+0])/pow(dur,6) + (25200*pow(1 - t/dur,2)*P[3*2+0])/pow(dur,5) - (25200*pow(t,2)*P[4*2+0])/pow(dur,7) +
+      (50400*t*(1 - t/dur)*P[4*2+0])/pow(dur,6) - (12600*pow(1 - t/dur,2)*P[4*2+0])/pow(dur,5) + (25200*pow(t,2)*P[5*2+0])/pow(dur,7) - (25200*t*(1 - t/dur)*P[5*2+0])/pow(dur,6) +
+      (2520*pow(1 - t/dur,2)*P[5*2+0])/pow(dur,5) - (12600*pow(t,2)*P[6*2+0])/pow(dur,7) + (5040*t*(1 - t/dur)*P[6*2+0])/pow(dur,6) + (2520*pow(t,2)*P[7*2+0])/pow(dur,7)),
+   2*((-12600*pow(t,2))/pow(dur,7) + (5040*t*(1 - t/dur))/pow(dur,6))*((-2520*pow(1 - t/dur,2)*P[0*2+1])/pow(dur,5) - (5040*t*(1 - t/dur)*P[1*2+1])/pow(dur,6) +
+      (12600*pow(1 - t/dur,2)*P[1*2+1])/pow(dur,5) - (2520*pow(t,2)*P[2*2+1])/pow(dur,7) + (25200*t*(1 - t/dur)*P[2*2+1])/pow(dur,6) - (25200*pow(1 - t/dur,2)*P[2*2+1])/pow(dur,5) +
+      (12600*pow(t,2)*P[3*2+1])/pow(dur,7) - (50400*t*(1 - t/dur)*P[3*2+1])/pow(dur,6) + (25200*pow(1 - t/dur,2)*P[3*2+1])/pow(dur,5) - (25200*pow(t,2)*P[4*2+1])/pow(dur,7) +
+      (50400*t*(1 - t/dur)*P[4*2+1])/pow(dur,6) - (12600*pow(1 - t/dur,2)*P[4*2+1])/pow(dur,5) + (25200*pow(t,2)*P[5*2+1])/pow(dur,7) - (25200*t*(1 - t/dur)*P[5*2+1])/pow(dur,6) +
+      (2520*pow(1 - t/dur,2)*P[5*2+1])/pow(dur,5) - (12600*pow(t,2)*P[6*2+1])/pow(dur,7) + (5040*t*(1 - t/dur)*P[6*2+1])/pow(dur,6) + (2520*pow(t,2)*P[7*2+1])/pow(dur,7)),
+   (5040*pow(t,2)*((-2520*pow(1 - t/dur,2)*P[0*2+0])/pow(dur,5) - (5040*t*(1 - t/dur)*P[1*2+0])/pow(dur,6) + (12600*pow(1 - t/dur,2)*P[1*2+0])/pow(dur,5) - (2520*pow(t,2)*P[2*2+0])/pow(dur,7) +
+        (25200*t*(1 - t/dur)*P[2*2+0])/pow(dur,6) - (25200*pow(1 - t/dur,2)*P[2*2+0])/pow(dur,5) + (12600*pow(t,2)*P[3*2+0])/pow(dur,7) - (50400*t*(1 - t/dur)*P[3*2+0])/pow(dur,6) +
+        (25200*pow(1 - t/dur,2)*P[3*2+0])/pow(dur,5) - (25200*pow(t,2)*P[4*2+0])/pow(dur,7) + (50400*t*(1 - t/dur)*P[4*2+0])/pow(dur,6) - (12600*pow(1 - t/dur,2)*P[4*2+0])/pow(dur,5) +
+        (25200*pow(t,2)*P[5*2+0])/pow(dur,7) - (25200*t*(1 - t/dur)*P[5*2+0])/pow(dur,6) + (2520*pow(1 - t/dur,2)*P[5*2+0])/pow(dur,5) - (12600*pow(t,2)*P[6*2+0])/pow(dur,7) +
+        (5040*t*(1 - t/dur)*P[6*2+0])/pow(dur,6) + (2520*pow(t,2)*P[7*2+0])/pow(dur,7)))/pow(dur,7),
+   (5040*pow(t,2)*((-2520*pow(1 - t/dur,2)*P[0*2+1])/pow(dur,5) - (5040*t*(1 - t/dur)*P[1*2+1])/pow(dur,6) + (12600*pow(1 - t/dur,2)*P[1*2+1])/pow(dur,5) - (2520*pow(t,2)*P[2*2+1])/pow(dur,7) +
+        (25200*t*(1 - t/dur)*P[2*2+1])/pow(dur,6) - (25200*pow(1 - t/dur,2)*P[2*2+1])/pow(dur,5) + (12600*pow(t,2)*P[3*2+1])/pow(dur,7) - (50400*t*(1 - t/dur)*P[3*2+1])/pow(dur,6) +
+        (25200*pow(1 - t/dur,2)*P[3*2+1])/pow(dur,5) - (25200*pow(t,2)*P[4*2+1])/pow(dur,7) + (50400*t*(1 - t/dur)*P[4*2+1])/pow(dur,6) - (12600*pow(1 - t/dur,2)*P[4*2+1])/pow(dur,5) +
+        (25200*pow(t,2)*P[5*2+1])/pow(dur,7) - (25200*t*(1 - t/dur)*P[5*2+1])/pow(dur,6) + (2520*pow(1 - t/dur,2)*P[5*2+1])/pow(dur,5) - (12600*pow(t,2)*P[6*2+1])/pow(dur,7) +
+        (5040*t*(1 - t/dur)*P[6*2+1])/pow(dur,6) + (2520*pow(t,2)*P[7*2+1])/pow(dur,7)))/pow(dur,7)};
+    }
+    return pow((-2520*pow(1 - t/dur,2)*P[0*2+0])/pow(dur,5) - (5040*t*(1 - t/dur)*P[1*2+0])/pow(dur,6) + (12600*pow(1 - t/dur,2)*P[1*2+0])/pow(dur,5) - (2520*pow(t,2)*P[2*2+0])/pow(dur,7) +
+     (25200*t*(1 - t/dur)*P[2*2+0])/pow(dur,6) - (25200*pow(1 - t/dur,2)*P[2*2+0])/pow(dur,5) + (12600*pow(t,2)*P[3*2+0])/pow(dur,7) - (50400*t*(1 - t/dur)*P[3*2+0])/pow(dur,6) +
+     (25200*pow(1 - t/dur,2)*P[3*2+0])/pow(dur,5) - (25200*pow(t,2)*P[4*2+0])/pow(dur,7) + (50400*t*(1 - t/dur)*P[4*2+0])/pow(dur,6) - (12600*pow(1 - t/dur,2)*P[4*2+0])/pow(dur,5) +
+     (25200*pow(t,2)*P[5*2+0])/pow(dur,7) - (25200*t*(1 - t/dur)*P[5*2+0])/pow(dur,6) + (2520*pow(1 - t/dur,2)*P[5*2+0])/pow(dur,5) - (12600*pow(t,2)*P[6*2+0])/pow(dur,7) +
+     (5040*t*(1 - t/dur)*P[6*2+0])/pow(dur,6) + (2520*pow(t,2)*P[7*2+0])/pow(dur,7),2) +
+   pow((-2520*pow(1 - t/dur,2)*P[0*2+1])/pow(dur,5) - (5040*t*(1 - t/dur)*P[1*2+1])/pow(dur,6) + (12600*pow(1 - t/dur,2)*P[1*2+1])/pow(dur,5) - (2520*pow(t,2)*P[2*2+1])/pow(dur,7) +
+     (25200*t*(1 - t/dur)*P[2*2+1])/pow(dur,6) - (25200*pow(1 - t/dur,2)*P[2*2+1])/pow(dur,5) + (12600*pow(t,2)*P[3*2+1])/pow(dur,7) - (50400*t*(1 - t/dur)*P[3*2+1])/pow(dur,6) +
+     (25200*pow(1 - t/dur,2)*P[3*2+1])/pow(dur,5) - (25200*pow(t,2)*P[4*2+1])/pow(dur,7) + (50400*t*(1 - t/dur)*P[4*2+1])/pow(dur,6) - (12600*pow(1 - t/dur,2)*P[4*2+1])/pow(dur,5) +
+     (25200*pow(t,2)*P[5*2+1])/pow(dur,7) - (25200*t*(1 - t/dur)*P[5*2+1])/pow(dur,6) + (2520*pow(1 - t/dur,2)*P[5*2+1])/pow(dur,5) - (12600*pow(t,2)*P[6*2+1])/pow(dur,7) +
+     (5040*t*(1 - t/dur)*P[6*2+1])/pow(dur,6) + (2520*pow(t,2)*P[7*2+1])/pow(dur,7),2);
+  } else if(n==6) {
+    if(grad.size()>0) {
+      grad = vector<double> {(10080*(1 - t/dur)*((5040*(1 - t/dur)*P[0*2+0])/pow(dur,6) + (5040*t*P[1*2+0])/pow(dur,7) - (30240*(1 - t/dur)*P[1*2+0])/pow(dur,6) - (30240*t*P[2*2+0])/pow(dur,7) +
+        (75600*(1 - t/dur)*P[2*2+0])/pow(dur,6) + (75600*t*P[3*2+0])/pow(dur,7) - (100800*(1 - t/dur)*P[3*2+0])/pow(dur,6) - (100800*t*P[4*2+0])/pow(dur,7) + (75600*(1 - t/dur)*P[4*2+0])/pow(dur,6) +
+        (75600*t*P[5*2+0])/pow(dur,7) - (30240*(1 - t/dur)*P[5*2+0])/pow(dur,6) - (30240*t*P[6*2+0])/pow(dur,7) + (5040*(1 - t/dur)*P[6*2+0])/pow(dur,6) + (5040*t*P[7*2+0])/pow(dur,7)))/pow(dur,6),
+   (10080*(1 - t/dur)*((5040*(1 - t/dur)*P[0*2+1])/pow(dur,6) + (5040*t*P[1*2+1])/pow(dur,7) - (30240*(1 - t/dur)*P[1*2+1])/pow(dur,6) - (30240*t*P[2*2+1])/pow(dur,7) +
+        (75600*(1 - t/dur)*P[2*2+1])/pow(dur,6) + (75600*t*P[3*2+1])/pow(dur,7) - (100800*(1 - t/dur)*P[3*2+1])/pow(dur,6) - (100800*t*P[4*2+1])/pow(dur,7) + (75600*(1 - t/dur)*P[4*2+1])/pow(dur,6) +
+        (75600*t*P[5*2+1])/pow(dur,7) - (30240*(1 - t/dur)*P[5*2+1])/pow(dur,6) - (30240*t*P[6*2+1])/pow(dur,7) + (5040*(1 - t/dur)*P[6*2+1])/pow(dur,6) + (5040*t*P[7*2+1])/pow(dur,7)))/pow(dur,6),
+   2*((5040*t)/pow(dur,7) - (30240*(1 - t/dur))/pow(dur,6))*((5040*(1 - t/dur)*P[0*2+0])/pow(dur,6) + (5040*t*P[1*2+0])/pow(dur,7) - (30240*(1 - t/dur)*P[1*2+0])/pow(dur,6) -
+      (30240*t*P[2*2+0])/pow(dur,7) + (75600*(1 - t/dur)*P[2*2+0])/pow(dur,6) + (75600*t*P[3*2+0])/pow(dur,7) - (100800*(1 - t/dur)*P[3*2+0])/pow(dur,6) - (100800*t*P[4*2+0])/pow(dur,7) +
+      (75600*(1 - t/dur)*P[4*2+0])/pow(dur,6) + (75600*t*P[5*2+0])/pow(dur,7) - (30240*(1 - t/dur)*P[5*2+0])/pow(dur,6) - (30240*t*P[6*2+0])/pow(dur,7) + (5040*(1 - t/dur)*P[6*2+0])/pow(dur,6) +
+      (5040*t*P[7*2+0])/pow(dur,7)),2*((5040*t)/pow(dur,7) - (30240*(1 - t/dur))/pow(dur,6))*
+    ((5040*(1 - t/dur)*P[0*2+1])/pow(dur,6) + (5040*t*P[1*2+1])/pow(dur,7) - (30240*(1 - t/dur)*P[1*2+1])/pow(dur,6) - (30240*t*P[2*2+1])/pow(dur,7) + (75600*(1 - t/dur)*P[2*2+1])/pow(dur,6) +
+      (75600*t*P[3*2+1])/pow(dur,7) - (100800*(1 - t/dur)*P[3*2+1])/pow(dur,6) - (100800*t*P[4*2+1])/pow(dur,7) + (75600*(1 - t/dur)*P[4*2+1])/pow(dur,6) + (75600*t*P[5*2+1])/pow(dur,7) -
+      (30240*(1 - t/dur)*P[5*2+1])/pow(dur,6) - (30240*t*P[6*2+1])/pow(dur,7) + (5040*(1 - t/dur)*P[6*2+1])/pow(dur,6) + (5040*t*P[7*2+1])/pow(dur,7)),
+   2*((-30240*t)/pow(dur,7) + (75600*(1 - t/dur))/pow(dur,6))*((5040*(1 - t/dur)*P[0*2+0])/pow(dur,6) + (5040*t*P[1*2+0])/pow(dur,7) - (30240*(1 - t/dur)*P[1*2+0])/pow(dur,6) -
+      (30240*t*P[2*2+0])/pow(dur,7) + (75600*(1 - t/dur)*P[2*2+0])/pow(dur,6) + (75600*t*P[3*2+0])/pow(dur,7) - (100800*(1 - t/dur)*P[3*2+0])/pow(dur,6) - (100800*t*P[4*2+0])/pow(dur,7) +
+      (75600*(1 - t/dur)*P[4*2+0])/pow(dur,6) + (75600*t*P[5*2+0])/pow(dur,7) - (30240*(1 - t/dur)*P[5*2+0])/pow(dur,6) - (30240*t*P[6*2+0])/pow(dur,7) + (5040*(1 - t/dur)*P[6*2+0])/pow(dur,6) +
+      (5040*t*P[7*2+0])/pow(dur,7)),2*((-30240*t)/pow(dur,7) + (75600*(1 - t/dur))/pow(dur,6))*
+    ((5040*(1 - t/dur)*P[0*2+1])/pow(dur,6) + (5040*t*P[1*2+1])/pow(dur,7) - (30240*(1 - t/dur)*P[1*2+1])/pow(dur,6) - (30240*t*P[2*2+1])/pow(dur,7) + (75600*(1 - t/dur)*P[2*2+1])/pow(dur,6) +
+      (75600*t*P[3*2+1])/pow(dur,7) - (100800*(1 - t/dur)*P[3*2+1])/pow(dur,6) - (100800*t*P[4*2+1])/pow(dur,7) + (75600*(1 - t/dur)*P[4*2+1])/pow(dur,6) + (75600*t*P[5*2+1])/pow(dur,7) -
+      (30240*(1 - t/dur)*P[5*2+1])/pow(dur,6) - (30240*t*P[6*2+1])/pow(dur,7) + (5040*(1 - t/dur)*P[6*2+1])/pow(dur,6) + (5040*t*P[7*2+1])/pow(dur,7)),
+   2*((75600*t)/pow(dur,7) - (100800*(1 - t/dur))/pow(dur,6))*((5040*(1 - t/dur)*P[0*2+0])/pow(dur,6) + (5040*t*P[1*2+0])/pow(dur,7) - (30240*(1 - t/dur)*P[1*2+0])/pow(dur,6) -
+      (30240*t*P[2*2+0])/pow(dur,7) + (75600*(1 - t/dur)*P[2*2+0])/pow(dur,6) + (75600*t*P[3*2+0])/pow(dur,7) - (100800*(1 - t/dur)*P[3*2+0])/pow(dur,6) - (100800*t*P[4*2+0])/pow(dur,7) +
+      (75600*(1 - t/dur)*P[4*2+0])/pow(dur,6) + (75600*t*P[5*2+0])/pow(dur,7) - (30240*(1 - t/dur)*P[5*2+0])/pow(dur,6) - (30240*t*P[6*2+0])/pow(dur,7) + (5040*(1 - t/dur)*P[6*2+0])/pow(dur,6) +
+      (5040*t*P[7*2+0])/pow(dur,7)),2*((75600*t)/pow(dur,7) - (100800*(1 - t/dur))/pow(dur,6))*
+    ((5040*(1 - t/dur)*P[0*2+1])/pow(dur,6) + (5040*t*P[1*2+1])/pow(dur,7) - (30240*(1 - t/dur)*P[1*2+1])/pow(dur,6) - (30240*t*P[2*2+1])/pow(dur,7) + (75600*(1 - t/dur)*P[2*2+1])/pow(dur,6) +
+      (75600*t*P[3*2+1])/pow(dur,7) - (100800*(1 - t/dur)*P[3*2+1])/pow(dur,6) - (100800*t*P[4*2+1])/pow(dur,7) + (75600*(1 - t/dur)*P[4*2+1])/pow(dur,6) + (75600*t*P[5*2+1])/pow(dur,7) -
+      (30240*(1 - t/dur)*P[5*2+1])/pow(dur,6) - (30240*t*P[6*2+1])/pow(dur,7) + (5040*(1 - t/dur)*P[6*2+1])/pow(dur,6) + (5040*t*P[7*2+1])/pow(dur,7)),
+   2*((-100800*t)/pow(dur,7) + (75600*(1 - t/dur))/pow(dur,6))*((5040*(1 - t/dur)*P[0*2+0])/pow(dur,6) + (5040*t*P[1*2+0])/pow(dur,7) - (30240*(1 - t/dur)*P[1*2+0])/pow(dur,6) -
+      (30240*t*P[2*2+0])/pow(dur,7) + (75600*(1 - t/dur)*P[2*2+0])/pow(dur,6) + (75600*t*P[3*2+0])/pow(dur,7) - (100800*(1 - t/dur)*P[3*2+0])/pow(dur,6) - (100800*t*P[4*2+0])/pow(dur,7) +
+      (75600*(1 - t/dur)*P[4*2+0])/pow(dur,6) + (75600*t*P[5*2+0])/pow(dur,7) - (30240*(1 - t/dur)*P[5*2+0])/pow(dur,6) - (30240*t*P[6*2+0])/pow(dur,7) + (5040*(1 - t/dur)*P[6*2+0])/pow(dur,6) +
+      (5040*t*P[7*2+0])/pow(dur,7)),2*((-100800*t)/pow(dur,7) + (75600*(1 - t/dur))/pow(dur,6))*
+    ((5040*(1 - t/dur)*P[0*2+1])/pow(dur,6) + (5040*t*P[1*2+1])/pow(dur,7) - (30240*(1 - t/dur)*P[1*2+1])/pow(dur,6) - (30240*t*P[2*2+1])/pow(dur,7) + (75600*(1 - t/dur)*P[2*2+1])/pow(dur,6) +
+      (75600*t*P[3*2+1])/pow(dur,7) - (100800*(1 - t/dur)*P[3*2+1])/pow(dur,6) - (100800*t*P[4*2+1])/pow(dur,7) + (75600*(1 - t/dur)*P[4*2+1])/pow(dur,6) + (75600*t*P[5*2+1])/pow(dur,7) -
+      (30240*(1 - t/dur)*P[5*2+1])/pow(dur,6) - (30240*t*P[6*2+1])/pow(dur,7) + (5040*(1 - t/dur)*P[6*2+1])/pow(dur,6) + (5040*t*P[7*2+1])/pow(dur,7)),
+   2*((75600*t)/pow(dur,7) - (30240*(1 - t/dur))/pow(dur,6))*((5040*(1 - t/dur)*P[0*2+0])/pow(dur,6) + (5040*t*P[1*2+0])/pow(dur,7) - (30240*(1 - t/dur)*P[1*2+0])/pow(dur,6) -
+      (30240*t*P[2*2+0])/pow(dur,7) + (75600*(1 - t/dur)*P[2*2+0])/pow(dur,6) + (75600*t*P[3*2+0])/pow(dur,7) - (100800*(1 - t/dur)*P[3*2+0])/pow(dur,6) - (100800*t*P[4*2+0])/pow(dur,7) +
+      (75600*(1 - t/dur)*P[4*2+0])/pow(dur,6) + (75600*t*P[5*2+0])/pow(dur,7) - (30240*(1 - t/dur)*P[5*2+0])/pow(dur,6) - (30240*t*P[6*2+0])/pow(dur,7) + (5040*(1 - t/dur)*P[6*2+0])/pow(dur,6) +
+      (5040*t*P[7*2+0])/pow(dur,7)),2*((75600*t)/pow(dur,7) - (30240*(1 - t/dur))/pow(dur,6))*
+    ((5040*(1 - t/dur)*P[0*2+1])/pow(dur,6) + (5040*t*P[1*2+1])/pow(dur,7) - (30240*(1 - t/dur)*P[1*2+1])/pow(dur,6) - (30240*t*P[2*2+1])/pow(dur,7) + (75600*(1 - t/dur)*P[2*2+1])/pow(dur,6) +
+      (75600*t*P[3*2+1])/pow(dur,7) - (100800*(1 - t/dur)*P[3*2+1])/pow(dur,6) - (100800*t*P[4*2+1])/pow(dur,7) + (75600*(1 - t/dur)*P[4*2+1])/pow(dur,6) + (75600*t*P[5*2+1])/pow(dur,7) -
+      (30240*(1 - t/dur)*P[5*2+1])/pow(dur,6) - (30240*t*P[6*2+1])/pow(dur,7) + (5040*(1 - t/dur)*P[6*2+1])/pow(dur,6) + (5040*t*P[7*2+1])/pow(dur,7)),
+   2*((-30240*t)/pow(dur,7) + (5040*(1 - t/dur))/pow(dur,6))*((5040*(1 - t/dur)*P[0*2+0])/pow(dur,6) + (5040*t*P[1*2+0])/pow(dur,7) - (30240*(1 - t/dur)*P[1*2+0])/pow(dur,6) -
+      (30240*t*P[2*2+0])/pow(dur,7) + (75600*(1 - t/dur)*P[2*2+0])/pow(dur,6) + (75600*t*P[3*2+0])/pow(dur,7) - (100800*(1 - t/dur)*P[3*2+0])/pow(dur,6) - (100800*t*P[4*2+0])/pow(dur,7) +
+      (75600*(1 - t/dur)*P[4*2+0])/pow(dur,6) + (75600*t*P[5*2+0])/pow(dur,7) - (30240*(1 - t/dur)*P[5*2+0])/pow(dur,6) - (30240*t*P[6*2+0])/pow(dur,7) + (5040*(1 - t/dur)*P[6*2+0])/pow(dur,6) +
+      (5040*t*P[7*2+0])/pow(dur,7)),2*((-30240*t)/pow(dur,7) + (5040*(1 - t/dur))/pow(dur,6))*
+    ((5040*(1 - t/dur)*P[0*2+1])/pow(dur,6) + (5040*t*P[1*2+1])/pow(dur,7) - (30240*(1 - t/dur)*P[1*2+1])/pow(dur,6) - (30240*t*P[2*2+1])/pow(dur,7) + (75600*(1 - t/dur)*P[2*2+1])/pow(dur,6) +
+      (75600*t*P[3*2+1])/pow(dur,7) - (100800*(1 - t/dur)*P[3*2+1])/pow(dur,6) - (100800*t*P[4*2+1])/pow(dur,7) + (75600*(1 - t/dur)*P[4*2+1])/pow(dur,6) + (75600*t*P[5*2+1])/pow(dur,7) -
+      (30240*(1 - t/dur)*P[5*2+1])/pow(dur,6) - (30240*t*P[6*2+1])/pow(dur,7) + (5040*(1 - t/dur)*P[6*2+1])/pow(dur,6) + (5040*t*P[7*2+1])/pow(dur,7)),
+   (10080*t*((5040*(1 - t/dur)*P[0*2+0])/pow(dur,6) + (5040*t*P[1*2+0])/pow(dur,7) - (30240*(1 - t/dur)*P[1*2+0])/pow(dur,6) - (30240*t*P[2*2+0])/pow(dur,7) + (75600*(1 - t/dur)*P[2*2+0])/pow(dur,6) +
+        (75600*t*P[3*2+0])/pow(dur,7) - (100800*(1 - t/dur)*P[3*2+0])/pow(dur,6) - (100800*t*P[4*2+0])/pow(dur,7) + (75600*(1 - t/dur)*P[4*2+0])/pow(dur,6) + (75600*t*P[5*2+0])/pow(dur,7) -
+        (30240*(1 - t/dur)*P[5*2+0])/pow(dur,6) - (30240*t*P[6*2+0])/pow(dur,7) + (5040*(1 - t/dur)*P[6*2+0])/pow(dur,6) + (5040*t*P[7*2+0])/pow(dur,7)))/pow(dur,7),
+   (10080*t*((5040*(1 - t/dur)*P[0*2+1])/pow(dur,6) + (5040*t*P[1*2+1])/pow(dur,7) - (30240*(1 - t/dur)*P[1*2+1])/pow(dur,6) - (30240*t*P[2*2+1])/pow(dur,7) + (75600*(1 - t/dur)*P[2*2+1])/pow(dur,6) +
+        (75600*t*P[3*2+1])/pow(dur,7) - (100800*(1 - t/dur)*P[3*2+1])/pow(dur,6) - (100800*t*P[4*2+1])/pow(dur,7) + (75600*(1 - t/dur)*P[4*2+1])/pow(dur,6) + (75600*t*P[5*2+1])/pow(dur,7) -
+        (30240*(1 - t/dur)*P[5*2+1])/pow(dur,6) - (30240*t*P[6*2+1])/pow(dur,7) + (5040*(1 - t/dur)*P[6*2+1])/pow(dur,6) + (5040*t*P[7*2+1])/pow(dur,7)))/pow(dur,7)};
+    }
+    return pow((5040*(1 - t/dur)*P[0*2+0])/pow(dur,6) + (5040*t*P[1*2+0])/pow(dur,7) - (30240*(1 - t/dur)*P[1*2+0])/pow(dur,6) - (30240*t*P[2*2+0])/pow(dur,7) + (75600*(1 - t/dur)*P[2*2+0])/pow(dur,6) +
+     (75600*t*P[3*2+0])/pow(dur,7) - (100800*(1 - t/dur)*P[3*2+0])/pow(dur,6) - (100800*t*P[4*2+0])/pow(dur,7) + (75600*(1 - t/dur)*P[4*2+0])/pow(dur,6) + (75600*t*P[5*2+0])/pow(dur,7) -
+     (30240*(1 - t/dur)*P[5*2+0])/pow(dur,6) - (30240*t*P[6*2+0])/pow(dur,7) + (5040*(1 - t/dur)*P[6*2+0])/pow(dur,6) + (5040*t*P[7*2+0])/pow(dur,7),2) +
+   pow((5040*(1 - t/dur)*P[0*2+1])/pow(dur,6) + (5040*t*P[1*2+1])/pow(dur,7) - (30240*(1 - t/dur)*P[1*2+1])/pow(dur,6) - (30240*t*P[2*2+1])/pow(dur,7) + (75600*(1 - t/dur)*P[2*2+1])/pow(dur,6) +
+     (75600*t*P[3*2+1])/pow(dur,7) - (100800*(1 - t/dur)*P[3*2+1])/pow(dur,6) - (100800*t*P[4*2+1])/pow(dur,7) + (75600*(1 - t/dur)*P[4*2+1])/pow(dur,6) + (75600*t*P[5*2+1])/pow(dur,7) -
+     (30240*(1 - t/dur)*P[5*2+1])/pow(dur,6) - (30240*t*P[6*2+1])/pow(dur,7) + (5040*(1 - t/dur)*P[6*2+1])/pow(dur,6) + (5040*t*P[7*2+1])/pow(dur,7),2);
+  } else if(n==7) {
+    if(grad.size()>0) {
+      grad = vector<double> {(-10080*((-5040*P[0*2+0])/pow(dur,7) + (35280*P[1*2+0])/pow(dur,7) - (105840*P[2*2+0])/pow(dur,7) + (176400*P[3*2+0])/pow(dur,7) - (176400*P[4*2+0])/pow(dur,7) + (105840*P[5*2+0])/pow(dur,7) -
+        (35280*P[6*2+0])/pow(dur,7) + (5040*P[7*2+0])/pow(dur,7)))/pow(dur,7),(-10080*
+      ((-5040*P[0*2+1])/pow(dur,7) + (35280*P[1*2+1])/pow(dur,7) - (105840*P[2*2+1])/pow(dur,7) + (176400*P[3*2+1])/pow(dur,7) - (176400*P[4*2+1])/pow(dur,7) + (105840*P[5*2+1])/pow(dur,7) -
+        (35280*P[6*2+1])/pow(dur,7) + (5040*P[7*2+1])/pow(dur,7)))/pow(dur,7),(70560*
+      ((-5040*P[0*2+0])/pow(dur,7) + (35280*P[1*2+0])/pow(dur,7) - (105840*P[2*2+0])/pow(dur,7) + (176400*P[3*2+0])/pow(dur,7) - (176400*P[4*2+0])/pow(dur,7) + (105840*P[5*2+0])/pow(dur,7) -
+        (35280*P[6*2+0])/pow(dur,7) + (5040*P[7*2+0])/pow(dur,7)))/pow(dur,7),(70560*
+      ((-5040*P[0*2+1])/pow(dur,7) + (35280*P[1*2+1])/pow(dur,7) - (105840*P[2*2+1])/pow(dur,7) + (176400*P[3*2+1])/pow(dur,7) - (176400*P[4*2+1])/pow(dur,7) + (105840*P[5*2+1])/pow(dur,7) -
+        (35280*P[6*2+1])/pow(dur,7) + (5040*P[7*2+1])/pow(dur,7)))/pow(dur,7),(-211680*
+      ((-5040*P[0*2+0])/pow(dur,7) + (35280*P[1*2+0])/pow(dur,7) - (105840*P[2*2+0])/pow(dur,7) + (176400*P[3*2+0])/pow(dur,7) - (176400*P[4*2+0])/pow(dur,7) + (105840*P[5*2+0])/pow(dur,7) -
+        (35280*P[6*2+0])/pow(dur,7) + (5040*P[7*2+0])/pow(dur,7)))/pow(dur,7),(-211680*
+      ((-5040*P[0*2+1])/pow(dur,7) + (35280*P[1*2+1])/pow(dur,7) - (105840*P[2*2+1])/pow(dur,7) + (176400*P[3*2+1])/pow(dur,7) - (176400*P[4*2+1])/pow(dur,7) + (105840*P[5*2+1])/pow(dur,7) -
+        (35280*P[6*2+1])/pow(dur,7) + (5040*P[7*2+1])/pow(dur,7)))/pow(dur,7),(352800*
+      ((-5040*P[0*2+0])/pow(dur,7) + (35280*P[1*2+0])/pow(dur,7) - (105840*P[2*2+0])/pow(dur,7) + (176400*P[3*2+0])/pow(dur,7) - (176400*P[4*2+0])/pow(dur,7) + (105840*P[5*2+0])/pow(dur,7) -
+        (35280*P[6*2+0])/pow(dur,7) + (5040*P[7*2+0])/pow(dur,7)))/pow(dur,7),(352800*
+      ((-5040*P[0*2+1])/pow(dur,7) + (35280*P[1*2+1])/pow(dur,7) - (105840*P[2*2+1])/pow(dur,7) + (176400*P[3*2+1])/pow(dur,7) - (176400*P[4*2+1])/pow(dur,7) + (105840*P[5*2+1])/pow(dur,7) -
+        (35280*P[6*2+1])/pow(dur,7) + (5040*P[7*2+1])/pow(dur,7)))/pow(dur,7),(-352800*
+      ((-5040*P[0*2+0])/pow(dur,7) + (35280*P[1*2+0])/pow(dur,7) - (105840*P[2*2+0])/pow(dur,7) + (176400*P[3*2+0])/pow(dur,7) - (176400*P[4*2+0])/pow(dur,7) + (105840*P[5*2+0])/pow(dur,7) -
+        (35280*P[6*2+0])/pow(dur,7) + (5040*P[7*2+0])/pow(dur,7)))/pow(dur,7),(-352800*
+      ((-5040*P[0*2+1])/pow(dur,7) + (35280*P[1*2+1])/pow(dur,7) - (105840*P[2*2+1])/pow(dur,7) + (176400*P[3*2+1])/pow(dur,7) - (176400*P[4*2+1])/pow(dur,7) + (105840*P[5*2+1])/pow(dur,7) -
+        (35280*P[6*2+1])/pow(dur,7) + (5040*P[7*2+1])/pow(dur,7)))/pow(dur,7),(211680*
+      ((-5040*P[0*2+0])/pow(dur,7) + (35280*P[1*2+0])/pow(dur,7) - (105840*P[2*2+0])/pow(dur,7) + (176400*P[3*2+0])/pow(dur,7) - (176400*P[4*2+0])/pow(dur,7) + (105840*P[5*2+0])/pow(dur,7) -
+        (35280*P[6*2+0])/pow(dur,7) + (5040*P[7*2+0])/pow(dur,7)))/pow(dur,7),(211680*
+      ((-5040*P[0*2+1])/pow(dur,7) + (35280*P[1*2+1])/pow(dur,7) - (105840*P[2*2+1])/pow(dur,7) + (176400*P[3*2+1])/pow(dur,7) - (176400*P[4*2+1])/pow(dur,7) + (105840*P[5*2+1])/pow(dur,7) -
+        (35280*P[6*2+1])/pow(dur,7) + (5040*P[7*2+1])/pow(dur,7)))/pow(dur,7),(-70560*
+      ((-5040*P[0*2+0])/pow(dur,7) + (35280*P[1*2+0])/pow(dur,7) - (105840*P[2*2+0])/pow(dur,7) + (176400*P[3*2+0])/pow(dur,7) - (176400*P[4*2+0])/pow(dur,7) + (105840*P[5*2+0])/pow(dur,7) -
+        (35280*P[6*2+0])/pow(dur,7) + (5040*P[7*2+0])/pow(dur,7)))/pow(dur,7),(-70560*
+      ((-5040*P[0*2+1])/pow(dur,7) + (35280*P[1*2+1])/pow(dur,7) - (105840*P[2*2+1])/pow(dur,7) + (176400*P[3*2+1])/pow(dur,7) - (176400*P[4*2+1])/pow(dur,7) + (105840*P[5*2+1])/pow(dur,7) -
+        (35280*P[6*2+1])/pow(dur,7) + (5040*P[7*2+1])/pow(dur,7)))/pow(dur,7),(10080*
+      ((-5040*P[0*2+0])/pow(dur,7) + (35280*P[1*2+0])/pow(dur,7) - (105840*P[2*2+0])/pow(dur,7) + (176400*P[3*2+0])/pow(dur,7) - (176400*P[4*2+0])/pow(dur,7) + (105840*P[5*2+0])/pow(dur,7) -
+        (35280*P[6*2+0])/pow(dur,7) + (5040*P[7*2+0])/pow(dur,7)))/pow(dur,7),(10080*
+      ((-5040*P[0*2+1])/pow(dur,7) + (35280*P[1*2+1])/pow(dur,7) - (105840*P[2*2+1])/pow(dur,7) + (176400*P[3*2+1])/pow(dur,7) - (176400*P[4*2+1])/pow(dur,7) + (105840*P[5*2+1])/pow(dur,7) -
+        (35280*P[6*2+1])/pow(dur,7) + (5040*P[7*2+1])/pow(dur,7)))/pow(dur,7)};
+    }
+    return pow((-5040*P[0*2+0])/pow(dur,7) + (35280*P[1*2+0])/pow(dur,7) - (105840*P[2*2+0])/pow(dur,7) + (176400*P[3*2+0])/pow(dur,7) - (176400*P[4*2+0])/pow(dur,7) + (105840*P[5*2+0])/pow(dur,7) -
+     (35280*P[6*2+0])/pow(dur,7) + (5040*P[7*2+0])/pow(dur,7),2) + pow((-5040*P[0*2+1])/pow(dur,7) + (35280*P[1*2+1])/pow(dur,7) - (105840*P[2*2+1])/pow(dur,7) + (176400*P[3*2+1])/pow(dur,7) -
+     (176400*P[4*2+1])/pow(dur,7) + (105840*P[5*2+1])/pow(dur,7) - (35280*P[6*2+1])/pow(dur,7) + (5040*P[7*2+1])/pow(dur,7),2);
+  }
+  if(grad.size() > 0) {
+    grad = vector<double>{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+  }
+  return 0;
+}

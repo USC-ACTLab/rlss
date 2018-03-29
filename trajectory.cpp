@@ -18,13 +18,9 @@ int trajectory::size() {
 }
 
 vectoreuc trajectory::eval(double t) {
-  int i = 0;
-  while(i<curves.size() && curves[i].duration < t) {
-    t -= curves[i].duration;
-    i++;
-  }
-  if(i==curves.size())
-    return curves[i-1].eval(curves[i-1].duration);
+  pair<int,double> cdata = curvedata(t);
+  int i = cdata.first;
+  t = cdata.second;
   return curves[i].eval(t);
 }
 
@@ -45,15 +41,9 @@ vectoreuc trajectory::eval(double t, int& curveidx, double& ct) {
 }
 
 vectoreuc trajectory::neval(double t, int n) {
-  int i = 0;
-  while(i<curves.size() && curves[i].duration < t) {
-    t -= curves[i].duration;
-    i++;
-  }
-  if(i==curves.size()) {
-    i--;
-    t = curves[i-1].duration;
-  }
+  pair<int, double> cdata = curvedata(t);
+  int i = cdata.first;
+  t = cdata.second;
 
   return curves[i].neval(t, n);
 }
@@ -104,4 +94,18 @@ trajectory& trajectory::operator-=(const trajectory& rhs) {
   }
 
   return *this;
+}
+
+pair<int, double> trajectory::curvedata(double t) {
+  int i = 0;
+  while(i<curves.size() && curves[i].duration < t) {
+    t -= curves[i].duration;
+    i++;
+  }
+  if(i==curves.size()) {
+    i--;
+    t = curves[i-1].duration;
+  }
+
+  return make_pair(i, t);
 }

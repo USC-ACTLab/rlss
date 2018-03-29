@@ -28,4 +28,9 @@ double bezier_2d_8pts_distance_from_plane(vector<vectoreuc>& P, hyperplane& plan
   grad is the gradient w.r.t. control points that shows the direction that increases distance most.
 */
 double bezier_2d_8pts_ndistance_from_point(vector<double>& P, vectoreuc& C, vector<double>& grad, double t, int degree, double dur);
+
+/*
+  return the l2 norm of the nth derivative of curve with control points P and duration dur, at the t. Put the gradient in grad vector
+*/
+double bezier_2d_8pts_neval_l2normsq(vector<double>& P, vector<double>& grad, double t, int n, double dur);
 #endif

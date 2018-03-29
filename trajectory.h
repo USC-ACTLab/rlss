@@ -19,5 +19,7 @@ class trajectory {
       vectoreuc neval(double t, int n);
       double integrate(double from, double to, vector<double>& grad);
       trajectory& operator-=(const trajectory& rhs);
+      /*index of the curve and time on the curve for given time*/
+      pair<int, double> curvedata(double t);
 };
 #endif

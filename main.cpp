@@ -95,6 +95,11 @@ int main(int argc, char** argv) {
 
   bool enable_voronoi = jsn["enable_voronoi"];
 
+  vector<int> dynamic_constraint_degrees = jsn["dynamic_constraint_degrees"];
+  vector<double> dynamic_constraint_max_values = jsn["dynamic_constraint_max_value_squares"];
+
+  string alg = jsn["algorithm"];
+
 
   nlohmann::json output_json;
 
@@ -208,10 +213,16 @@ int main(int argc, char** argv) {
       */
 
       unsigned varcount = trajectories[i].size() * ppc * problem_dimension;
-      nlopt::opt problem(nlopt::LD_SLSQP, varcount);
-      //nlopt::opt problem(nlopt::LD_MMA, varcount);
-      //nlopt::opt problem(nlopt::LD_CCSAQ, varcount);
-      //nlopt::opt problem(nlopt::GN_ISRES, varcount);
+      //nlopt::opt problem(nlopt::AUGLAG, varcount);
+      //problem.set_local_optimizer(local_opt);
+      nlopt::opt problem;
+      if(alg == "MMA") {
+        problem = nlopt::opt(nlopt::LD_MMA, varcount);
+      } else if(alg == "SLSQP") {
+        problem = nlopt::opt(nlopt::LD_SLSQP, varcount);
+      } else {
+        throw "no such algorithm";
+      }
       problem_data data;
       data.current_t = ct;
       data.time_horizon = hor;
@@ -296,6 +307,7 @@ int main(int argc, char** argv) {
 
 
       vector<continuity_data*> contpts;
+      vector<maxnvalue_data*> maxpts;
       /*vector<double> continuity_tolerances(problem_dimension);
       for(int i=0; i<problem_dimension; i++) {
         continuity_tolerances[i] = continuity_tol;
@@ -326,10 +338,10 @@ int main(int argc, char** argv) {
       }
 
       end_curve = min((int)trajectories[i].size()-1, end_curve);
-      start_curve = max(0, start_curve-1);
-      for(int n=0; n<=max_continuity; n++) {
+      //start_curve = max(0, start_curve-1);
+      for(int j=start_curve; j < end_curve; j++) {
+        for(int n=0; n<=max_continuity; n++) {
         // nth degree continuity
-        for(int j=start_curve; j < end_curve; j++) {
           continuity_data* cd = new continuity_data;
           cd->pdata = &data;
           cd->n = n;
@@ -340,8 +352,36 @@ int main(int argc, char** argv) {
 
 
         }
+
+        for(int k=0; k<dynamic_constraint_degrees.size(); k++) {
+          int deg = dynamic_constraint_degrees[k];
+          double max_val = dynamic_constraint_max_values[k];
+
+          maxnvalue_data* dd = new maxnvalue_data;
+          dd->pdata = &data;
+          dd->cidx = j;
+          dd->degree = deg;
+          dd->max_val = max_val;
+
+          problem.add_inequality_constraint(optimization::maximum_nvalue_of_curve, (void*)dd, 0);
+          maxpts.push_back(dd);
+        }
       }
 
+      for(int j=0; j<dynamic_constraint_degrees.size(); j++) {
+        int deg = dynamic_constraint_degrees[j];
+        double max_val = dynamic_constraint_max_values[j];
+        cout << max_val << endl;
+
+        maxnvalue_data* dd = new maxnvalue_data;
+        dd->pdata = &data;
+        dd->cidx = end_curve;
+        dd->degree = deg;
+        dd->max_val = max_val;
+
+        problem.add_inequality_constraint(optimization::maximum_nvalue_of_curve, (void*)dd, 0);
+        maxpts.push_back(dd);
+      }
       vector<point_data*> pointpts;
 
       for(int j=0; j<=max_initial_point_degree; j++) {
@@ -354,6 +394,7 @@ int main(int argc, char** argv) {
         problem.add_inequality_constraint(optimization::point_constraint, (void*)pd, initial_point_tols[j]);
         pointpts.push_back(pd);
       }
+
 
       /* if integral is less than this value, stop.*/
       problem.set_stopval(integral_stopval);
@@ -443,6 +484,9 @@ int main(int argc, char** argv) {
       }
       for(int j=0; j<pointpts.size(); j++) {
         delete pointpts[j];
+      }
+      for(int j=0; j<maxpts.size(); j++) {
+        delete maxpts[j];
       }
       auto t1 = Time::now();
       fsec fs = t1 - t0;

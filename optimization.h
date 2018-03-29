@@ -51,6 +51,14 @@ class point_data {
     int degree;
 };
 
+class maxnvalue_data {
+  public:
+    problem_data* pdata;
+    int cidx; // curve index
+    int degree; // derivative degree(1 = velocity, 2 = acc, 3= jerk etc)
+    double max_val;
+};
+
 class optimization {
   public:
     static double objective(const vector<double>& x, vector<double>& grad, void* f_data);
@@ -61,6 +69,9 @@ class optimization {
 
     /* enforces being in the given point at the given time */
     static double point_constraint(const vector<double>& x, vector<double>& grad, void* p_data);
+
+    /*calculate the maximum value of nth derivative of given curve*/
+    static double maximum_nvalue_of_curve(const vector<double>& x, vector<double>& grad, void* d_data);
 };
 
 

@@ -119,7 +119,7 @@ double optimization::obstacle_constraint(const vector<double>& x, vector<double>
   double prev_constraint_result = 0;
 
   double obsdt = 0.01;
-  for(double t = ct; t<=ct+T; t+=obsdt) {
+  for(double t = ct; t<=min(ct+T, tt); t+=obsdt) {
     double velocity = nt.neval(t, 1).L2norm();
     int curveidx;
     double curvet;
@@ -161,7 +161,6 @@ double optimization::obstacle_constraint(const vector<double>& x, vector<double>
 
     }
   }
-  //cout << "obs end: " << constraint_result<< " prev: " << prev_constraint_result << endl;
   return constraint_result;
 }
 
@@ -263,4 +262,53 @@ double optimization::point_constraint(const vector<double>& x, vector<double>& g
   //cout << "start diff "<< degree << ": " << result << endl;
   return result;
 
+}
+
+double optimization::maximum_nvalue_of_curve(const vector<double>& x, vector<double>& grad, void* d_data) {
+  maxnvalue_data& maxdata = *((maxnvalue_data*)d_data);
+  problem_data& pdata = *(maxdata.pdata);
+  int ppc = pdata.ppc; //pts per curve
+  int pd = pdata.problem_dimension;
+  int cpts = ppc * pd;
+  trajectory& ot = *(pdata.original_trajectory);
+
+
+  int cidx = maxdata.cidx;
+  int deg = maxdata.degree;
+  double max_allowed = maxdata.max_val;
+
+
+  double maxdt = 0.01;
+
+  vector<double> curvecpts(cpts);
+  for(int i=0; i<ppc; i++) {
+    for(int j=0; j<pd; j++) {
+      curvecpts[i*pd+j] = x[cidx*cpts+i*pd+j];
+    }
+  }
+
+  vector<double> innergrad;
+  if(grad.size() > 0) {
+    innergrad.resize(cpts);
+    for(int i=0; i<grad.size(); i++) {
+      grad[i] = 0;
+    }
+  }
+  double max_val = -1;
+  double dur = ot[cidx].duration;
+  for(double t=0; t<=dur; t+=maxdt) {
+    double val = bezier_2d_8pts_neval_l2normsq(curvecpts, innergrad, t, deg, dur);
+    if(val > max_val) {
+      max_val = val;
+      if(innergrad.size() > 0) {
+        for(int i=0; i<ppc; i++) {
+          for(int j=0; j<pd; j++) {
+            grad[cidx*cpts+i*pd+j] = innergrad[i*pd+j];
+          }
+        }
+      }
+    }
+  }
+  //cout << "dyn " << deg << " " << max_val - max_allowed << endl;
+  return max_val - max_allowed;
 }
