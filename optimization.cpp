@@ -309,6 +309,9 @@ double optimization::maximum_nvalue_of_curve(const vector<double>& x, vector<dou
       }
     }
   }
-  //cout << "dyn " << deg << " " << max_val - max_allowed << endl;
+  /*if(max_val - max_allowed > 0) {
+    cout << " >>>> ";
+  }
+  cout << "dyn " << deg << " " << max_val - max_allowed << endl;*/
   return max_val - max_allowed;
 }

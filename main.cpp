@@ -20,6 +20,7 @@
 #include "cxxopts.hpp"
 #include "json.hpp"
 #include <chrono>
+#include "svmoptimization.h"
 
 
 
@@ -294,7 +295,9 @@ int main(int argc, char** argv) {
       }
 
       // just to delete them from heap later.
+      /* obstacle avoidance v1 */
       vector<obstacle_data*> obspts;
+      /*vector<obstacle_data*> obspts;
 
       for(int j=0; j<obstacles.size(); j++) {
         obstacle_data* od = new obstacle_data;
@@ -303,6 +306,89 @@ int main(int argc, char** argv) {
 
         problem.add_inequality_constraint(optimization::obstacle_constraint, (void*)od, obstacle_tolerance);
         obspts.push_back(od);
+      }*/
+
+      vector<svmopt_data*> svmoptpts;
+      vector<svmobs_data*> svmobspts;
+      vector<svmrobot_data*> svmrobotpts;
+      for(int j=0; j<obstacles.size(); j++) {
+        /* problem_dimension coordinates and b */
+        nlopt::opt obstaclesvm(nlopt::LD_MMA, problem_dimension+1);
+        svmopt_data* objdata = new svmopt_data;
+        svmoptpts.push_back(objdata);
+        obstaclesvm.set_min_objective(svmoptimization::objective, (void*)objdata);
+
+        for(int k=0; k<obstacles[j].ch.size()-1; k++) {
+          svmobs_data* svmobsdata = new svmobs_data;
+          svmobspts.push_back(svmobsdata);
+          svmobsdata->obspt = &obstacles[j][obstacles[j].ch[k]];
+          obstaclesvm.add_inequality_constraint(svmoptimization::obspointconstraint, (void*)svmobsdata, 0.00001);
+        }
+
+        svmrobot_data* svmrobotdata = new svmrobot_data;
+        svmrobotdata->robotpt = &positions[i];
+        svmrobotpts.push_back(svmrobotdata);
+        obstaclesvm.add_inequality_constraint(svmoptimization::robotpointconstraint, (void*)svmrobotdata,0.00001);
+        obstaclesvm.set_ftol_rel(0.000001);
+        vector<double> init_points(problem_dimension+1);
+        for(int k=0; k<init_points.size(); k++) {
+          init_points[k] = 1;
+        }
+        double f_opt;
+        try {
+          nlopt::result res = obstaclesvm.optimize(init_points, f_opt);
+        } catch(nlopt::roundoff_limited& e) {
+        }
+        cout << "svm result: " << f_opt << " ";
+        for(int j=0; j<init_points.size(); j++) {
+          cout << init_points[j] << " ";
+        }
+        cout << endl;
+        hyperplane sep_plane;
+        vectoreuc normal(2);
+        normal[0] = init_points[0];
+        normal[1] = init_points[1];
+        double norm = normal.L2norm();
+        sep_plane.normal = normal.normalized();
+        sep_plane.distance = init_points[2]/norm;
+
+        double current_time = ct;
+        double end_time  = ct+hor;
+
+        int idx = 0;
+
+        while(idx < trajectories[i].size() && current_time >= trajectories[i][idx].duration) {
+          current_time -= trajectories[i][idx].duration;
+          end_time -= trajectories[i][idx].duration;
+          idx++;
+        }
+
+        current_time = max(current_time, 0.0); // to resolve underflows. just for ct == 0.
+        int cnt = 0;
+        while(end_time > 0 && idx < trajectories[i].size()) {
+          double cend_time = min(end_time, trajectories[i][idx].duration);
+          double curvet = 0;
+          double step = trajectories[i][idx].duration / (trajectories[i][idx].size()-1);
+          for(int p=0; p<trajectories[i][idx].size(); p++) {
+            //if((curvet > current_time || fabs(curvet - current_time) < PATHREPLAN_EPSILON) && (curvet < cend_time || fabs(curvet - cend_time) < PATHREPLAN_EPSILON)) {
+              voronoi_data* vd = new voronoi_data;
+              vd->pdata = &data;
+              vd->plane = sep_plane;
+              vd->curve_idx = idx;
+              vd->point_idx = p;
+              problem.add_inequality_constraint(optimization::voronoi_constraint, (void*)vd, 0);
+              vdpts.push_back(vd);
+              cnt++;
+            //}
+            curvet += step;
+          }
+
+
+          end_time -= cend_time;
+          current_time = 0;
+          idx++;
+        }
+        cout << "number of effected points: " << cnt << endl;
       }
 
 
@@ -363,7 +449,7 @@ int main(int argc, char** argv) {
           dd->degree = deg;
           dd->max_val = max_val;
 
-          problem.add_inequality_constraint(optimization::maximum_nvalue_of_curve, (void*)dd, 0);
+        //  problem.add_inequality_constraint(optimization::maximum_nvalue_of_curve, (void*)dd, 0);
           maxpts.push_back(dd);
         }
       }
@@ -371,7 +457,6 @@ int main(int argc, char** argv) {
       for(int j=0; j<dynamic_constraint_degrees.size(); j++) {
         int deg = dynamic_constraint_degrees[j];
         double max_val = dynamic_constraint_max_values[j];
-        cout << max_val << endl;
 
         maxnvalue_data* dd = new maxnvalue_data;
         dd->pdata = &data;
@@ -379,7 +464,7 @@ int main(int argc, char** argv) {
         dd->degree = deg;
         dd->max_val = max_val;
 
-        problem.add_inequality_constraint(optimization::maximum_nvalue_of_curve, (void*)dd, 0);
+        //problem.add_inequality_constraint(optimization::maximum_nvalue_of_curve, (void*)dd, 0);
         maxpts.push_back(dd);
       }
       vector<point_data*> pointpts;
@@ -400,7 +485,7 @@ int main(int argc, char** argv) {
       problem.set_stopval(integral_stopval);
 
       /* if objective function changes relatively less than this value, stop.*/
-      problem.set_ftol_rel(relative_integral_stopval);
+      //problem.set_ftol_rel(relative_integral_stopval);
 
       if(set_max_time) {
         problem.set_maxtime(dt);
@@ -437,6 +522,7 @@ int main(int argc, char** argv) {
 
 
       nlopt::result res;
+      cout << "major opt started" << endl;
       try {
         res = problem.optimize(initial_values, opt_f);
       } catch(nlopt::roundoff_limited& e) {
@@ -456,6 +542,7 @@ int main(int argc, char** argv) {
 
 
       cout << "nlopt result: " << res << " objective value: " << opt_f << endl;
+
       /*int a; cin >> a;*/
 
       /*initidx = 0;
@@ -487,6 +574,15 @@ int main(int argc, char** argv) {
       }
       for(int j=0; j<maxpts.size(); j++) {
         delete maxpts[j];
+      }
+      for(int j=0; j<svmoptpts.size(); j++) {
+        delete svmoptpts[j];
+      }
+      for(int j=0; j<svmobspts.size(); j++) {
+        delete svmobspts[j];
+      }
+      for(int j=0; j<svmrobotpts.size(); j++) {
+        delete svmrobotpts[j];
       }
       auto t1 = Time::now();
       fsec fs = t1 - t0;

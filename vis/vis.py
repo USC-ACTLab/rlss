@@ -9,7 +9,6 @@ from descartes import PolygonPatch
 
 jsn = json.load(open(sys.argv[1]))
 obstacles = os.listdir(sys.argv[2])
-print obstacles
 
 
 fig = plt.figure()
@@ -17,11 +16,6 @@ ax = plt.axes(xlim=(-10,10), ylim=(-10,10))
 time_text = ax.text(0.02, 0.95, '', transform=ax.transAxes)
 trajectories = []
 to_animate = []
-for i in range(jsn["number_of_robots"]):
-    atraj = ax.plot([], [], lw=2)[0]
-    trajectories.append(atraj)
-    to_animate.append(atraj)
-to_animate.append(time_text)
 
 polygon_patches = []
 for obs in obstacles:
@@ -35,9 +29,17 @@ for obs in obstacles:
             continue
         points.append((float(row[0]), float(row[1])))
     poly = Polygon(points)
-    polypatch = PolygonPatch(poly)
+    polypatch = PolygonPatch(poly, color='yellow', zorder=5)
     ax.add_patch(polypatch)
+    to_animate.append(polypatch)
 
+for i in range(jsn["number_of_robots"]):
+    atraj = ax.plot([], [], lw=2, zorder=0)[0]
+    trajectories.append(atraj)
+    to_animate.append(atraj)
+
+
+to_animate.append(time_text)
 x = []
 y = []
 
@@ -69,7 +71,6 @@ def animate(frame):
     time_text.set_text('time = %.1f' % (jsn["dt"]*frame))
     return to_animate
 
-print len(jsn["points"])
 anim = animation.FuncAnimation(fig, animate, init_func=init,frames=len(jsn["points"]),interval=jsn["dt"]*1000,blit=True)
 
 plt.show(block=False)

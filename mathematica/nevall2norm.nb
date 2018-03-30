@@ -10,10 +10,10 @@
 NotebookFileLineBreakTest
 NotebookFileLineBreakTest
 NotebookDataPosition[       158,          7]
-NotebookDataLength[     10233,        243]
-NotebookOptionsPosition[      9497,        222]
-NotebookOutlinePosition[      9836,        237]
-CellTagsIndexPosition[      9793,        234]
+NotebookDataLength[      4085,        125]
+NotebookOptionsPosition[      3608,        110]
+NotebookOutlinePosition[      3947,        125]
+CellTagsIndexPosition[      3904,        122]
 WindowFrame->Normal*)
 
 (* Beginning of Notebook Content *)
@@ -96,129 +96,17 @@ Cell[BoxData[{
   3.731262524301279*^9}},ExpressionUUID->"ca96822a-005e-42bb-95cc-\
 565f86c02ed9"],
 
-Cell[CellGroupData[{
-
 Cell[BoxData[
  RowBox[{"CForm", "[", "sq", "]"}]], "Input",
  CellChangeTimes->{{3.731262033436346*^9, 
   3.731262035065634*^9}},ExpressionUUID->"baeee6c2-63a8-4a39-8408-\
 ab60add2ffe5"],
 
-Cell["\<\
-Power((-5040*P(0,0))/Power(dur,7) + (35280*P(1,0))/Power(dur,7) - \
-(105840*P(2,0))/Power(dur,7) + (176400*P(3,0))/Power(dur,7) - \
-(176400*P(4,0))/Power(dur,7) + (105840*P(5,0))/Power(dur,7) - 
-     (35280*P(6,0))/Power(dur,7) + (5040*P(7,0))/Power(dur,7),2) + \
-Power((-5040*P(0,1))/Power(dur,7) + (35280*P(1,1))/Power(dur,7) - \
-(105840*P(2,1))/Power(dur,7) + (176400*P(3,1))/Power(dur,7) - 
-     (176400*P(4,1))/Power(dur,7) + (105840*P(5,1))/Power(dur,7) - \
-(35280*P(6,1))/Power(dur,7) + (5040*P(7,1))/Power(dur,7),2)\
-\>", "Output",
- CellChangeTimes->{{3.7312620660683413`*^9, 3.7312620779918823`*^9}, 
-   3.731262143477477*^9, 3.731262241458634*^9, 3.7312622773285513`*^9, {
-   3.731262307442595*^9, 3.731262358663907*^9}, {3.73126240940729*^9, 
-   3.731262454664507*^9}, 3.731262490606863*^9, {3.731262527652315*^9, 
-   3.731262534412455*^9}},ExpressionUUID->"50a1ae56-5356-4c2f-a640-\
-0a99c360d3a1"]
-}, Open  ]],
-
-Cell[CellGroupData[{
-
 Cell[BoxData[
  RowBox[{"CForm", "[", "grad", "]"}]], "Input",
  CellChangeTimes->{{3.731262045062498*^9, 
   3.73126204839167*^9}},ExpressionUUID->"1c6061a6-6c24-4afc-8756-\
-dff69272adae"],
-
-Cell["\<\
-List((-10080*((-5040*P(0,0))/Power(dur,7) + (35280*P(1,0))/Power(dur,7) - \
-(105840*P(2,0))/Power(dur,7) + (176400*P(3,0))/Power(dur,7) - \
-(176400*P(4,0))/Power(dur,7) + (105840*P(5,0))/Power(dur,7) - 
-        (35280*P(6,0))/Power(dur,7) + \
-(5040*P(7,0))/Power(dur,7)))/Power(dur,7),(-10080*
-      ((-5040*P(0,1))/Power(dur,7) + (35280*P(1,1))/Power(dur,7) - \
-(105840*P(2,1))/Power(dur,7) + (176400*P(3,1))/Power(dur,7) - \
-(176400*P(4,1))/Power(dur,7) + (105840*P(5,1))/Power(dur,7) - 
-        (35280*P(6,1))/Power(dur,7) + \
-(5040*P(7,1))/Power(dur,7)))/Power(dur,7),(70560*
-      ((-5040*P(0,0))/Power(dur,7) + (35280*P(1,0))/Power(dur,7) - \
-(105840*P(2,0))/Power(dur,7) + (176400*P(3,0))/Power(dur,7) - \
-(176400*P(4,0))/Power(dur,7) + (105840*P(5,0))/Power(dur,7) - 
-        (35280*P(6,0))/Power(dur,7) + \
-(5040*P(7,0))/Power(dur,7)))/Power(dur,7),(70560*
-      ((-5040*P(0,1))/Power(dur,7) + (35280*P(1,1))/Power(dur,7) - \
-(105840*P(2,1))/Power(dur,7) + (176400*P(3,1))/Power(dur,7) - \
-(176400*P(4,1))/Power(dur,7) + (105840*P(5,1))/Power(dur,7) - 
-        (35280*P(6,1))/Power(dur,7) + \
-(5040*P(7,1))/Power(dur,7)))/Power(dur,7),(-211680*
-      ((-5040*P(0,0))/Power(dur,7) + (35280*P(1,0))/Power(dur,7) - \
-(105840*P(2,0))/Power(dur,7) + (176400*P(3,0))/Power(dur,7) - \
-(176400*P(4,0))/Power(dur,7) + (105840*P(5,0))/Power(dur,7) - 
-        (35280*P(6,0))/Power(dur,7) + \
-(5040*P(7,0))/Power(dur,7)))/Power(dur,7),(-211680*
-      ((-5040*P(0,1))/Power(dur,7) + (35280*P(1,1))/Power(dur,7) - \
-(105840*P(2,1))/Power(dur,7) + (176400*P(3,1))/Power(dur,7) - \
-(176400*P(4,1))/Power(dur,7) + (105840*P(5,1))/Power(dur,7) - 
-        (35280*P(6,1))/Power(dur,7) + \
-(5040*P(7,1))/Power(dur,7)))/Power(dur,7),(352800*
-      ((-5040*P(0,0))/Power(dur,7) + (35280*P(1,0))/Power(dur,7) - \
-(105840*P(2,0))/Power(dur,7) + (176400*P(3,0))/Power(dur,7) - \
-(176400*P(4,0))/Power(dur,7) + (105840*P(5,0))/Power(dur,7) - 
-        (35280*P(6,0))/Power(dur,7) + \
-(5040*P(7,0))/Power(dur,7)))/Power(dur,7),(352800*
-      ((-5040*P(0,1))/Power(dur,7) + (35280*P(1,1))/Power(dur,7) - \
-(105840*P(2,1))/Power(dur,7) + (176400*P(3,1))/Power(dur,7) - \
-(176400*P(4,1))/Power(dur,7) + (105840*P(5,1))/Power(dur,7) - 
-        (35280*P(6,1))/Power(dur,7) + \
-(5040*P(7,1))/Power(dur,7)))/Power(dur,7),(-352800*
-      ((-5040*P(0,0))/Power(dur,7) + (35280*P(1,0))/Power(dur,7) - \
-(105840*P(2,0))/Power(dur,7) + (176400*P(3,0))/Power(dur,7) - \
-(176400*P(4,0))/Power(dur,7) + (105840*P(5,0))/Power(dur,7) - 
-        (35280*P(6,0))/Power(dur,7) + \
-(5040*P(7,0))/Power(dur,7)))/Power(dur,7),(-352800*
-      ((-5040*P(0,1))/Power(dur,7) + (35280*P(1,1))/Power(dur,7) - \
-(105840*P(2,1))/Power(dur,7) + (176400*P(3,1))/Power(dur,7) - \
-(176400*P(4,1))/Power(dur,7) + (105840*P(5,1))/Power(dur,7) - 
-        (35280*P(6,1))/Power(dur,7) + \
-(5040*P(7,1))/Power(dur,7)))/Power(dur,7),(211680*
-      ((-5040*P(0,0))/Power(dur,7) + (35280*P(1,0))/Power(dur,7) - \
-(105840*P(2,0))/Power(dur,7) + (176400*P(3,0))/Power(dur,7) - \
-(176400*P(4,0))/Power(dur,7) + (105840*P(5,0))/Power(dur,7) - 
-        (35280*P(6,0))/Power(dur,7) + \
-(5040*P(7,0))/Power(dur,7)))/Power(dur,7),(211680*
-      ((-5040*P(0,1))/Power(dur,7) + (35280*P(1,1))/Power(dur,7) - \
-(105840*P(2,1))/Power(dur,7) + (176400*P(3,1))/Power(dur,7) - \
-(176400*P(4,1))/Power(dur,7) + (105840*P(5,1))/Power(dur,7) - 
-        (35280*P(6,1))/Power(dur,7) + \
-(5040*P(7,1))/Power(dur,7)))/Power(dur,7),(-70560*
-      ((-5040*P(0,0))/Power(dur,7) + (35280*P(1,0))/Power(dur,7) - \
-(105840*P(2,0))/Power(dur,7) + (176400*P(3,0))/Power(dur,7) - \
-(176400*P(4,0))/Power(dur,7) + (105840*P(5,0))/Power(dur,7) - 
-        (35280*P(6,0))/Power(dur,7) + \
-(5040*P(7,0))/Power(dur,7)))/Power(dur,7),(-70560*
-      ((-5040*P(0,1))/Power(dur,7) + (35280*P(1,1))/Power(dur,7) - \
-(105840*P(2,1))/Power(dur,7) + (176400*P(3,1))/Power(dur,7) - \
-(176400*P(4,1))/Power(dur,7) + (105840*P(5,1))/Power(dur,7) - 
-        (35280*P(6,1))/Power(dur,7) + \
-(5040*P(7,1))/Power(dur,7)))/Power(dur,7),(10080*
-      ((-5040*P(0,0))/Power(dur,7) + (35280*P(1,0))/Power(dur,7) - \
-(105840*P(2,0))/Power(dur,7) + (176400*P(3,0))/Power(dur,7) - \
-(176400*P(4,0))/Power(dur,7) + (105840*P(5,0))/Power(dur,7) - 
-        (35280*P(6,0))/Power(dur,7) + \
-(5040*P(7,0))/Power(dur,7)))/Power(dur,7),(10080*
-      ((-5040*P(0,1))/Power(dur,7) + (35280*P(1,1))/Power(dur,7) - \
-(105840*P(2,1))/Power(dur,7) + (176400*P(3,1))/Power(dur,7) - \
-(176400*P(4,1))/Power(dur,7) + (105840*P(5,1))/Power(dur,7) - 
-        (35280*P(6,1))/Power(dur,7) + \
-(5040*P(7,1))/Power(dur,7)))/Power(dur,7))\
-\>", "Output",
- CellChangeTimes->{
-  3.7312620796474857`*^9, 3.731262144912883*^9, 3.7312621770982523`*^9, 
-   3.7312622430562077`*^9, {3.731262308900918*^9, 3.731262491987924*^9}, {
-   3.731262529511972*^9, 
-   3.7312625362616653`*^9}},ExpressionUUID->"577dea3e-a3fb-478f-bd25-\
-f84ef1158729"]
-}, Open  ]]
+dff69272adae"]
 },
 WindowSize->{1855, 1056},
 WindowMargins->{{0, Automatic}, {Automatic, 0}},
@@ -237,14 +125,8 @@ CellTagsIndex->{}
 (*NotebookFileOutline
 Notebook[{
 Cell[558, 20, 2669, 76, 170, "Input",ExpressionUUID->"ca96822a-005e-42bb-95cc-565f86c02ed9"],
-Cell[CellGroupData[{
-Cell[3252, 100, 185, 4, 31, "Input",ExpressionUUID->"baeee6c2-63a8-4a39-8408-ab60add2ffe5"],
-Cell[3440, 106, 919, 15, 88, "Output",ExpressionUUID->"50a1ae56-5356-4c2f-a640-0a99c360d3a1"]
-}, Open  ]],
-Cell[CellGroupData[{
-Cell[4396, 126, 186, 4, 31, "Input",ExpressionUUID->"1c6061a6-6c24-4afc-8756-dff69272adae"],
-Cell[4585, 132, 4896, 87, 639, "Output",ExpressionUUID->"577dea3e-a3fb-478f-bd25-f84ef1158729"]
-}, Open  ]]
+Cell[3230, 98, 185, 4, 31, "Input",ExpressionUUID->"baeee6c2-63a8-4a39-8408-ab60add2ffe5"],
+Cell[3418, 104, 186, 4, 31, "Input",ExpressionUUID->"1c6061a6-6c24-4afc-8756-dff69272adae"]
 }
 ]
 *)
