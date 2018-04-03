@@ -73,6 +73,7 @@ int main(int argc, char** argv) {
   bool set_max_time = jsn["set_max_time_as_replan_period"];
   double hor = jsn["planning_horizon"];
   string outputfile = jsn["output_file"];
+  double obstacle_horizon = jsn["obstacle_horizon"];
 
 
   vector<double> continuity_tols;
@@ -313,8 +314,12 @@ int main(int argc, char** argv) {
       vector<svmrobot_data*> svmrobotpts;
       for(int j=0; j<obstacles.size(); j++) {
         /* problem_dimension coordinates and b */
-        nlopt::opt obstaclesvm(nlopt::LD_MMA, problem_dimension+1);
+        nlopt::opt obstaclesvm(nlopt::LD_SLSQP, problem_dimension+1);
         svmopt_data* objdata = new svmopt_data;
+        vectoreuc vel = trajectories[i].neval(ct, 1);
+        objdata->velocity_direction = vel.normalized();
+        objdata->alpha = 1;
+        objdata->beta = 1;
         svmoptpts.push_back(objdata);
         obstaclesvm.set_min_objective(svmoptimization::objective, (void*)objdata);
 
@@ -323,27 +328,35 @@ int main(int argc, char** argv) {
           svmobspts.push_back(svmobsdata);
           svmobsdata->obspt = &obstacles[j][obstacles[j].ch[k]];
           obstaclesvm.add_inequality_constraint(svmoptimization::obspointconstraint, (void*)svmobsdata, 0.00001);
+          cout << "obs: " << obstacles[j][obstacles[j].ch[k]] << endl;
         }
 
         svmrobot_data* svmrobotdata = new svmrobot_data;
         svmrobotdata->robotpt = &positions[i];
+        cout << "ro: " << positions[i] << endl;
         svmrobotpts.push_back(svmrobotdata);
         obstaclesvm.add_inequality_constraint(svmoptimization::robotpointconstraint, (void*)svmrobotdata,0.00001);
-        obstaclesvm.set_ftol_rel(0.000001);
+        obstaclesvm.set_ftol_rel(0.00000000001);
         vector<double> init_points(problem_dimension+1);
         for(int k=0; k<init_points.size(); k++) {
           init_points[k] = 1;
         }
         double f_opt;
+        nlopt::result res;
         try {
-          nlopt::result res = obstaclesvm.optimize(init_points, f_opt);
+          res = obstaclesvm.optimize(init_points, f_opt);
         } catch(nlopt::roundoff_limited& e) {
         }
-        cout << "svm result: " << f_opt << " ";
+        cout << "pla: ";
         for(int j=0; j<init_points.size(); j++) {
           cout << init_points[j] << " ";
         }
         cout << endl;
+        for(int l=0; l<svmobspts.size(); l++) {
+          vector<double> a;
+          cout << svmoptimization::obspointconstraint(init_points, a, svmobspts[l]) << endl;
+        }
+        cout << "svm ret: " << res << " val: " << f_opt << endl;
         hyperplane sep_plane;
         vectoreuc normal(2);
         normal[0] = init_points[0];
@@ -353,7 +366,7 @@ int main(int argc, char** argv) {
         sep_plane.distance = init_points[2]/norm;
 
         double current_time = ct;
-        double end_time  = ct+hor;
+        double end_time  = ct+obstacle_horizon;
 
         int idx = 0;
 
@@ -365,12 +378,12 @@ int main(int argc, char** argv) {
 
         current_time = max(current_time, 0.0); // to resolve underflows. just for ct == 0.
         int cnt = 0;
-        while(end_time > 0 && idx < trajectories[i].size()) {
+        while(end_time >= 0 && idx < trajectories[i].size()) {
           double cend_time = min(end_time, trajectories[i][idx].duration);
           double curvet = 0;
           double step = trajectories[i][idx].duration / (trajectories[i][idx].size()-1);
           for(int p=0; p<trajectories[i][idx].size(); p++) {
-            //if((curvet > current_time || fabs(curvet - current_time) < PATHREPLAN_EPSILON) && (curvet < cend_time || fabs(curvet - cend_time) < PATHREPLAN_EPSILON)) {
+            if((curvet >= current_time || fabs(curvet - current_time) < PATHREPLAN_EPSILON) && (curvet <= cend_time || fabs(curvet - cend_time) < PATHREPLAN_EPSILON)) {
               voronoi_data* vd = new voronoi_data;
               vd->pdata = &data;
               vd->plane = sep_plane;
@@ -379,7 +392,7 @@ int main(int argc, char** argv) {
               problem.add_inequality_constraint(optimization::voronoi_constraint, (void*)vd, 0);
               vdpts.push_back(vd);
               cnt++;
-            //}
+            }
             curvet += step;
           }
 
@@ -425,7 +438,7 @@ int main(int argc, char** argv) {
 
       end_curve = min((int)trajectories[i].size()-1, end_curve);
       //start_curve = max(0, start_curve-1);
-      for(int j=start_curve; j < end_curve; j++) {
+      for(int j=start_curve; j <= end_curve && j<trajectories[i].size()-1; j++) {
         for(int n=0; n<=max_continuity; n++) {
         // nth degree continuity
           continuity_data* cd = new continuity_data;
@@ -439,33 +452,22 @@ int main(int argc, char** argv) {
 
         }
 
-        for(int k=0; k<dynamic_constraint_degrees.size(); k++) {
-          int deg = dynamic_constraint_degrees[k];
-          double max_val = dynamic_constraint_max_values[k];
+
+      }
+      for(int n=start_curve; n<=end_curve; n++) {
+        for(int j=0; j<dynamic_constraint_degrees.size(); j++) {
+          int deg = dynamic_constraint_degrees[j];
+          double max_val = dynamic_constraint_max_values[j];
 
           maxnvalue_data* dd = new maxnvalue_data;
           dd->pdata = &data;
-          dd->cidx = j;
+          dd->cidx = n;
           dd->degree = deg;
           dd->max_val = max_val;
 
-        //  problem.add_inequality_constraint(optimization::maximum_nvalue_of_curve, (void*)dd, 0);
+          //problem.add_inequality_constraint(optimization::maximum_nvalue_of_curve, (void*)dd, 0);
           maxpts.push_back(dd);
         }
-      }
-
-      for(int j=0; j<dynamic_constraint_degrees.size(); j++) {
-        int deg = dynamic_constraint_degrees[j];
-        double max_val = dynamic_constraint_max_values[j];
-
-        maxnvalue_data* dd = new maxnvalue_data;
-        dd->pdata = &data;
-        dd->cidx = end_curve;
-        dd->degree = deg;
-        dd->max_val = max_val;
-
-        //problem.add_inequality_constraint(optimization::maximum_nvalue_of_curve, (void*)dd, 0);
-        maxpts.push_back(dd);
       }
       vector<point_data*> pointpts;
 

@@ -7,7 +7,12 @@ using namespace std;
 
 class svmopt_data {
   public:
-
+    vectoreuc velocity_direction;
+    double alpha;
+    double beta;
+    /*
+      alpha * |w| + beta * w (dot) velocity_direction
+    */
 };
 
 class svmobs_data {

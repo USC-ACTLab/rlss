@@ -4,6 +4,7 @@
   "replan_period": 0.3,
   "set_max_time_as_replan_period": false,
   "planning_horizon": 2,
+  "obstacle_horizon": 0.6,
   "objective_stop_value": 100,
   "objective_relative_stop_value": 0.01,
   "problem_dimension": 2,
