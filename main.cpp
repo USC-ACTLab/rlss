@@ -298,7 +298,6 @@ int main(int argc, char** argv) {
       // just to delete them from heap later.
       /* obstacle avoidance v1 */
       vector<obstacle_data*> obspts;
-      /*vector<obstacle_data*> obspts;
 
       for(int j=0; j<obstacles.size(); j++) {
         obstacle_data* od = new obstacle_data;
@@ -307,13 +306,14 @@ int main(int argc, char** argv) {
 
         problem.add_inequality_constraint(optimization::obstacle_constraint, (void*)od, obstacle_tolerance);
         obspts.push_back(od);
-      }*/
+      }
+
 
       vector<svmopt_data*> svmoptpts;
       vector<svmobs_data*> svmobspts;
       vector<svmrobot_data*> svmrobotpts;
+      /* SVM STUFF
       for(int j=0; j<obstacles.size(); j++) {
-        /* problem_dimension coordinates and b */
         nlopt::opt obstaclesvm(nlopt::LD_SLSQP, problem_dimension+1);
         svmopt_data* objdata = new svmopt_data;
         vectoreuc vel = trajectories[i].neval(ct, 1);
@@ -403,7 +403,7 @@ int main(int argc, char** argv) {
         }
         cout << "number of effected points: " << cnt << endl;
       }
-
+*/
 
       vector<continuity_data*> contpts;
       vector<maxnvalue_data*> maxpts;
