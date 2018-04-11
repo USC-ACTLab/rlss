@@ -1,10 +1,9 @@
 {
-  "trajectories": "../../only1trajfast/",
-  "obstacles": "../../only1obs/",
+  "trajectories": "../../initial_trajectories/",
+  "obstacles": "../../obstacles/",
   "replan_period": 0.3,
   "set_max_time_as_replan_period": false,
-  "planning_horizon": 2,
-  "obstacle_horizon": 0.6,
+  "planning_horizon": 3,
   "objective_stop_value": 100,
   "objective_relative_stop_value": 0.01,
   "problem_dimension": 2,
@@ -21,7 +20,7 @@
     1
   ],
   "dynamic_constraint_max_value_squares": [
-    100000
+    16
   ],
   "obstacle_tolerance": 0.0001,
   "enable_voronoi": true,

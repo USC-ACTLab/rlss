@@ -19,6 +19,14 @@ class problem_data {
     int ppc;
 };
 
+class alt_obj_data {
+  public:
+    problem_data* pdata;
+    vectoreuc* pos;
+    vectoreuc* vel;
+    vectoreuc* acc;
+};
+
 /*
 voronoi constraint for one point only.
 */
@@ -62,6 +70,7 @@ class maxnvalue_data {
 class optimization {
   public:
     static double objective(const vector<double>& x, vector<double>& grad, void* f_data);
+    static double alt_objective(const vector<double>& x, vector<double>& grad, void* f_data);
     static double voronoi_constraint(const vector<double>& x, vector<double>& grad, void* v_data);
     static double obstacle_constraint(const vector<double>& x, vector<double>& grad, void* o_data);
     /* requires distance between two points to be zero, use it with add_equality_constraint*/

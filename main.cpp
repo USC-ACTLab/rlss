@@ -73,7 +73,6 @@ int main(int argc, char** argv) {
   bool set_max_time = jsn["set_max_time_as_replan_period"];
   double hor = jsn["planning_horizon"];
   string outputfile = jsn["output_file"];
-  double obstacle_horizon = jsn["obstacle_horizon"];
 
 
   vector<double> continuity_tols;
@@ -234,7 +233,18 @@ int main(int argc, char** argv) {
       data.ppc = ppc;
       data.tt = total_t;
 
-      problem.set_min_objective(optimization::objective, (void*)&data);
+      //problem.set_min_objective(optimization::objective, (void*)&data);
+
+      alt_obj_data alt_data;
+      alt_data.pdata = &data;
+      vectoreuc OBJPOS = orijinal_trajectories[i].neval(min(ct+hor, total_t), 0);
+      vectoreuc OBJVEL = orijinal_trajectories[i].neval(min(ct+hor, total_t), 1);
+      vectoreuc OBJACC = orijinal_trajectories[i].neval(min(ct+hor, total_t), 2);
+      alt_data.pos = &OBJPOS;
+      alt_data.vel = &OBJVEL;
+      alt_data.acc = &OBJACC;
+
+      problem.set_min_objective(optimization::alt_objective, (void*)&alt_data);
 
 
       /* all control points should be in range [-10, 10].
@@ -465,7 +475,7 @@ int main(int argc, char** argv) {
           dd->degree = deg;
           dd->max_val = max_val;
 
-          //problem.add_inequality_constraint(optimization::maximum_nvalue_of_curve, (void*)dd, 0);
+          problem.add_inequality_constraint(optimization::maximum_nvalue_of_curve, (void*)dd, 0);
           maxpts.push_back(dd);
         }
       }
@@ -524,7 +534,6 @@ int main(int argc, char** argv) {
 
 
       nlopt::result res;
-      cout << "major opt started" << endl;
       try {
         res = problem.optimize(initial_values, opt_f);
       } catch(nlopt::roundoff_limited& e) {

@@ -26,6 +26,7 @@ class curve {
     static int comb(int n, int i);
     double integrate(double from, double to, vector<double>& grad);
     curve& operator-=(const curve& rhs);
+    void print();
 };
 
 #endif

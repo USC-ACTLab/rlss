@@ -36,7 +36,7 @@ vectoreuc trajectory::eval(double t, int& curveidx, double& ct) {
     return curves[i-1].eval(curves[i-1].duration);
   }
   curveidx = i;
-  ct = t / curves[i].duration;
+  ct = t;
   return curves[i].eval(t);
 }
 
@@ -74,7 +74,9 @@ double trajectory::integrate(double from, double to, vector<double>& grad) {
 
   for(; to > 0 && curveidx < curves.size(); to-=curves[curveidx++].duration) {
     vector<double> grdient(curves[curveidx].size() * curves[curveidx][0].size());
+    //cout << from << " " << min(to, curves[curveidx].duration) << endl;
     res += curves[curveidx].integrate(from, min(to, curves[curveidx].duration), grdient);
+    //cout << res << endl;
     if(grad.size() > 0) {
       for(int i=0; i<grdient.size(); i++) {
         grad[gradidx++] = grdient[i];

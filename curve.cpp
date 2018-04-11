@@ -203,3 +203,10 @@ curve& curve::operator-=(const curve& rhs) {
 
   return *this;
 }
+
+void curve::print() {
+  for(int i=0; i<size(); i++) {
+    cout << cpts[i] << " ";
+  }
+  cout << endl;
+}
