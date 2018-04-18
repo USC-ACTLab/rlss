@@ -1,11 +1,11 @@
 {
-  "trajectories": "../../initial_trajectories/",
-  "obstacles": "../../obstacles/",
-  "replan_period": 0.3,
+  "trajectories": "../../head_to_head_trajs/",
+  "obstacles": "../../noobs/",
+  "replan_period": 0.1,
   "set_max_time_as_replan_period": false,
   "planning_horizon": 3,
-  "objective_stop_value": 100,
-  "objective_relative_stop_value": 0.01,
+  "objective_stop_value": 0.1,
+  "objective_relative_stop_value": 0.000003,
   "problem_dimension": 2,
   "points_per_curve": 8,
   "continuity_upto_degree": 1,
@@ -17,14 +17,14 @@
     0.001, 0.01, 0.1
   ],
   "dynamic_constraint_degrees": [
-    1
+
   ],
   "dynamic_constraint_max_value_squares": [
-    16
+
   ],
-  "obstacle_tolerance": 0.0001,
+  "obstacle_tolerance": 0.001,
   "enable_voronoi": true,
   "output_file": "res",
   "print_dt": 0.01,
-  "algorithm": "SLSQP"
+  "algorithm": "MMA"
 }

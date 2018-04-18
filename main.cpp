@@ -21,6 +21,7 @@
 #include "json.hpp"
 #include <chrono>
 #include "svmoptimization.h"
+#include "utility.h"
 
 
 
@@ -35,11 +36,6 @@ typedef chrono::high_resolution_clock Time;
 typedef chrono::milliseconds ms;
 typedef chrono::duration<float> fsec;
 
-double frand(double fMin, double fMax)
-{
-    double f = (double)rand() / RAND_MAX;
-    return fMin + f * (fMax - fMin);
-}
 
 int main(int argc, char** argv) {
 
@@ -186,11 +182,21 @@ int main(int argc, char** argv) {
 
   output_json["dt"] = printdt;
   output_json["number_of_robots"] = trajectories.size();
+  int steps_per_cycle = (dt / printdt)+0.5;
   int output_iter = 0;
 
 
   double total_time_for_opt = 0;
   int total_count_for_opt = 0;
+
+
+  for(int i=0; i<trajectories.size(); i++) {
+    for(double t=0; t<=total_t; t+=printdt) {
+      vectoreuc eu = orijinal_trajectories[i].eval(t);
+      output_json["originals"][i]["x"].push_back(eu[0]);
+      output_json["originals"][i]["y"].push_back(eu[1]);
+    }
+  }
 
   for(double ct = 0; ct <= total_t; ct+=dt) {
     for(int i=0; i<trajectories.size(); i++) {
@@ -198,7 +204,6 @@ int main(int argc, char** argv) {
       output_json["points"][output_iter].push_back(positions[i].crds);
       //out << i << " (" << positions[i][0] << "," << positions[i][1] << ")" << endl;
     }
-    output_iter++;
 
     for(int i=0; i<trajectories.size(); i++ ) {
       auto t0 = Time::now();
@@ -207,6 +212,14 @@ int main(int argc, char** argv) {
       vector<hyperplane> voronoi_hyperplanes;
       if(enable_voronoi) {
         voronoi_hyperplanes = voronoi(positions,i);
+      }
+
+      for(int j=0; j<voronoi_hyperplanes.size(); j++) {
+        output_json["voronois"][output_iter][i][j].push_back(voronoi_hyperplanes[j].normal[0]); //normal first
+        output_json["voronois"][output_iter][i][j].push_back(voronoi_hyperplanes[j].normal[1]);//normal seconds
+        output_json["voronois"][output_iter][i][j].push_back(voronoi_hyperplanes[j].distance); //distance
+        output_json["voronois"][output_iter][i][j].push_back(ct);
+        output_json["voronois"][output_iter][i][j].push_back(ct+dt);
       }
 
       /*
@@ -233,7 +246,7 @@ int main(int argc, char** argv) {
       data.ppc = ppc;
       data.tt = total_t;
 
-      //problem.set_min_objective(optimization::objective, (void*)&data);
+      problem.set_min_objective(optimization::objective, (void*)&data);
 
       alt_obj_data alt_data;
       alt_data.pdata = &data;
@@ -244,7 +257,7 @@ int main(int argc, char** argv) {
       alt_data.vel = &OBJVEL;
       alt_data.acc = &OBJACC;
 
-      problem.set_min_objective(optimization::alt_objective, (void*)&alt_data);
+    //  problem.set_min_objective(optimization::alt_objective, (void*)&alt_data);
 
 
       /* all control points should be in range [-10, 10].
@@ -269,6 +282,7 @@ int main(int argc, char** argv) {
 
         double current_time = ct;
         double end_time  = ct+dt;
+        //double end_time  = ct+dt;
 
         int idx = 0;
 
@@ -285,7 +299,7 @@ int main(int argc, char** argv) {
           double curvet = 0;
           double step = trajectories[i][idx].duration / (trajectories[i][idx].size()-1);
           for(int p=0; p<trajectories[i][idx].size(); p++) {
-            if((curvet > current_time || fabs(curvet - current_time) < PATHREPLAN_EPSILON) && (curvet < cend_time || fabs(curvet - cend_time) < PATHREPLAN_EPSILON)) {
+            //if((curvet > current_time || fabs(curvet - current_time) < PATHREPLAN_EPSILON) /*&& (curvet < cend_time || fabs(curvet - cend_time) < PATHREPLAN_EPSILON)*/) {
               voronoi_data* vd = new voronoi_data;
               vd->pdata = &data;
               vd->plane = plane;
@@ -293,7 +307,7 @@ int main(int argc, char** argv) {
               vd->point_idx = p;
               problem.add_inequality_constraint(optimization::voronoi_constraint, (void*)vd, 0);
               vdpts.push_back(vd);
-            }
+          //}
             curvet += step;
           }
 
@@ -485,6 +499,10 @@ int main(int argc, char** argv) {
         point_data* pd = new point_data;
         pd->pdata = &data;
         pd->point = trajectories[i].neval(ct, j);
+        /*if(j==0) {
+          pd->point[0] += fRand(-0.002, 0.002);
+          pd->point[1] += fRand(-0.002, 0.002);
+        }*/
         pd->time = ct;
         pd->degree = j;
 
@@ -497,18 +515,19 @@ int main(int argc, char** argv) {
       problem.set_stopval(integral_stopval);
 
       /* if objective function changes relatively less than this value, stop.*/
-      //problem.set_ftol_rel(relative_integral_stopval);
+      problem.set_ftol_abs(relative_integral_stopval);
 
       if(set_max_time) {
         problem.set_maxtime(dt);
       }
+      //problem.set_maxtime(5);
 
 
       vector<double> initial_values;
       for(int j=0; j<trajectories[i].size(); j++) {
         for(int k=0; k<ppc; k++) {
           for(int p=0; p<problem_dimension; p++) {
-            initial_values.push_back(trajectories[i][j][k][p]);
+            initial_values.push_back(trajectories[i][j][k][p] + fRand(-0.002, 0.002));
           }
         }
       }
@@ -540,6 +559,7 @@ int main(int argc, char** argv) {
         cout << "roundoff_limited" << endl;
       } catch(std::runtime_error& e) {
         cout << "runtime error " << i << endl;
+        cout << e.what()<< endl;
       }
 
       initidx = 0;
@@ -601,9 +621,16 @@ int main(int argc, char** argv) {
       total_time_for_opt += d.count();
       total_count_for_opt++;
       cout << "optimization time: " << d.count() << "ms" << endl;
-    }
 
-    for(double t = ct + printdt; t<ct+dt; t+=printdt) {
+      for(double t = ct; t<min(total_t, ct+hor); t+=printdt) {
+        vectoreuc ev = trajectories[i].eval(t);
+        output_json["planned_trajs"][output_iter][i]["x"].push_back(ev[0]);
+        output_json["planned_trajs"][output_iter][i]["y"].push_back(ev[1]);
+      }
+    }
+    output_iter++;
+    int v = 0;
+    for(double t = ct + printdt; t<=total_t && v < steps_per_cycle - 1; t+=printdt, v++) {
       for(int i=0; i<trajectories.size(); i++) {
         vectoreuc vec = trajectories[i].eval(t);
         output_json["points"][output_iter].push_back(vec.crds);
@@ -612,6 +639,8 @@ int main(int argc, char** argv) {
       output_iter++;
     }
   }
+
+
 
   cout << "average opt time: " << total_time_for_opt / total_count_for_opt << "ms" << endl;
   out << output_json << endl;

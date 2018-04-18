@@ -8,9 +8,9 @@ using namespace std;
 
 
 double optimization::alt_objective(const vector<double>& x, vector<double>& grad, void* f_data) {
-  double alpha_pos = 0.01;
-  double alpha_vel = 0.001;
-  double alpha_acc = 0.0001;
+  double alpha_pos = 1;
+  double alpha_vel = 0;
+  double alpha_acc = 0;
 
   alt_obj_data& odata = *((alt_obj_data*)f_data);
   problem_data& pdata = *(odata.pdata);
@@ -18,9 +18,6 @@ double optimization::alt_objective(const vector<double>& x, vector<double>& grad
   vectoreuc& vel = *(odata.vel);
   vectoreuc& acc = *(odata.acc);
   trajectory& ot = *(pdata.original_trajectory);
-  cout << pos << endl;
-  cout << vel << endl;
-  cout << acc << endl;
 
   int pd = pdata.problem_dimension;
   int ppc = pdata.ppc;
@@ -49,9 +46,8 @@ double optimization::alt_objective(const vector<double>& x, vector<double>& grad
   }
 
 
-  cout <<"T: " <<  T << endl;
+  //cout <<"T: " <<  T << endl;
   double posdis = bezier_2d_8pts_ndistance_from_point(P, pos, innergrad, T, 0, ot[curveidx].duration);
-  cout << posdis << endl;
   if(grad.size() > 0) {
     for(int i=0; i<ppc; i++) {
       for(int j=0; j<pd; j++) {
@@ -61,7 +57,6 @@ double optimization::alt_objective(const vector<double>& x, vector<double>& grad
   }
 
   double veldis = bezier_2d_8pts_ndistance_from_point(P, vel, innergrad, T, 1, ot[curveidx].duration);
-  cout << veldis << endl;
   if(grad.size() > 0) {
     for(int i=0; i<ppc; i++) {
       for(int j=0; j<pd; j++) {
@@ -71,7 +66,6 @@ double optimization::alt_objective(const vector<double>& x, vector<double>& grad
   }
 
   double accdis = bezier_2d_8pts_ndistance_from_point(P, acc, innergrad, T, 2, ot[curveidx].duration);
-  cout << accdis << endl;
   if(grad.size() > 0) {
     for(int i=0; i<ppc; i++) {
       for(int j=0; j<pd; j++) {
@@ -81,7 +75,7 @@ double optimization::alt_objective(const vector<double>& x, vector<double>& grad
   }
 
   double cost = alpha_pos * posdis + alpha_vel * veldis + alpha_acc * accdis;
-  cout << "obj cost: " << cost << endl;
+  //cout << "obj cost: " << cost << endl;
   return cost;
 
 }
@@ -120,7 +114,7 @@ double optimization::objective(const vector<double>& x, vector<double>& grad, vo
 
   nt -= ot;
   double result = nt.integrate(ct, ct+T, grad);
-  cout << ct << ct+T << " objective: " << result << endl;
+  //cout << ct << ct+T << " objective: " << result << endl;
   return result;
 }
 
@@ -154,7 +148,7 @@ double optimization::voronoi_constraint(const vector<double>& x, vector<double>&
     }
   }
   double result = cur_pt.dot(plane.normal) - plane.distance;
-  cout << "voro constraint: " << result << endl;
+  //cout << "voro constraint: " << result << endl;
   return result;
 }
 
@@ -241,7 +235,7 @@ double optimization::obstacle_constraint(const vector<double>& x, vector<double>
 
     }
   }
-  cout << "obstacle cons: " << constraint_result << endl;
+  //cout << "obstacle cons: " << constraint_result << endl;
   return constraint_result;
 }
 
@@ -285,7 +279,7 @@ double optimization::continuity_constraint(const vector<double>& x, vector<doubl
       }
     }
   }
-  cout << "con constraint: " << result << endl;
+  //cout << "con constraint: " << result << endl;
   return result;
 }
 
@@ -340,7 +334,7 @@ double optimization::point_constraint(const vector<double>& x, vector<double>& g
       }
     }
   }
-  cout << "point constraint deg "<< degree << ": " << result << endl;
+  //cout << "point constraint deg "<< degree << ": " << result << endl;
   return result;
 
 }
@@ -394,6 +388,6 @@ double optimization::maximum_nvalue_of_curve(const vector<double>& x, vector<dou
   if(max_val - max_allowed > 0) {
     cout << " >>>> ";
   }*/
-  cout << "dyn consraint deg " << deg << ": " << max_val - max_allowed << endl;
+  //cout << "dyn consraint deg " << deg << ": " << max_val - max_allowed << endl;
   return max_val - max_allowed;
 }
