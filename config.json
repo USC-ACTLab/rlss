@@ -5,7 +5,7 @@
   "set_max_time_as_replan_period": false,
   "planning_horizon": 3,
   "objective_stop_value": 0.1,
-  "objective_relative_stop_value": 0.000003,
+  "objective_relative_stop_value": 0.0003,
   "problem_dimension": 2,
   "points_per_curve": 8,
   "continuity_upto_degree": 1,

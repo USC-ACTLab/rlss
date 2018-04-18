@@ -281,7 +281,7 @@ int main(int argc, char** argv) {
 
 
         double current_time = ct;
-        double end_time  = ct+dt;
+        double end_time  = ct+2*dt;
         //double end_time  = ct+dt;
 
         int idx = 0;

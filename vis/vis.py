@@ -83,7 +83,7 @@ for i in range(jsn["number_of_robots"]):
     voronois.append([])
     for v in jsn["voronois"][0][i]:
         (x,y) = genvoroxy(v)
-        v = ax.plot(x, y, lw=2, zorder=7)[0]
+        v = ax.plot(x, y, lw=2, zorder=7, color=colors[i])[0]
         voronois[i].append(v)
         to_animate.append(v)
 
