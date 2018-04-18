@@ -9,10 +9,9 @@ from descartes import PolygonPatch
 import numpy as np
 
 jsn = json.load(open(sys.argv[1]))
-obstacles = os.listdir(sys.argv[2])
 
 save = None
-if (sys.argv[3] == "save"):
+if (len(sys.argv) > 2 and sys.argv[2] == "save"):
     save = True
 else:
     save = False
@@ -25,28 +24,19 @@ trajectories = []
 to_animate = []
 
 polygon_patches = []
-for obs in obstacles:
-    csvfile = open(sys.argv[2] + "/" + obs, "r")
-    readr = csv.reader(csvfile, delimiter=',')
-    points = []
-    header = True
-    for row in readr:
-        if(header):
-            header = False
-            continue
-        points.append((float(row[0]), float(row[1])))
-    poly = Polygon(points)
-    polypatch = PolygonPatch(poly, color='yellow', zorder=5)
-    ax.add_patch(polypatch)
-    to_animate.append(polypatch)
+if("obstacles" in jsn):
+    for obs in jsn["obstacles"]:
+        poly = Polygon(obs)
+        polypatch = PolygonPatch(poly, color='yellow', zorder = 5)
+        ax.add_patch(polypatch)
+        to_animate.append(polypatch)
+
 
 circles = []
 voronois = []
 plans = []
 originals = []
 
-print len(jsn["originals"][0]["x"])
-print len(jsn["points"])
 
 for i in range(jsn["number_of_robots"]):
     orig = ax.plot(jsn["originals"][i]["x"], jsn["originals"][i]["y"], linestyle="dashed", lw=2, zorder = 10, color=colors[i], alpha = 0.8)[0]
@@ -144,8 +134,8 @@ def animate(frame):
         originals[i].set_data(jsn["originals"][i]["x"][frame:], jsn["originals"][i]["y"][frame:])
     time_text.set_text('time = %.1f' % (jsn["dt"]*frame))
     if save:
-        if(frame > 550):
-            plt.savefig("images/"+str(frame)+".png")
+        if(frame > 300):
+        	plt.savefig("images/"+str(frame)+".png")
     return to_animate
 
 anim = animation.FuncAnimation(fig, animate, init_func=init,frames=len(jsn["points"]),interval=jsn["dt"]*1000,blit=True)

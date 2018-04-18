@@ -1,6 +1,6 @@
 {
-  "trajectories": "../../head_to_head_trajs/",
-  "obstacles": "../../noobs/",
+  "trajectories": "../test_data/trajectories/head_to_head_trajs/",
+  "obstacles": "../test_data/obstacles/noobs/",
   "replan_period": 0.1,
   "set_max_time_as_replan_period": false,
   "planning_horizon": 3,
@@ -24,7 +24,7 @@
   ],
   "obstacle_tolerance": 0.001,
   "enable_voronoi": true,
-  "output_file": "res",
+  "output_file": "res.json",
   "print_dt": 0.01,
   "algorithm": "MMA"
 }

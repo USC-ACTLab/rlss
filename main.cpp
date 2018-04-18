@@ -1,12 +1,9 @@
 #include <iostream>
 #include <nlopt.hpp>
-#include <armadillo>
 #include <fstream>
 #include <experimental/filesystem>
 #include <vector>
 #include "csv/CSVparser.hpp"
-#include <boost/geometry.hpp> // for geometry algorithms
-#include <boost/geometry/geometries/geometries.hpp> // for geometry types
 #include <algorithm>
 #include <cassert>
 #include <cstdarg>
@@ -29,7 +26,6 @@
 
 namespace fs = std::experimental::filesystem::v1;
 using namespace std;
-using namespace boost::geometry;
 
 
 typedef chrono::high_resolution_clock Time;
@@ -40,9 +36,9 @@ typedef chrono::duration<float> fsec;
 int main(int argc, char** argv) {
 
   string config_path;
-  cxxopts::Options options("Path Replanner", "Path replanner for UAV swarms");
+  cxxopts::Options options("Trajectory Replanner", "trajectory replanner");
   options.add_options()
-    ("cfg", "Config file", cxxopts::value<std::string>()->default_value("../config.json")),
+    ("cfg", "Config file", cxxopts::value<std::string>()->default_value("../config.json"))
     ("help", "Display help page");
 
   auto result = options.parse(argc, argv);
@@ -153,7 +149,7 @@ int main(int argc, char** argv) {
 
 
   vector<obstacle2D> obstacles;
-
+  int obs_idx = 0;
   for(auto & p : fs::directory_iterator(obstacles_path)) {
     csv::Parser file(p.path().string());
     obstacle2D o;
@@ -161,11 +157,13 @@ int main(int argc, char** argv) {
       vectoreuc pt(problem_dimension);
       for(int u=0; u<problem_dimension; u++)
         pt[u] = stod(file[i][u]);
+      output_json["obstacles"][obs_idx].push_back(pt.crds);
       o.add_pt(pt);
     }
     o.convex_hull();
     o.ch_planes();
     obstacles.push_back(o);
+    obs_idx++;
   }
 
 
@@ -515,7 +513,7 @@ int main(int argc, char** argv) {
       problem.set_stopval(integral_stopval);
 
       /* if objective function changes relatively less than this value, stop.*/
-      problem.set_ftol_abs(relative_integral_stopval);
+      problem.set_ftol_rel(relative_integral_stopval);
 
       if(set_max_time) {
         problem.set_maxtime(dt);
