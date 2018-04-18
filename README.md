@@ -23,6 +23,8 @@ If you do not use --cfg, default file path is ../config.json.
 
 Check config.json for the sample config file.
 
+Notice that in default config file "obstacles" key has value of "../test_data/obstacled/noobs". Since noobs should be an empty folder, pushing it into git was not possible. Create this folder by yourself if you have no obstacles.
+
 Optimization results in a "res.json" file.
 
 ### Visualize the results
