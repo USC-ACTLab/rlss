@@ -1,4 +1,4 @@
-# MR Trajectory Replanning
+# Multi Robot Trajectory Replanning
 
 ### To build the project
 
