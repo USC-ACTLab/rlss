@@ -200,6 +200,7 @@ double optimization::obstacle_constraint(const vector<double>& x, vector<double>
     vectoreuc cur = nt.eval(t, curveidx, curvet);
     bool avoided = false;
     double closest_dist = numeric_limits<double>::infinity();
+    double lowest_cos = numeric_limits<double>::infinity();
     int closest_hp = -1;
     for(int i=0; i<hps.size(); i++) {
       double dist = cur.dot(hps[i].normal) - hps[i].distance;
@@ -207,8 +208,11 @@ double optimization::obstacle_constraint(const vector<double>& x, vector<double>
         avoided = true;
         break;
       }
-      if(dist < closest_dist) {
-        closest_dist = dist;
+
+      vectoreuc vel = nt.neval(t, 1).normalized();
+      double cosmeasure = fabs(vel.dot(hps[i].normal));
+      if(cosmeasure < closest_dist) {
+        closest_dist = cosmeasure;
         closest_hp = i;
       }
     }

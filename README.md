@@ -3,7 +3,7 @@
 ### To build the project
 
 ```
-sudo apt install libnlopt-dev libgsl-dev
+sudo apt install libnlopt-dev
 mkdir build
 cd build
 cmake ..

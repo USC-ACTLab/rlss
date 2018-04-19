@@ -69,13 +69,14 @@ def genvoroxy(voronoi):
     for xx in xc:
         yc.append((c-a*xx)/b)
     return (xc,yc)
-for i in range(jsn["number_of_robots"]):
-    voronois.append([])
-    for v in jsn["voronois"][0][i]:
-        (x,y) = genvoroxy(v)
-        v = ax.plot(x, y, lw=2, zorder=7, color=colors[i])[0]
-        voronois[i].append(v)
-        to_animate.append(v)
+if "voronois" in jsn:
+    for i in range(jsn["number_of_robots"]):
+        voronois.append([])
+        for v in jsn["voronois"][0][i]:
+            (x,y) = genvoroxy(v)
+            v = ax.plot(x, y, lw=2, zorder=7, color=colors[i])[0]
+            voronois[i].append(v)
+            to_animate.append(v)
 
 to_animate.append(time_text)
 x = []
@@ -95,12 +96,13 @@ def init():
         x.append([])
         y.append([])
     time_text.set_text('')
-    for i in range(jsn["number_of_robots"]):
-        j = 0
-        for v in jsn["voronois"][0][i]:
-            (xx,yy) = genvoroxy(v)
-            voronois[i][j].set_data(xx,yy)
-            j+=1
+    if "voronois" in jsn:
+        for i in range(jsn["number_of_robots"]):
+            j = 0
+            for v in jsn["voronois"][0][i]:
+                (xx,yy) = genvoroxy(v)
+                voronois[i][j].set_data(xx,yy)
+                j+=1
     for i in range(jsn["number_of_robots"]):
         plans[i].set_data(jsn["planned_trajs"][0][i]["x"], jsn["planned_trajs"][0][i]["y"])
         originals[i].set_data(jsn["originals"][i]["x"], jsn["originals"][i]["y"])
@@ -120,7 +122,7 @@ def animate(frame):
         atraj.set_data(x[i],y[i])
         circles[i].center = (jsn["points"][frame][i][0], jsn["points"][frame][i][1])
 
-    if(frame < len(jsn["voronois"]) and jsn["voronois"][frame] != None):
+    if("voronois" in jsn and frame < len(jsn["voronois"]) and jsn["voronois"][frame] != None):
         for j in range(jsn["number_of_robots"]):
             for i,v in enumerate(jsn["voronois"][frame][j]):
                 (xx,yy) = genvoroxy(v)

@@ -79,7 +79,7 @@ void obstacle2D::ch_planes() {
     normal[0] = secondpt[1] - firstpt[1];
     normal[1] = firstpt[0] - secondpt[0];
     hp.normal = normal.normalized();
-    hp.distance = firstpt.dot(hp.normal);
+    hp.distance = firstpt.dot(hp.normal) - 0.15;
     chplanes.push_back(hp);
   }
 }

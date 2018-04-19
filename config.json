@@ -1,6 +1,6 @@
 {
-  "trajectories": "../test_data/trajectories/head_to_head_trajs/",
-  "obstacles": "../test_data/obstacles/noobs/",
+  "trajectories": "../test_data/trajectories/straight_to_right/",
+  "obstacles": "../test_data/obstacles/only1obs_2/",
   "replan_period": 0.1,
   "set_max_time_as_replan_period": false,
   "planning_horizon": 3,
@@ -12,9 +12,9 @@
   "continuity_tolerances": [
     0.0001, 0.001, 0.01, 0.1, 1, 10
   ],
-  "initial_point_constraints_upto_degree": 0,
+  "initial_point_constraints_upto_degree": 1,
   "initial_point_tolerances": [
-    0.001, 0.01, 0.1
+    0.00001, 0.01, 0.1
   ],
   "dynamic_constraint_degrees": [
 
@@ -22,7 +22,7 @@
   "dynamic_constraint_max_value_squares": [
 
   ],
-  "obstacle_tolerance": 0.001,
+  "obstacle_tolerance": 0,
   "enable_voronoi": true,
   "output_file": "res.json",
   "print_dt": 0.01,

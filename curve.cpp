@@ -3,7 +3,6 @@
 #include "curve.h"
 #include <chrono>
 #include "bezier_mathematica.h"
-#include <gsl/gsl_sf_hyperg.h>
 #include <cassert>
 #include <iostream>
 

@@ -513,7 +513,7 @@ int main(int argc, char** argv) {
       problem.set_stopval(integral_stopval);
 
       /* if objective function changes relatively less than this value, stop.*/
-      problem.set_ftol_rel(relative_integral_stopval);
+      problem.set_ftol_abs(relative_integral_stopval);
 
       if(set_max_time) {
         problem.set_maxtime(dt);
@@ -551,6 +551,8 @@ int main(int argc, char** argv) {
 
 
       nlopt::result res;
+
+
       try {
         res = problem.optimize(initial_values, opt_f);
       } catch(nlopt::roundoff_limited& e) {
@@ -559,6 +561,8 @@ int main(int argc, char** argv) {
         cout << "runtime error " << i << endl;
         cout << e.what()<< endl;
       }
+
+
 
       initidx = 0;
       for(int j=0; j<trajectories[i].size(); j++) {
