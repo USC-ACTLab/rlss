@@ -559,7 +559,7 @@ int main(int argc, char** argv) {
       data.ppc = ppc;
       data.tt = total_t;
 
-      problem.set_min_objective(optimization::objective, (void*)&data);
+      //problem.set_min_objective(optimization::objective, (void*)&data);
 
       alt_obj_data alt_data;
       alt_data.pdata = &data;
@@ -571,6 +571,9 @@ int main(int argc, char** argv) {
       alt_data.acc = &OBJACC;
 
     //  problem.set_min_objective(optimization::alt_objective, (void*)&alt_data);
+
+      problem.set_min_objective(optimization::pos_energy_combine_objective, (void*)&alt_data);
+
 
       edt_data edata;
       edata.pdata = &data;

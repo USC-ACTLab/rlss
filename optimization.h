@@ -78,6 +78,9 @@ class optimization {
   public:
     static double objective(const vector<double>& x, vector<double>& grad, void* f_data);
     static double alt_objective(const vector<double>& x, vector<double>& grad, void* f_data);
+    static double energy_objective(const vector<double>& x, vector<double>& grad, void* f_data);
+    static double pos_energy_combine_objective(const vector<double>& x, vector<double>& grad, void* f_data);
+
     static double voronoi_constraint(const vector<double>& x, vector<double>& grad, void* v_data);
     static double obstacle_constraint(const vector<double>& x, vector<double>& grad, void* o_data);
 

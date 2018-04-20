@@ -34,4 +34,7 @@ double bezier_2d_8pts_ndistance_from_point(vector<double>& P, vectoreuc& C, vect
   return the l2 norm of the nth derivative of curve with control points P and duration dur, at the t. Put the gradient in grad vector
 */
 double bezier_2d_8pts_neval_l2normsq(vector<double>& P, vector<double>& grad, double t, int n, double dur);
+
+/* integrates from 0 to duration*/
+double bezier_2d_8pts_nthderivative_normsqintegrate(vector<double>& P, vector<double>& grad, double duration, int n);
 #endif

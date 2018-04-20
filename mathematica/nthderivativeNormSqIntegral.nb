@@ -10,16 +10,14 @@
 NotebookFileLineBreakTest
 NotebookFileLineBreakTest
 NotebookDataPosition[       158,          7]
-NotebookDataLength[     13748,        405]
-NotebookOptionsPosition[     13103,        385]
-NotebookOutlinePosition[     13442,        400]
-CellTagsIndexPosition[     13399,        397]
+NotebookDataLength[      8211,        204]
+NotebookOptionsPosition[      7473,        183]
+NotebookOutlinePosition[      7812,        198]
+CellTagsIndexPosition[      7769,        195]
 WindowFrame->Normal*)
 
 (* Beginning of Notebook Content *)
 Notebook[{
-
-Cell[CellGroupData[{
 Cell[BoxData[{
  RowBox[{
   RowBox[{"d", "=", " ", "7"}], ";"}], "\[IndentingNewLine]", 
@@ -53,7 +51,7 @@ Cell[BoxData[{
        RowBox[{"Q", "-", "1"}]}], "}"}]}], "]"}]}], 
   ";"}], "\[IndentingNewLine]", 
  RowBox[{
-  RowBox[{"n", " ", "=", " ", "2"}], ";"}], "\[IndentingNewLine]", 
+  RowBox[{"n", " ", "=", " ", "3"}], ";"}], "\[IndentingNewLine]", 
  RowBox[{
   RowBox[{"derivative", " ", "=", " ", 
    RowBox[{"D", "[", 
@@ -79,308 +77,108 @@ Cell[BoxData[{
      RowBox[{"{", 
       RowBox[{"t", ",", " ", "0", ",", " ", "duration"}], "}"}]}], "]"}]}], 
   ";"}], "\[IndentingNewLine]", 
- RowBox[{"CForm", "[", "integral", "]"}]}], "Input",
+ RowBox[{
+  RowBox[{"gradient", " ", "=", " ", 
+   RowBox[{"Grad", "[", 
+    RowBox[{"integral", ",", 
+     RowBox[{"Flatten", "[", 
+      RowBox[{"Table", "[", 
+       RowBox[{
+        RowBox[{"P", "[", 
+         RowBox[{"i", ",", "j"}], "]"}], ",", 
+        RowBox[{"{", 
+         RowBox[{"i", ",", "0", ",", "d"}], "}"}], ",", 
+        RowBox[{"{", 
+         RowBox[{"j", ",", "0", ",", 
+          RowBox[{"Q", "-", "1"}]}], "}"}]}], "]"}], "]"}]}], "]"}]}], 
+  ";"}]}], "Input",
  CellChangeTimes->{{3.733247576958294*^9, 3.73324770980243*^9}, {
   3.73324780551764*^9, 3.733247853943613*^9}, {3.733248175616412*^9, 
-  3.7332481771393633`*^9}, {3.7332483123338003`*^9, 
-  3.733248312427621*^9}},ExpressionUUID->"5c6779be-1c24-447a-a94c-\
+  3.7332481771393633`*^9}, {3.7332483123338003`*^9, 3.733248312427621*^9}, {
+  3.733252362003602*^9, 3.733252401829814*^9}, {3.733252496250854*^9, 
+  3.733252496350443*^9}, {3.733252549978217*^9, 
+  3.733252550055719*^9}},ExpressionUUID->"5c6779be-1c24-447a-a94c-\
 a7fb4ee3386c"],
 
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{"\[IndentingNewLine]", 
+  RowBox[{"CForm", "[", "integral", "]"}]}]], "Input",ExpressionUUID->\
+"8014d90d-211f-46d3-87ca-d130418c0ca2"],
+
 Cell["\<\
-(7*(462*Power(P(0,0),2) + 462*Power(P(0,1),2) + 252*Power(P(1,0),2) + \
-252*Power(P(1,1),2) + 84*Power(P(2,0),2) + 84*Power(P(2,1),2) + \
-84*P(2,0)*P(3,0) + 60*Power(P(3,0),2) + 84*P(2,1)*P(3,1) + 
-       60*Power(P(3,1),2) - 6*P(2,0)*P(4,0) + 75*P(3,0)*P(4,0) + \
-60*Power(P(4,0),2) - 6*P(2,1)*P(4,1) + 75*P(3,1)*P(4,1) + 60*Power(P(4,1),2) \
-- 51*P(2,0)*P(5,0) - 6*P(3,0)*P(5,0) + 84*P(4,0)*P(5,0) + 
-       84*Power(P(5,0),2) - 51*P(2,1)*P(5,1) - 6*P(3,1)*P(5,1) + \
-84*P(4,1)*P(5,1) + 84*Power(P(5,1),2) - 48*P(2,0)*P(6,0) - 63*P(3,0)*P(6,0) - \
-28*P(4,0)*P(6,0) + 126*P(5,0)*P(6,0) + 252*Power(P(6,0),2) - 
-       48*P(2,1)*P(6,1) - 63*P(3,1)*P(6,1) - 28*P(4,1)*P(6,1) + \
-126*P(5,1)*P(6,1) + 252*Power(P(6,1),2) + P(1,0)*(126*P(2,0) - 28*P(3,0) - \
-63*P(4,0) - 48*P(5,0) - 23*P(6,0) - 6*P(7,0)) - 
-       7*(3*P(2,0) + 8*P(3,0) + 18*P(4,0) + 36*P(5,0) + 66*P(6,0))*P(7,0) + \
-462*Power(P(7,0),2) - P(0,0)*(462*P(1,0) + 252*P(2,0) + 126*P(3,0) + \
-56*P(4,0) + 21*P(5,0) + 6*P(6,0) + P(7,0)) + 
-       P(1,1)*(126*P(2,1) - 28*P(3,1) - 63*P(4,1) - 48*P(5,1) - 23*P(6,1) - \
-6*P(7,1)) - 7*(3*P(2,1) + 8*P(3,1) + 18*P(4,1) + 36*P(5,1) + \
-66*P(6,1))*P(7,1) + 462*Power(P(7,1),2) - 
-       P(0,1)*(462*P(1,1) + 252*P(2,1) + 126*P(3,1) + 56*P(4,1) + 21*P(5,1) + \
-6*P(6,1) + P(7,1))))/(858.*duration)\
+(140*(35*Power(P(0,0),2) + 35*Power(P(0,1),2) + 230*Power(P(1,0),2) + \
+230*Power(P(1,1),2) + 153*Power(P(2,0),2) + 153*Power(P(2,1),2) - \
+51*P(2,0)*P(3,0) + 20*Power(P(3,0),2) - 51*P(2,1)*P(3,1) + 
+       20*Power(P(3,1),2) - 30*P(2,0)*P(4,0) + 5*P(3,0)*P(4,0) + \
+20*Power(P(4,0),2) - 30*P(2,1)*P(4,1) + 5*P(3,1)*P(4,1) + 20*Power(P(4,1),2) \
+- 9*P(2,0)*P(5,0) - 30*P(3,0)*P(5,0) - 51*P(4,0)*P(5,0) + 
+       153*Power(P(5,0),2) - 9*P(2,1)*P(5,1) - 30*P(3,1)*P(5,1) - \
+51*P(4,1)*P(5,1) + 153*Power(P(5,1),2) + 12*P(2,0)*P(6,0) + 19*P(3,0)*P(6,0) \
++ 26*P(4,0)*P(6,0) - 345*P(5,0)*P(6,0) + 230*Power(P(6,0),2) + 
+       12*P(2,1)*P(6,1) + 19*P(3,1)*P(6,1) + 26*P(4,1)*P(6,1) - \
+345*P(5,1)*P(6,1) + 230*Power(P(6,1),2) + P(1,0)*(-345*P(2,0) + 26*P(3,0) + \
+19*P(4,0) + 12*P(5,0) + 5*P(6,0) - 2*P(7,0)) - 
+       (3*P(2,0) + 4*P(3,0) + 5*(P(4,0) - 24*P(5,0) + 35*P(6,0)))*P(7,0) + \
+35*Power(P(7,0),2) - P(0,0)*(175*P(1,0) - 120*P(2,0) + 5*P(3,0) + 4*P(4,0) + \
+3*P(5,0) + 2*P(6,0) + P(7,0)) + 
+       P(1,1)*(-345*P(2,1) + 26*P(3,1) + 19*P(4,1) + 12*P(5,1) + 5*P(6,1) - \
+2*P(7,1)) - (3*P(2,1) + 4*P(3,1) + 5*(P(4,1) - 24*P(5,1) + 35*P(6,1)))*P(7,1) \
++ 35*Power(P(7,1),2) - 
+       P(0,1)*(175*P(1,1) - 120*P(2,1) + 5*P(3,1) + 4*P(4,1) + 3*P(5,1) + \
+2*P(6,1) + P(7,1))))/Power(duration,5)\
 \>", "Output",
- CellChangeTimes->{3.733247858157565*^9, 3.733248196041013*^9, 
-  3.733248297156032*^9},ExpressionUUID->"cc4f8558-c473-47f2-9505-\
-c98687417da4"]
+ CellChangeTimes->{3.733252419641953*^9, 3.733252515708552*^9, 
+  3.733252561007586*^9},ExpressionUUID->"3864be02-2dca-4c5c-abe1-\
+da5cd0e0f9ae"]
 }, Open  ]],
 
 Cell[CellGroupData[{
 
-Cell[BoxData["normsq"], "Input",
- CellChangeTimes->{{3.733248205982708*^9, 
-  3.733248206467824*^9}},ExpressionUUID->"17b4608a-4a8d-4a85-a2da-\
-79004e7332af"],
-
 Cell[BoxData[
- RowBox[{
-  SuperscriptBox[
-   RowBox[{"(", 
-    RowBox[{
-     RowBox[{"-", 
-      FractionBox[
-       RowBox[{"7", " ", 
-        SuperscriptBox[
-         RowBox[{"(", 
-          RowBox[{"1", "-", 
-           FractionBox["t", "duration"]}], ")"}], "6"], " ", 
-        RowBox[{"P", "[", 
-         RowBox[{"0", ",", "0"}], "]"}]}], "duration"]}], "-", 
-     FractionBox[
-      RowBox[{"42", " ", "t", " ", 
-       SuperscriptBox[
-        RowBox[{"(", 
-         RowBox[{"1", "-", 
-          FractionBox["t", "duration"]}], ")"}], "5"], " ", 
-       RowBox[{"P", "[", 
-        RowBox[{"1", ",", "0"}], "]"}]}], 
-      SuperscriptBox["duration", "2"]], "+", 
-     FractionBox[
-      RowBox[{"7", " ", 
-       SuperscriptBox[
-        RowBox[{"(", 
-         RowBox[{"1", "-", 
-          FractionBox["t", "duration"]}], ")"}], "6"], " ", 
-       RowBox[{"P", "[", 
-        RowBox[{"1", ",", "0"}], "]"}]}], "duration"], "-", 
-     FractionBox[
-      RowBox[{"105", " ", 
-       SuperscriptBox["t", "2"], " ", 
-       SuperscriptBox[
-        RowBox[{"(", 
-         RowBox[{"1", "-", 
-          FractionBox["t", "duration"]}], ")"}], "4"], " ", 
-       RowBox[{"P", "[", 
-        RowBox[{"2", ",", "0"}], "]"}]}], 
-      SuperscriptBox["duration", "3"]], "+", 
-     FractionBox[
-      RowBox[{"42", " ", "t", " ", 
-       SuperscriptBox[
-        RowBox[{"(", 
-         RowBox[{"1", "-", 
-          FractionBox["t", "duration"]}], ")"}], "5"], " ", 
-       RowBox[{"P", "[", 
-        RowBox[{"2", ",", "0"}], "]"}]}], 
-      SuperscriptBox["duration", "2"]], "-", 
-     FractionBox[
-      RowBox[{"140", " ", 
-       SuperscriptBox["t", "3"], " ", 
-       SuperscriptBox[
-        RowBox[{"(", 
-         RowBox[{"1", "-", 
-          FractionBox["t", "duration"]}], ")"}], "3"], " ", 
-       RowBox[{"P", "[", 
-        RowBox[{"3", ",", "0"}], "]"}]}], 
-      SuperscriptBox["duration", "4"]], "+", 
-     FractionBox[
-      RowBox[{"105", " ", 
-       SuperscriptBox["t", "2"], " ", 
-       SuperscriptBox[
-        RowBox[{"(", 
-         RowBox[{"1", "-", 
-          FractionBox["t", "duration"]}], ")"}], "4"], " ", 
-       RowBox[{"P", "[", 
-        RowBox[{"3", ",", "0"}], "]"}]}], 
-      SuperscriptBox["duration", "3"]], "-", 
-     FractionBox[
-      RowBox[{"105", " ", 
-       SuperscriptBox["t", "4"], " ", 
-       SuperscriptBox[
-        RowBox[{"(", 
-         RowBox[{"1", "-", 
-          FractionBox["t", "duration"]}], ")"}], "2"], " ", 
-       RowBox[{"P", "[", 
-        RowBox[{"4", ",", "0"}], "]"}]}], 
-      SuperscriptBox["duration", "5"]], "+", 
-     FractionBox[
-      RowBox[{"140", " ", 
-       SuperscriptBox["t", "3"], " ", 
-       SuperscriptBox[
-        RowBox[{"(", 
-         RowBox[{"1", "-", 
-          FractionBox["t", "duration"]}], ")"}], "3"], " ", 
-       RowBox[{"P", "[", 
-        RowBox[{"4", ",", "0"}], "]"}]}], 
-      SuperscriptBox["duration", "4"]], "-", 
-     FractionBox[
-      RowBox[{"42", " ", 
-       SuperscriptBox["t", "5"], " ", 
-       RowBox[{"(", 
-        RowBox[{"1", "-", 
-         FractionBox["t", "duration"]}], ")"}], " ", 
-       RowBox[{"P", "[", 
-        RowBox[{"5", ",", "0"}], "]"}]}], 
-      SuperscriptBox["duration", "6"]], "+", 
-     FractionBox[
-      RowBox[{"105", " ", 
-       SuperscriptBox["t", "4"], " ", 
-       SuperscriptBox[
-        RowBox[{"(", 
-         RowBox[{"1", "-", 
-          FractionBox["t", "duration"]}], ")"}], "2"], " ", 
-       RowBox[{"P", "[", 
-        RowBox[{"5", ",", "0"}], "]"}]}], 
-      SuperscriptBox["duration", "5"]], "-", 
-     FractionBox[
-      RowBox[{"7", " ", 
-       SuperscriptBox["t", "6"], " ", 
-       RowBox[{"P", "[", 
-        RowBox[{"6", ",", "0"}], "]"}]}], 
-      SuperscriptBox["duration", "7"]], "+", 
-     FractionBox[
-      RowBox[{"42", " ", 
-       SuperscriptBox["t", "5"], " ", 
-       RowBox[{"(", 
-        RowBox[{"1", "-", 
-         FractionBox["t", "duration"]}], ")"}], " ", 
-       RowBox[{"P", "[", 
-        RowBox[{"6", ",", "0"}], "]"}]}], 
-      SuperscriptBox["duration", "6"]], "+", 
-     FractionBox[
-      RowBox[{"7", " ", 
-       SuperscriptBox["t", "6"], " ", 
-       RowBox[{"P", "[", 
-        RowBox[{"7", ",", "0"}], "]"}]}], 
-      SuperscriptBox["duration", "7"]]}], ")"}], "2"], "+", 
-  SuperscriptBox[
-   RowBox[{"(", 
-    RowBox[{
-     RowBox[{"-", 
-      FractionBox[
-       RowBox[{"7", " ", 
-        SuperscriptBox[
-         RowBox[{"(", 
-          RowBox[{"1", "-", 
-           FractionBox["t", "duration"]}], ")"}], "6"], " ", 
-        RowBox[{"P", "[", 
-         RowBox[{"0", ",", "1"}], "]"}]}], "duration"]}], "-", 
-     FractionBox[
-      RowBox[{"42", " ", "t", " ", 
-       SuperscriptBox[
-        RowBox[{"(", 
-         RowBox[{"1", "-", 
-          FractionBox["t", "duration"]}], ")"}], "5"], " ", 
-       RowBox[{"P", "[", 
-        RowBox[{"1", ",", "1"}], "]"}]}], 
-      SuperscriptBox["duration", "2"]], "+", 
-     FractionBox[
-      RowBox[{"7", " ", 
-       SuperscriptBox[
-        RowBox[{"(", 
-         RowBox[{"1", "-", 
-          FractionBox["t", "duration"]}], ")"}], "6"], " ", 
-       RowBox[{"P", "[", 
-        RowBox[{"1", ",", "1"}], "]"}]}], "duration"], "-", 
-     FractionBox[
-      RowBox[{"105", " ", 
-       SuperscriptBox["t", "2"], " ", 
-       SuperscriptBox[
-        RowBox[{"(", 
-         RowBox[{"1", "-", 
-          FractionBox["t", "duration"]}], ")"}], "4"], " ", 
-       RowBox[{"P", "[", 
-        RowBox[{"2", ",", "1"}], "]"}]}], 
-      SuperscriptBox["duration", "3"]], "+", 
-     FractionBox[
-      RowBox[{"42", " ", "t", " ", 
-       SuperscriptBox[
-        RowBox[{"(", 
-         RowBox[{"1", "-", 
-          FractionBox["t", "duration"]}], ")"}], "5"], " ", 
-       RowBox[{"P", "[", 
-        RowBox[{"2", ",", "1"}], "]"}]}], 
-      SuperscriptBox["duration", "2"]], "-", 
-     FractionBox[
-      RowBox[{"140", " ", 
-       SuperscriptBox["t", "3"], " ", 
-       SuperscriptBox[
-        RowBox[{"(", 
-         RowBox[{"1", "-", 
-          FractionBox["t", "duration"]}], ")"}], "3"], " ", 
-       RowBox[{"P", "[", 
-        RowBox[{"3", ",", "1"}], "]"}]}], 
-      SuperscriptBox["duration", "4"]], "+", 
-     FractionBox[
-      RowBox[{"105", " ", 
-       SuperscriptBox["t", "2"], " ", 
-       SuperscriptBox[
-        RowBox[{"(", 
-         RowBox[{"1", "-", 
-          FractionBox["t", "duration"]}], ")"}], "4"], " ", 
-       RowBox[{"P", "[", 
-        RowBox[{"3", ",", "1"}], "]"}]}], 
-      SuperscriptBox["duration", "3"]], "-", 
-     FractionBox[
-      RowBox[{"105", " ", 
-       SuperscriptBox["t", "4"], " ", 
-       SuperscriptBox[
-        RowBox[{"(", 
-         RowBox[{"1", "-", 
-          FractionBox["t", "duration"]}], ")"}], "2"], " ", 
-       RowBox[{"P", "[", 
-        RowBox[{"4", ",", "1"}], "]"}]}], 
-      SuperscriptBox["duration", "5"]], "+", 
-     FractionBox[
-      RowBox[{"140", " ", 
-       SuperscriptBox["t", "3"], " ", 
-       SuperscriptBox[
-        RowBox[{"(", 
-         RowBox[{"1", "-", 
-          FractionBox["t", "duration"]}], ")"}], "3"], " ", 
-       RowBox[{"P", "[", 
-        RowBox[{"4", ",", "1"}], "]"}]}], 
-      SuperscriptBox["duration", "4"]], "-", 
-     FractionBox[
-      RowBox[{"42", " ", 
-       SuperscriptBox["t", "5"], " ", 
-       RowBox[{"(", 
-        RowBox[{"1", "-", 
-         FractionBox["t", "duration"]}], ")"}], " ", 
-       RowBox[{"P", "[", 
-        RowBox[{"5", ",", "1"}], "]"}]}], 
-      SuperscriptBox["duration", "6"]], "+", 
-     FractionBox[
-      RowBox[{"105", " ", 
-       SuperscriptBox["t", "4"], " ", 
-       SuperscriptBox[
-        RowBox[{"(", 
-         RowBox[{"1", "-", 
-          FractionBox["t", "duration"]}], ")"}], "2"], " ", 
-       RowBox[{"P", "[", 
-        RowBox[{"5", ",", "1"}], "]"}]}], 
-      SuperscriptBox["duration", "5"]], "-", 
-     FractionBox[
-      RowBox[{"7", " ", 
-       SuperscriptBox["t", "6"], " ", 
-       RowBox[{"P", "[", 
-        RowBox[{"6", ",", "1"}], "]"}]}], 
-      SuperscriptBox["duration", "7"]], "+", 
-     FractionBox[
-      RowBox[{"42", " ", 
-       SuperscriptBox["t", "5"], " ", 
-       RowBox[{"(", 
-        RowBox[{"1", "-", 
-         FractionBox["t", "duration"]}], ")"}], " ", 
-       RowBox[{"P", "[", 
-        RowBox[{"6", ",", "1"}], "]"}]}], 
-      SuperscriptBox["duration", "6"]], "+", 
-     FractionBox[
-      RowBox[{"7", " ", 
-       SuperscriptBox["t", "6"], " ", 
-       RowBox[{"P", "[", 
-        RowBox[{"7", ",", "1"}], "]"}]}], 
-      SuperscriptBox["duration", "7"]]}], ")"}], "2"]}]], "Output",
- CellChangeTimes->{
-  3.733248206757052*^9},ExpressionUUID->"ada86d0e-54c8-40bb-9f27-\
-e954a060433b"]
+ RowBox[{"CForm", "[", "gradient", "]"}]], "Input",
+ CellChangeTimes->{{3.733252404171174*^9, 
+  3.733252406913686*^9}},ExpressionUUID->"f24ac218-2e37-4d19-b842-\
+b5736f430cee"],
+
+Cell["\<\
+List((140*(70*P(0,0) - 175*P(1,0) + 120*P(2,0) - 5*P(3,0) - 4*P(4,0) - \
+3*P(5,0) - 2*P(6,0) - P(7,0)))/Power(duration,5),
+   (140*(70*P(0,1) - 175*P(1,1) + 120*P(2,1) - 5*P(3,1) - 4*P(4,1) - 3*P(5,1) \
+- 2*P(6,1) - P(7,1)))/Power(duration,5),
+   (140*(-175*P(0,0) + 460*P(1,0) - 345*P(2,0) + 26*P(3,0) + 19*P(4,0) + \
+12*P(5,0) + 5*P(6,0) - 2*P(7,0)))/Power(duration,5),
+   (140*(-175*P(0,1) + 460*P(1,1) - 345*P(2,1) + 26*P(3,1) + 19*P(4,1) + \
+12*P(5,1) + 5*P(6,1) - 2*P(7,1)))/Power(duration,5),
+   (140*(120*P(0,0) - 345*P(1,0) + 306*P(2,0) - 51*P(3,0) - 30*P(4,0) - \
+9*P(5,0) + 12*P(6,0) - 3*P(7,0)))/Power(duration,5),
+   (140*(120*P(0,1) - 345*P(1,1) + 306*P(2,1) - 51*P(3,1) - 30*P(4,1) - \
+9*P(5,1) + 12*P(6,1) - 3*P(7,1)))/Power(duration,5),
+   (140*(-5*P(0,0) + 26*P(1,0) - 51*P(2,0) + 40*P(3,0) + 5*P(4,0) - 30*P(5,0) \
++ 19*P(6,0) - 4*P(7,0)))/Power(duration,5),
+   (140*(-5*P(0,1) + 26*P(1,1) - 51*P(2,1) + 40*P(3,1) + 5*P(4,1) - 30*P(5,1) \
++ 19*P(6,1) - 4*P(7,1)))/Power(duration,5),
+   (140*(-4*P(0,0) + 19*P(1,0) - 30*P(2,0) + 5*P(3,0) + 40*P(4,0) - 51*P(5,0) \
++ 26*P(6,0) - 5*P(7,0)))/Power(duration,5),
+   (140*(-4*P(0,1) + 19*P(1,1) - 30*P(2,1) + 5*P(3,1) + 40*P(4,1) - 51*P(5,1) \
++ 26*P(6,1) - 5*P(7,1)))/Power(duration,5),
+   (140*(-3*P(0,0) + 12*P(1,0) - 9*P(2,0) - 30*P(3,0) - 51*P(4,0) + \
+306*P(5,0) - 345*P(6,0) + 120*P(7,0)))/Power(duration,5),
+   (140*(-3*P(0,1) + 12*P(1,1) - 9*P(2,1) - 30*P(3,1) - 51*P(4,1) + \
+306*P(5,1) - 345*P(6,1) + 120*P(7,1)))/Power(duration,5),
+   (140*(-2*P(0,0) + 5*P(1,0) + 12*P(2,0) + 19*P(3,0) + 26*P(4,0) - \
+345*P(5,0) + 460*P(6,0) - 175*P(7,0)))/Power(duration,5),
+   (140*(-2*P(0,1) + 5*P(1,1) + 12*P(2,1) + 19*P(3,1) + 26*P(4,1) - \
+345*P(5,1) + 460*P(6,1) - 175*P(7,1)))/Power(duration,5),
+   (140*(-P(0,0) - 2*P(1,0) - 3*P(2,0) - 4*P(3,0) - 5*(P(4,0) - 24*P(5,0) + \
+35*P(6,0)) + 70*P(7,0)))/Power(duration,5),
+   (140*(-P(0,1) - 2*P(1,1) - 3*P(2,1) - 4*P(3,1) - 5*(P(4,1) - 24*P(5,1) + \
+35*P(6,1)) + 70*P(7,1)))/Power(duration,5))\
+\>", "Output",
+ CellChangeTimes->{3.733252458710972*^9, 3.73325251767715*^9, 
+  3.733252567430929*^9},ExpressionUUID->"98ed7288-beb8-4915-bb18-\
+801de134d3b2"]
 }, Open  ]]
 },
 WindowSize->{1855, 1056},
@@ -399,13 +197,14 @@ CellTagsIndex->{}
 *)
 (*NotebookFileOutline
 Notebook[{
+Cell[558, 20, 2841, 80, 193, "Input",ExpressionUUID->"5c6779be-1c24-447a-a94c-a7fb4ee3386c"],
 Cell[CellGroupData[{
-Cell[580, 22, 2267, 64, 193, "Input",ExpressionUUID->"5c6779be-1c24-447a-a94c-a7fb4ee3386c"],
-Cell[2850, 88, 1471, 24, 164, "Output",ExpressionUUID->"cc4f8558-c473-47f2-9505-c98687417da4"]
+Cell[3424, 104, 158, 3, 55, "Input",ExpressionUUID->"8014d90d-211f-46d3-87ca-d130418c0ca2"],
+Cell[3585, 109, 1465, 24, 164, "Output",ExpressionUUID->"3864be02-2dca-4c5c-abe1-da5cd0e0f9ae"]
 }, Open  ]],
 Cell[CellGroupData[{
-Cell[4358, 117, 158, 3, 31, "Input",ExpressionUUID->"17b4608a-4a8d-4a85-a2da-79004e7332af"],
-Cell[4519, 122, 8568, 260, 292, "Output",ExpressionUUID->"ada86d0e-54c8-40bb-9f27-e954a060433b"]
+Cell[5087, 138, 191, 4, 31, "Input",ExpressionUUID->"f24ac218-2e37-4d19-b842-b5736f430cee"],
+Cell[5281, 144, 2176, 36, 335, "Output",ExpressionUUID->"98ed7288-beb8-4915-bb18-801de134d3b2"]
 }, Open  ]]
 }
 ]

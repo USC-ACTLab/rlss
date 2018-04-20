@@ -6,6 +6,101 @@
 using namespace std;
 
 
+double optimization::energy_objective(const vector<double>& x, vector<double>& grad, void* f_data) {
+  double alpha_vel = 1;
+  double alpha_acc = 1;
+  double alpha_jerk = 1;
+
+
+  problem_data& pdata = *((problem_data*)f_data);
+
+  double ct = pdata.current_t;
+  double T = pdata.time_horizon;
+  trajectory& ot = *(pdata.original_trajectory);
+  int pd = pdata.problem_dimension;
+  int ppc = pdata.ppc;
+  double tt = pdata.tt;
+
+  int cpts = pd * ppc;
+
+  if(grad.size() > 0) {
+    for(int i=0; i<grad.size(); i++) {
+      grad[i] = 0;
+    }
+  }
+
+
+  double start_time = ct;
+  double end_time = ct+T;
+
+  int startcurveidx = 0;
+
+  for(; startcurveidx < ot.size() && start_time > ot[startcurveidx].duration; startcurveidx++) {
+    start_time -= ot[startcurveidx].duration;
+    end_time -= ot[startcurveidx].duration;
+  }
+
+  startcurveidx = min(startcurveidx, ot.size() - 1);
+
+  int endcurveidx = startcurveidx;
+
+  for(; endcurveidx < ot.size() && end_time > ot[endcurveidx].duration; endcurveidx++) {
+    end_time -= ot[endcurveidx].duration;
+  }
+
+  endcurveidx = min(endcurveidx, ot.size() - 1);
+
+
+  double total_energy = 0;
+  vector<double> innergrad;
+  if(grad.size() > 0) {
+    innergrad.resize(cpts);
+  }
+
+  for(int i=startcurveidx; i<=endcurveidx; i++) {
+    vector<double> P(cpts);
+    for(int j=0; j<ppc; j++) {
+      for(int k=0; k<pd; k++) {
+        P[j*pd+k] = x[i*cpts + j*pd+k];
+      }
+    }
+    double energy = bezier_2d_8pts_nthderivative_normsqintegrate(P, innergrad, ot[i].duration, 1);
+    total_energy += alpha_vel * energy;
+
+    for(int j=0; j<ppc; j++) {
+      for(int k=0; k<pd; k++) {
+        grad[i*cpts+j*pd+k] += innergrad[j*pd+k] * alpha_vel;
+      }
+    }
+
+    energy = bezier_2d_8pts_nthderivative_normsqintegrate(P, innergrad, ot[i].duration, 2);
+    total_energy += alpha_vel * energy;
+
+    if(grad.size()>  0) {
+      for(int j=0; j<ppc; j++) {
+        for(int k=0; k<pd; k++) {
+          grad[i*cpts+j*pd+k] += innergrad[j*pd+k] * alpha_acc;
+        }
+      }
+    }
+
+    energy = bezier_2d_8pts_nthderivative_normsqintegrate(P, innergrad, ot[i].duration, 3);
+    total_energy += alpha_vel * energy;
+
+
+    if(grad.size() > 0) {
+      for(int j=0; j<ppc; j++) {
+        for(int k=0; k<pd; k++) {
+          grad[i*cpts+j*pd+k] += innergrad[j*pd+k] * alpha_jerk;
+        }
+      }
+    }
+
+  }
+
+  return total_energy;
+}
+
 
 double optimization::alt_objective(const vector<double>& x, vector<double>& grad, void* f_data) {
   double alpha_pos = 1;
@@ -78,6 +173,47 @@ double optimization::alt_objective(const vector<double>& x, vector<double>& grad
   //cout << "obj cost: " << cost << endl;
   return cost;
 
+}
+
+
+double optimization::pos_energy_combine_objective(const vector<double>& x, vector<double>& grad, void* f_data) {
+  alt_obj_data& odata = *((alt_obj_data*)f_data);
+  problem_data& pdata = *(odata.pdata);
+  vectoreuc& pos = *(odata.pos);
+  vectoreuc& vel = *(odata.vel);
+  vectoreuc& acc = *(odata.acc);
+  trajectory& ot = *(pdata.original_trajectory);
+
+  int pd = pdata.problem_dimension;
+  int ppc = pdata.ppc;
+  int cpts = pd*ppc;
+
+  double alpha_pos = 100;
+  double alpha_energy = 1;
+
+  for(int i=0; i<grad.size(); i++) {
+    grad[i] = 0;
+  }
+
+  vector<double> innergrad(grad.size());
+
+  double res = alpha_pos * optimization::alt_objective(x, innergrad, f_data);
+
+  if(grad.size() > 0) {
+    for(int i=0; i<grad.size() ;i++) {
+      grad[i] += alpha_pos * innergrad[i];
+    }
+  }
+
+  res += alpha_energy * optimization::energy_objective(x, innergrad, &pdata);
+
+  if(grad.size() > 0) {
+    for(int i=0; i<grad.size(); i++) {
+      grad[i] += alpha_energy * innergrad[i];
+    }
+  }
+
+  return res;
 }
 
 

@@ -27,22 +27,6 @@ class curve {
     double integrate(double from, double to, vector<double>& grad);
     curve& operator-=(const curve& rhs);
     void print();
-
-    /*
-      integrates first derivative norm square from 0 to duration.
-    */
-    double velnormsqintegrate();
-
-
-    /*
-      integrates second derivative norm square from 0 to duration.
-    */
-    double accnormsqintegrate();
-
-    /*
-      integrates third derivative norm square from 0 to duration.
-    */
-    double jerknormsqintegrate();
 };
 
 #endif
