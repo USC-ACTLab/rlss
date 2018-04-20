@@ -19,6 +19,7 @@ colors = ['b', 'g', 'r', 'c', 'm', 'k']
 
 fig = plt.figure()
 ax = plt.axes(xlim=(-10,10), ylim=(-10,10))
+ax.set_aspect('equal')
 time_text = ax.text(0.02, 0.95, '', transform=ax.transAxes)
 trajectories = []
 to_animate = []
@@ -116,6 +117,7 @@ def animate(frame):
     global time_text
     global voronois
     global save
+    global fig
     for i, atraj in enumerate(trajectories):
         x[i].append(jsn["points"][frame][i][0])
         y[i].append(jsn["points"][frame][i][1])
@@ -137,11 +139,9 @@ def animate(frame):
     time_text.set_text('time = %.1f' % (jsn["dt"]*frame))
     if save:
         if(frame > 300):
-        	plt.savefig("images/"+str(frame)+".png")
+            fig.savefig("images/"+str(frame)+".png")
     return to_animate
 
 anim = animation.FuncAnimation(fig, animate, init_func=init,frames=len(jsn["points"]),interval=jsn["dt"]*1000,blit=True)
 
-plt.show(block=False)
-
-input()
+plt.show()

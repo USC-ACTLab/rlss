@@ -3,7 +3,7 @@
 ### To build the project
 
 ```
-sudo apt install libnlopt-dev
+sudo apt install libnlopt-dev coinor-libipopt-dev
 mkdir build
 cd build
 cmake ..
@@ -48,3 +48,34 @@ python3 vis.py ../build/res.json save
 ```
 
 Saving waits until frame number 300 (3 seconds). Until that time, zoom the simulation for better images.
+
+
+## Profiling
+
+### Install
+
+```
+sudo apt install google-perftools
+```
+
+Follow instructions for visualizer at https://github.com/google/pprof
+
+### Run
+
+```
+LD_PRELOAD="/usr/lib/libprofiler.so" CPUPROFILE=prof.out ./main
+```
+
+### Visualize
+
+```
+~/go/bin/pprof -web prof.out
+```
+
+
+
+## NL-OPT issues
+
+https://github.com/scipy/scipy/issues/7618
+https://scicomp.stackexchange.com/questions/83/is-there-a-high-quality-nonlinear-programming-solver-for-python
+https://www.jstage.jst.go.jp/article/jrsj/32/6/32_32_536/_pdf
