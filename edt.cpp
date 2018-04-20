@@ -16,11 +16,16 @@ void edt::construct(vector<obstacle2D>* obstacles) {
       pt[0] = x;
       pt[1] = y;
       double dist = 0;
+      bool dist_changed = false;
       for(int i=0; i<obstacles->size(); i++) {
         obstacle2D& obs = (*obstacles)[i];
         if(obs.point_inside(pt)) {
-          dist = obs.closest_distance(pt);
-          break;
+          if(!dist_changed) {
+            dist = obs.closest_distance(pt);
+            dist_changed = true;
+          } else {
+            dist = min(dist, obs.closest_distance(pt));
+          }
         }
       }
       distRow.push_back(dist);

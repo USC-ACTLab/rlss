@@ -209,3 +209,35 @@ void curve::print() {
   }
   cout << endl;
 }
+
+
+double curve::velnormsqintegrate() {
+  return (7*(462*pow(cpts[0][0],2) + 462*pow(cpts[0][1],2) + 252*pow(cpts[1][0],2) + 252*pow(cpts[1][1],2) + 84*pow(cpts[2][0],2) + 84*pow(cpts[2][1],2) + 84*cpts[2][0]*cpts[3][0] + 60*pow(cpts[3][0],2) + 84*cpts[2][1]*cpts[3][1] +
+       60*pow(cpts[3][1],2) - 6*cpts[2][0]*cpts[4][0] + 75*cpts[3][0]*cpts[4][0] + 60*pow(cpts[4][0],2) - 6*cpts[2][1]*cpts[4][1] + 75*cpts[3][1]*cpts[4][1] + 60*pow(cpts[4][1],2) - 51*cpts[2][0]*cpts[5][0] - 6*cpts[3][0]*cpts[5][0] + 84*cpts[4][0]*cpts[5][0] +
+       84*pow(cpts[5][0],2) - 51*cpts[2][1]*cpts[5][1] - 6*cpts[3][1]*cpts[5][1] + 84*cpts[4][1]*cpts[5][1] + 84*pow(cpts[5][1],2) - 48*cpts[2][0]*cpts[6][0] - 63*cpts[3][0]*cpts[6][0] - 28*cpts[4][0]*cpts[6][0] + 126*cpts[5][0]*cpts[6][0] + 252*pow(cpts[6][0],2) -
+       48*cpts[2][1]*cpts[6][1] - 63*cpts[3][1]*cpts[6][1] - 28*cpts[4][1]*cpts[6][1] + 126*cpts[5][1]*cpts[6][1] + 252*pow(cpts[6][1],2) + cpts[1][0]*(126*cpts[2][0] - 28*cpts[3][0] - 63*cpts[4][0] - 48*cpts[5][0] - 23*cpts[6][0] - 6*cpts[7][0]) -
+       7*(3*cpts[2][0] + 8*cpts[3][0] + 18*cpts[4][0] + 36*cpts[5][0] + 66*cpts[6][0])*cpts[7][0] + 462*pow(cpts[7][0],2) - cpts[0][0]*(462*cpts[1][0] + 252*cpts[2][0] + 126*cpts[3][0] + 56*cpts[4][0] + 21*cpts[5][0] + 6*cpts[6][0] + cpts[7][0]) +
+       cpts[1][1]*(126*cpts[2][1] - 28*cpts[3][1] - 63*cpts[4][1] - 48*cpts[5][1] - 23*cpts[6][1] - 6*cpts[7][1]) - 7*(3*cpts[2][1] + 8*cpts[3][1] + 18*cpts[4][1] + 36*cpts[5][1] + 66*cpts[6][1])*cpts[7][1] + 462*pow(cpts[7][1],2) -
+       cpts[0][1]*(462*cpts[1][1] + 252*cpts[2][1] + 126*cpts[3][1] + 56*cpts[4][1] + 21*cpts[5][1] + 6*cpts[6][1] + cpts[7][1])))/(858.*duration);
+}
+
+double curve::accnormsqintegrate() {
+  return (14*(126*pow(cpts[0][0],2) + 126*pow(cpts[0][1],2) + 322*pow(cpts[1][0],2) + 322*pow(cpts[1][1],2) + 60*pow(cpts[2][0],2) + 60*pow(cpts[2][1],2) + 20*cpts[2][0]*cpts[3][0] + 20*pow(cpts[3][0],2) + 20*cpts[2][1]*cpts[3][1] +
+       20*pow(cpts[3][1],2) - 20*cpts[2][0]*cpts[4][0] + 15*cpts[3][0]*cpts[4][0] + 20*pow(cpts[4][0],2) - 20*cpts[2][1]*cpts[4][1] + 15*cpts[3][1]*cpts[4][1] + 20*pow(cpts[4][1],2) - 21*cpts[2][0]*cpts[5][0] - 20*cpts[3][0]*cpts[5][0] + 20*cpts[4][0]*cpts[5][0] +
+       60*pow(cpts[5][0],2) - 21*cpts[2][1]*cpts[5][1] - 20*cpts[3][1]*cpts[5][1] + 20*cpts[4][1]*cpts[5][1] + 60*pow(cpts[5][1],2) - 4*cpts[2][0]*cpts[6][0] - 30*cpts[3][0]*cpts[6][0] - 80*cpts[4][0]*cpts[6][0] - 161*cpts[5][0]*cpts[6][0] + 322*pow(cpts[6][0],2) -
+       4*cpts[2][1]*cpts[6][1] - 30*cpts[3][1]*cpts[6][1] - 80*cpts[4][1]*cpts[6][1] - 161*cpts[5][1]*cpts[6][1] + 322*pow(cpts[6][1],2) - cpts[1][0]*(161*cpts[2][0] + 80*cpts[3][0] + 30*cpts[4][0] + 4*cpts[5][0] - 5*cpts[6][0] - 4*cpts[7][0]) +
+       (10*cpts[2][0] + 20*cpts[3][0] + 7*(5*cpts[4][0] + 8*cpts[5][0] - 54*cpts[6][0]))*cpts[7][0] + 126*pow(cpts[7][0],2) + cpts[0][0]*(-378*cpts[1][0] + 56*cpts[2][0] + 35*cpts[3][0] + 20*cpts[4][0] + 10*cpts[5][0] + 4*cpts[6][0] + cpts[7][0]) -
+       cpts[1][1]*(161*cpts[2][1] + 80*cpts[3][1] + 30*cpts[4][1] + 4*cpts[5][1] - 5*cpts[6][1] - 4*cpts[7][1]) + (10*cpts[2][1] + 20*cpts[3][1] + 7*(5*cpts[4][1] + 8*cpts[5][1] - 54*cpts[6][1]))*cpts[7][1] + 126*pow(cpts[7][1],2) +
+       cpts[0][1]*(-378*cpts[1][1] + 56*cpts[2][1] + 35*cpts[3][1] + 20*cpts[4][1] + 10*cpts[5][1] + 4*cpts[6][1] + cpts[7][1])))/(11.*pow(duration,3));
+}
+
+
+double curve::jerknormsqintegrate() {
+  return (140*(35*pow(cpts[0][0],2) + 35*pow(cpts[0][1],2) + 230*pow(cpts[1][0],2) + 230*pow(cpts[1][1],2) + 153*pow(cpts[2][0],2) + 153*pow(cpts[2][1],2) - 51*cpts[2][0]*cpts[3][0] + 20*pow(cpts[3][0],2) - 51*cpts[2][1]*cpts[3][1] +
+       20*pow(cpts[3][1],2) - 30*cpts[2][0]*cpts[4][0] + 5*cpts[3][0]*cpts[4][0] + 20*pow(cpts[4][0],2) - 30*cpts[2][1]*cpts[4][1] + 5*cpts[3][1]*cpts[4][1] + 20*pow(cpts[4][1],2) - 9*cpts[2][0]*cpts[5][0] - 30*cpts[3][0]*cpts[5][0] - 51*cpts[4][0]*cpts[5][0] +
+       153*pow(cpts[5][0],2) - 9*cpts[2][1]*cpts[5][1] - 30*cpts[3][1]*cpts[5][1] - 51*cpts[4][1]*cpts[5][1] + 153*pow(cpts[5][1],2) + 12*cpts[2][0]*cpts[6][0] + 19*cpts[3][0]*cpts[6][0] + 26*cpts[4][0]*cpts[6][0] - 345*cpts[5][0]*cpts[6][0] + 230*pow(cpts[6][0],2) +
+       12*cpts[2][1]*cpts[6][1] + 19*cpts[3][1]*cpts[6][1] + 26*cpts[4][1]*cpts[6][1] - 345*cpts[5][1]*cpts[6][1] + 230*pow(cpts[6][1],2) + cpts[1][0]*(-345*cpts[2][0] + 26*cpts[3][0] + 19*cpts[4][0] + 12*cpts[5][0] + 5*cpts[6][0] - 2*cpts[7][0]) -
+       (3*cpts[2][0] + 4*cpts[3][0] + 5*(cpts[4][0] - 24*cpts[5][0] + 35*cpts[6][0]))*cpts[7][0] + 35*pow(cpts[7][0],2) - cpts[0][0]*(175*cpts[1][0] - 120*cpts[2][0] + 5*cpts[3][0] + 4*cpts[4][0] + 3*cpts[5][0] + 2*cpts[6][0] + cpts[7][0]) +
+       cpts[1][1]*(-345*cpts[2][1] + 26*cpts[3][1] + 19*cpts[4][1] + 12*cpts[5][1] + 5*cpts[6][1] - 2*cpts[7][1]) - (3*cpts[2][1] + 4*cpts[3][1] + 5*(cpts[4][1] - 24*cpts[5][1] + 35*cpts[6][1]))*cpts[7][1] + 35*pow(cpts[7][1],2) -
+       cpts[0][1]*(175*cpts[1][1] - 120*cpts[2][1] + 5*cpts[3][1] + 4*cpts[4][1] + 3*cpts[5][1] + 2*cpts[6][1] + cpts[7][1])))/pow(duration,5);
+}
