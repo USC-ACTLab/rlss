@@ -1,0 +1,689 @@
+(* Content-type: application/vnd.wolfram.mathematica *)
+
+(*** Wolfram Notebook File ***)
+(* http://www.wolfram.com/nb *)
+
+(* CreatedBy='Mathematica 11.2' *)
+
+(*CacheID: 234*)
+(* Internal cache information:
+NotebookFileLineBreakTest
+NotebookFileLineBreakTest
+NotebookDataPosition[       158,          7]
+NotebookDataLength[     34041,        681]
+NotebookOptionsPosition[     32853,        652]
+NotebookOutlinePosition[     33192,        667]
+CellTagsIndexPosition[     33149,        664]
+WindowFrame->Normal*)
+
+(* Beginning of Notebook Content *)
+Notebook[{
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{"Q", " ", "=", " ", "2"}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"d", " ", "=", " ", "7"}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{
+   RowBox[{"f", "[", "t_", "]"}], " ", "=", " ", 
+   RowBox[{"Table", "[", 
+    RowBox[{
+     RowBox[{"Sum", "[", 
+      RowBox[{
+       RowBox[{
+        RowBox[{"P", "[", 
+         RowBox[{"i", ",", "j"}], "]"}], "*", 
+        RowBox[{"Binomial", "[", 
+         RowBox[{"d", ",", "i"}], "]"}], "*", 
+        RowBox[{
+         RowBox[{"(", 
+          RowBox[{"t", "/", "dur"}], ")"}], "^", "i"}], "*", 
+        RowBox[{
+         RowBox[{"(", 
+          RowBox[{"1", "-", 
+           RowBox[{"(", 
+            RowBox[{"t", "/", "dur"}], ")"}]}], ")"}], "^", 
+         RowBox[{"(", 
+          RowBox[{"d", "-", "i"}], ")"}]}]}], ",", " ", 
+       RowBox[{"{", 
+        RowBox[{"i", ",", "0", ",", "d"}], "}"}]}], "]"}], ",", " ", 
+     RowBox[{"{", 
+      RowBox[{"j", ",", " ", "0", ",", " ", 
+       RowBox[{"Q", "-", "1"}]}], "}"}]}], "]"}]}], 
+  ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{
+   RowBox[{"{", 
+    RowBox[{"x", ",", "y"}], "}"}], " ", "=", " ", 
+   RowBox[{"f", "[", "ct", "]"}]}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"xy1", " ", "=", " ", 
+   RowBox[{
+    RowBox[{
+     RowBox[{"(", 
+      RowBox[{
+       RowBox[{"(", 
+        RowBox[{"x2", "-", "x"}], ")"}], "/", "ss"}], ")"}], "*", "q11"}], 
+    " ", "+", " ", 
+    RowBox[{
+     RowBox[{"(", 
+      RowBox[{
+       RowBox[{"(", 
+        RowBox[{"x", "-", "x1"}], ")"}], "/", "ss"}], ")"}], "*", "q21"}]}]}],
+   ";"}], "\n", 
+ RowBox[{
+  RowBox[{"xy2", " ", "=", " ", 
+   RowBox[{
+    RowBox[{
+     RowBox[{"(", 
+      RowBox[{
+       RowBox[{"(", 
+        RowBox[{"x2", "-", "x"}], ")"}], "/", "ss"}], ")"}], "*", "q12"}], 
+    " ", "+", " ", 
+    RowBox[{
+     RowBox[{"(", 
+      RowBox[{
+       RowBox[{"(", 
+        RowBox[{"x", "-", "x1"}], ")"}], "/", "ss"}], ")"}], "*", "q22"}]}]}],
+   ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"xy", " ", "=", " ", 
+   RowBox[{
+    RowBox[{
+     RowBox[{"(", 
+      RowBox[{
+       RowBox[{"(", 
+        RowBox[{"y2", "-", "y"}], ")"}], "/", "ss"}], ")"}], "*", "xy1"}], 
+    " ", "+", " ", 
+    RowBox[{
+     RowBox[{"(", 
+      RowBox[{
+       RowBox[{"(", 
+        RowBox[{"y", "-", "y1"}], ")"}], "/", "ss"}], ")"}], "*", "xy2"}]}]}],
+   ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"xygrad", " ", "=", " ", 
+   RowBox[{"Grad", "[", 
+    RowBox[{"xy", ",", " ", 
+     RowBox[{"Flatten", "[", 
+      RowBox[{"Table", "[", 
+       RowBox[{
+        RowBox[{"P", "[", 
+         RowBox[{"i", ",", "j"}], "]"}], ",", " ", 
+        RowBox[{"{", 
+         RowBox[{"i", ",", " ", "0", ",", " ", "d"}], "}"}], ",", " ", 
+        RowBox[{"{", 
+         RowBox[{"j", ",", "0", ",", 
+          RowBox[{"Q", "-", "1"}]}], "}"}]}], "]"}], "]"}]}], "]"}]}], 
+  ";"}]}], "Input",
+ CellChangeTimes->{{3.7331669080254297`*^9, 3.7331670988877583`*^9}, {
+   3.7331671368199053`*^9, 3.733167192777759*^9}, {3.733167225199933*^9, 
+   3.733167264411621*^9}, {3.733167362201078*^9, 3.733167362844469*^9}, 
+   3.733168767558889*^9},ExpressionUUID->"0734218b-0567-4768-b38d-\
+bfb99eb5b6be"],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"CForm", "[", "xy", "]"}], "\[IndentingNewLine]"}]], "Input",
+ CellChangeTimes->{{3.7331673698303347`*^9, 
+  3.733167378954564*^9}},ExpressionUUID->"d0490c74-39c9-41dd-8757-\
+3800aa243060"],
+
+Cell["\<\
+(((q11*(x2 - Power(1 - ct/dur,7)*P(0,0) - (7*ct*Power(1 - \
+ct/dur,6)*P(1,0))/dur - (21*Power(ct,2)*Power(1 - \
+ct/dur,5)*P(2,0))/Power(dur,2) - (35*Power(ct,3)*Power(1 - \
+ct/dur,4)*P(3,0))/Power(dur,3) - 
+             (35*Power(ct,4)*Power(1 - ct/dur,3)*P(4,0))/Power(dur,4) - \
+(21*Power(ct,5)*Power(1 - ct/dur,2)*P(5,0))/Power(dur,5) - (7*Power(ct,6)*(1 \
+- ct/dur)*P(6,0))/Power(dur,6) - 
+             (Power(ct,7)*P(7,0))/Power(dur,7)))/ss + (q21*(-x1 + Power(1 - \
+ct/dur,7)*P(0,0) + (7*ct*Power(1 - ct/dur,6)*P(1,0))/dur + \
+(21*Power(ct,2)*Power(1 - ct/dur,5)*P(2,0))/Power(dur,2) + 
+             (35*Power(ct,3)*Power(1 - ct/dur,4)*P(3,0))/Power(dur,3) + \
+(35*Power(ct,4)*Power(1 - ct/dur,3)*P(4,0))/Power(dur,4) + \
+(21*Power(ct,5)*Power(1 - ct/dur,2)*P(5,0))/Power(dur,5) + 
+             (7*Power(ct,6)*(1 - ct/dur)*P(6,0))/Power(dur,6) + \
+(Power(ct,7)*P(7,0))/Power(dur,7)))/ss)*
+      (y2 - Power(1 - ct/dur,7)*P(0,1) - (7*ct*Power(1 - \
+ct/dur,6)*P(1,1))/dur - (21*Power(ct,2)*Power(1 - \
+ct/dur,5)*P(2,1))/Power(dur,2) - (35*Power(ct,3)*Power(1 - \
+ct/dur,4)*P(3,1))/Power(dur,3) - 
+        (35*Power(ct,4)*Power(1 - ct/dur,3)*P(4,1))/Power(dur,4) - \
+(21*Power(ct,5)*Power(1 - ct/dur,2)*P(5,1))/Power(dur,5) - (7*Power(ct,6)*(1 \
+- ct/dur)*P(6,1))/Power(dur,6) - 
+        (Power(ct,7)*P(7,1))/Power(dur,7)))/ss + (((q12*(x2 - Power(1 - \
+ct/dur,7)*P(0,0) - (7*ct*Power(1 - ct/dur,6)*P(1,0))/dur - \
+(21*Power(ct,2)*Power(1 - ct/dur,5)*P(2,0))/Power(dur,2) - 
+             (35*Power(ct,3)*Power(1 - ct/dur,4)*P(3,0))/Power(dur,3) - \
+(35*Power(ct,4)*Power(1 - ct/dur,3)*P(4,0))/Power(dur,4) - \
+(21*Power(ct,5)*Power(1 - ct/dur,2)*P(5,0))/Power(dur,5) - 
+             (7*Power(ct,6)*(1 - ct/dur)*P(6,0))/Power(dur,6) - \
+(Power(ct,7)*P(7,0))/Power(dur,7)))/ss + 
+        (q22*(-x1 + Power(1 - ct/dur,7)*P(0,0) + (7*ct*Power(1 - \
+ct/dur,6)*P(1,0))/dur + (21*Power(ct,2)*Power(1 - \
+ct/dur,5)*P(2,0))/Power(dur,2) + 
+             (35*Power(ct,3)*Power(1 - ct/dur,4)*P(3,0))/Power(dur,3) + \
+(35*Power(ct,4)*Power(1 - ct/dur,3)*P(4,0))/Power(dur,4) + \
+(21*Power(ct,5)*Power(1 - ct/dur,2)*P(5,0))/Power(dur,5) + 
+             (7*Power(ct,6)*(1 - ct/dur)*P(6,0))/Power(dur,6) + \
+(Power(ct,7)*P(7,0))/Power(dur,7)))/ss)*
+      (-y1 + Power(1 - ct/dur,7)*P(0,1) + (7*ct*Power(1 - \
+ct/dur,6)*P(1,1))/dur + (21*Power(ct,2)*Power(1 - \
+ct/dur,5)*P(2,1))/Power(dur,2) + (35*Power(ct,3)*Power(1 - \
+ct/dur,4)*P(3,1))/Power(dur,3) + 
+        (35*Power(ct,4)*Power(1 - ct/dur,3)*P(4,1))/Power(dur,4) + \
+(21*Power(ct,5)*Power(1 - ct/dur,2)*P(5,1))/Power(dur,5) + (7*Power(ct,6)*(1 \
+- ct/dur)*P(6,1))/Power(dur,6) + 
+        (Power(ct,7)*P(7,1))/Power(dur,7)))/ss\
+\>", "Output",
+ CellChangeTimes->{
+  3.7331687783036947`*^9},ExpressionUUID->"489c20f1-ea0c-4c49-9da8-\
+899cd3f2f3a0"]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{"CForm", "[", "xygrad", "]"}]], "Input",
+ CellChangeTimes->{{3.733167396670395*^9, 
+  3.733167399509252*^9}},ExpressionUUID->"f4589b34-db25-4328-a5f3-\
+6aec955613af"],
+
+Cell["\<\
+List(((-((Power(1 - ct/dur,7)*q11)/ss) + (Power(1 - ct/dur,7)*q21)/ss)*(y2 - \
+Power(1 - ct/dur,7)*P(0,1) - (7*ct*Power(1 - ct/dur,6)*P(1,1))/dur - \
+(21*Power(ct,2)*Power(1 - ct/dur,5)*P(2,1))/Power(dur,2) - 
+         (35*Power(ct,3)*Power(1 - ct/dur,4)*P(3,1))/Power(dur,3) - \
+(35*Power(ct,4)*Power(1 - ct/dur,3)*P(4,1))/Power(dur,4) - \
+(21*Power(ct,5)*Power(1 - ct/dur,2)*P(5,1))/Power(dur,5) - 
+         (7*Power(ct,6)*(1 - ct/dur)*P(6,1))/Power(dur,6) - \
+(Power(ct,7)*P(7,1))/Power(dur,7)))/ss + 
+    ((-((Power(1 - ct/dur,7)*q12)/ss) + (Power(1 - ct/dur,7)*q22)/ss)*(-y1 + \
+Power(1 - ct/dur,7)*P(0,1) + (7*ct*Power(1 - ct/dur,6)*P(1,1))/dur + \
+(21*Power(ct,2)*Power(1 - ct/dur,5)*P(2,1))/Power(dur,2) + 
+         (35*Power(ct,3)*Power(1 - ct/dur,4)*P(3,1))/Power(dur,3) + \
+(35*Power(ct,4)*Power(1 - ct/dur,3)*P(4,1))/Power(dur,4) + \
+(21*Power(ct,5)*Power(1 - ct/dur,2)*P(5,1))/Power(dur,5) + 
+         (7*Power(ct,6)*(1 - ct/dur)*P(6,1))/Power(dur,6) + \
+(Power(ct,7)*P(7,1))/Power(dur,7)))/ss,
+   -((Power(1 - ct/dur,7)*((q11*(x2 - Power(1 - ct/dur,7)*P(0,0) - \
+(7*ct*Power(1 - ct/dur,6)*P(1,0))/dur - (21*Power(ct,2)*Power(1 - \
+ct/dur,5)*P(2,0))/Power(dur,2) - 
+                (35*Power(ct,3)*Power(1 - ct/dur,4)*P(3,0))/Power(dur,3) - \
+(35*Power(ct,4)*Power(1 - ct/dur,3)*P(4,0))/Power(dur,4) - \
+(21*Power(ct,5)*Power(1 - ct/dur,2)*P(5,0))/Power(dur,5) - 
+                (7*Power(ct,6)*(1 - ct/dur)*P(6,0))/Power(dur,6) - \
+(Power(ct,7)*P(7,0))/Power(dur,7)))/ss + 
+           (q21*(-x1 + Power(1 - ct/dur,7)*P(0,0) + (7*ct*Power(1 - \
+ct/dur,6)*P(1,0))/dur + (21*Power(ct,2)*Power(1 - \
+ct/dur,5)*P(2,0))/Power(dur,2) + 
+                (35*Power(ct,3)*Power(1 - ct/dur,4)*P(3,0))/Power(dur,3) + \
+(35*Power(ct,4)*Power(1 - ct/dur,3)*P(4,0))/Power(dur,4) + \
+(21*Power(ct,5)*Power(1 - ct/dur,2)*P(5,0))/Power(dur,5) + 
+                (7*Power(ct,6)*(1 - ct/dur)*P(6,0))/Power(dur,6) + \
+(Power(ct,7)*P(7,0))/Power(dur,7)))/ss))/ss) + 
+    (Power(1 - ct/dur,7)*((q12*(x2 - Power(1 - ct/dur,7)*P(0,0) - \
+(7*ct*Power(1 - ct/dur,6)*P(1,0))/dur - (21*Power(ct,2)*Power(1 - \
+ct/dur,5)*P(2,0))/Power(dur,2) - 
+              (35*Power(ct,3)*Power(1 - ct/dur,4)*P(3,0))/Power(dur,3) - \
+(35*Power(ct,4)*Power(1 - ct/dur,3)*P(4,0))/Power(dur,4) - \
+(21*Power(ct,5)*Power(1 - ct/dur,2)*P(5,0))/Power(dur,5) - 
+              (7*Power(ct,6)*(1 - ct/dur)*P(6,0))/Power(dur,6) - \
+(Power(ct,7)*P(7,0))/Power(dur,7)))/ss + 
+         (q22*(-x1 + Power(1 - ct/dur,7)*P(0,0) + (7*ct*Power(1 - \
+ct/dur,6)*P(1,0))/dur + (21*Power(ct,2)*Power(1 - \
+ct/dur,5)*P(2,0))/Power(dur,2) + 
+              (35*Power(ct,3)*Power(1 - ct/dur,4)*P(3,0))/Power(dur,3) + \
+(35*Power(ct,4)*Power(1 - ct/dur,3)*P(4,0))/Power(dur,4) + \
+(21*Power(ct,5)*Power(1 - ct/dur,2)*P(5,0))/Power(dur,5) + 
+              (7*Power(ct,6)*(1 - ct/dur)*P(6,0))/Power(dur,6) + \
+(Power(ct,7)*P(7,0))/Power(dur,7)))/ss))/ss,
+   (((-7*ct*Power(1 - ct/dur,6)*q11)/(dur*ss) + (7*ct*Power(1 - \
+ct/dur,6)*q21)/(dur*ss))*
+       (y2 - Power(1 - ct/dur,7)*P(0,1) - (7*ct*Power(1 - \
+ct/dur,6)*P(1,1))/dur - (21*Power(ct,2)*Power(1 - \
+ct/dur,5)*P(2,1))/Power(dur,2) - (35*Power(ct,3)*Power(1 - \
+ct/dur,4)*P(3,1))/Power(dur,3) - 
+         (35*Power(ct,4)*Power(1 - ct/dur,3)*P(4,1))/Power(dur,4) - \
+(21*Power(ct,5)*Power(1 - ct/dur,2)*P(5,1))/Power(dur,5) - (7*Power(ct,6)*(1 \
+- ct/dur)*P(6,1))/Power(dur,6) - 
+         (Power(ct,7)*P(7,1))/Power(dur,7)))/ss + (((-7*ct*Power(1 - \
+ct/dur,6)*q12)/(dur*ss) + (7*ct*Power(1 - ct/dur,6)*q22)/(dur*ss))*
+       (-y1 + Power(1 - ct/dur,7)*P(0,1) + (7*ct*Power(1 - \
+ct/dur,6)*P(1,1))/dur + (21*Power(ct,2)*Power(1 - \
+ct/dur,5)*P(2,1))/Power(dur,2) + (35*Power(ct,3)*Power(1 - \
+ct/dur,4)*P(3,1))/Power(dur,3) + 
+         (35*Power(ct,4)*Power(1 - ct/dur,3)*P(4,1))/Power(dur,4) + \
+(21*Power(ct,5)*Power(1 - ct/dur,2)*P(5,1))/Power(dur,5) + (7*Power(ct,6)*(1 \
+- ct/dur)*P(6,1))/Power(dur,6) + 
+         (Power(ct,7)*P(7,1))/Power(dur,7)))/ss,(-7*ct*Power(1 - \
+ct/dur,6)*((q11*(x2 - Power(1 - ct/dur,7)*P(0,0) - (7*ct*Power(1 - \
+ct/dur,6)*P(1,0))/dur - 
+              (21*Power(ct,2)*Power(1 - ct/dur,5)*P(2,0))/Power(dur,2) - \
+(35*Power(ct,3)*Power(1 - ct/dur,4)*P(3,0))/Power(dur,3) - \
+(35*Power(ct,4)*Power(1 - ct/dur,3)*P(4,0))/Power(dur,4) - 
+              (21*Power(ct,5)*Power(1 - ct/dur,2)*P(5,0))/Power(dur,5) - \
+(7*Power(ct,6)*(1 - ct/dur)*P(6,0))/Power(dur,6) - \
+(Power(ct,7)*P(7,0))/Power(dur,7)))/ss + 
+         (q21*(-x1 + Power(1 - ct/dur,7)*P(0,0) + (7*ct*Power(1 - \
+ct/dur,6)*P(1,0))/dur + (21*Power(ct,2)*Power(1 - \
+ct/dur,5)*P(2,0))/Power(dur,2) + 
+              (35*Power(ct,3)*Power(1 - ct/dur,4)*P(3,0))/Power(dur,3) + \
+(35*Power(ct,4)*Power(1 - ct/dur,3)*P(4,0))/Power(dur,4) + \
+(21*Power(ct,5)*Power(1 - ct/dur,2)*P(5,0))/Power(dur,5) + 
+              (7*Power(ct,6)*(1 - ct/dur)*P(6,0))/Power(dur,6) + \
+(Power(ct,7)*P(7,0))/Power(dur,7)))/ss))/(dur*ss) + 
+    (7*ct*Power(1 - ct/dur,6)*((q12*(x2 - Power(1 - ct/dur,7)*P(0,0) - \
+(7*ct*Power(1 - ct/dur,6)*P(1,0))/dur - (21*Power(ct,2)*Power(1 - \
+ct/dur,5)*P(2,0))/Power(dur,2) - 
+              (35*Power(ct,3)*Power(1 - ct/dur,4)*P(3,0))/Power(dur,3) - \
+(35*Power(ct,4)*Power(1 - ct/dur,3)*P(4,0))/Power(dur,4) - \
+(21*Power(ct,5)*Power(1 - ct/dur,2)*P(5,0))/Power(dur,5) - 
+              (7*Power(ct,6)*(1 - ct/dur)*P(6,0))/Power(dur,6) - \
+(Power(ct,7)*P(7,0))/Power(dur,7)))/ss + 
+         (q22*(-x1 + Power(1 - ct/dur,7)*P(0,0) + (7*ct*Power(1 - \
+ct/dur,6)*P(1,0))/dur + (21*Power(ct,2)*Power(1 - \
+ct/dur,5)*P(2,0))/Power(dur,2) + 
+              (35*Power(ct,3)*Power(1 - ct/dur,4)*P(3,0))/Power(dur,3) + \
+(35*Power(ct,4)*Power(1 - ct/dur,3)*P(4,0))/Power(dur,4) + \
+(21*Power(ct,5)*Power(1 - ct/dur,2)*P(5,0))/Power(dur,5) + 
+              (7*Power(ct,6)*(1 - ct/dur)*P(6,0))/Power(dur,6) + \
+(Power(ct,7)*P(7,0))/Power(dur,7)))/ss))/(dur*ss),
+   (((-21*Power(ct,2)*Power(1 - ct/dur,5)*q11)/(Power(dur,2)*ss) + \
+(21*Power(ct,2)*Power(1 - ct/dur,5)*q21)/(Power(dur,2)*ss))*
+       (y2 - Power(1 - ct/dur,7)*P(0,1) - (7*ct*Power(1 - \
+ct/dur,6)*P(1,1))/dur - (21*Power(ct,2)*Power(1 - \
+ct/dur,5)*P(2,1))/Power(dur,2) - (35*Power(ct,3)*Power(1 - \
+ct/dur,4)*P(3,1))/Power(dur,3) - 
+         (35*Power(ct,4)*Power(1 - ct/dur,3)*P(4,1))/Power(dur,4) - \
+(21*Power(ct,5)*Power(1 - ct/dur,2)*P(5,1))/Power(dur,5) - (7*Power(ct,6)*(1 \
+- ct/dur)*P(6,1))/Power(dur,6) - 
+         (Power(ct,7)*P(7,1))/Power(dur,7)))/ss + (((-21*Power(ct,2)*Power(1 \
+- ct/dur,5)*q12)/(Power(dur,2)*ss) + (21*Power(ct,2)*Power(1 - \
+ct/dur,5)*q22)/(Power(dur,2)*ss))*
+       (-y1 + Power(1 - ct/dur,7)*P(0,1) + (7*ct*Power(1 - \
+ct/dur,6)*P(1,1))/dur + (21*Power(ct,2)*Power(1 - \
+ct/dur,5)*P(2,1))/Power(dur,2) + (35*Power(ct,3)*Power(1 - \
+ct/dur,4)*P(3,1))/Power(dur,3) + 
+         (35*Power(ct,4)*Power(1 - ct/dur,3)*P(4,1))/Power(dur,4) + \
+(21*Power(ct,5)*Power(1 - ct/dur,2)*P(5,1))/Power(dur,5) + (7*Power(ct,6)*(1 \
+- ct/dur)*P(6,1))/Power(dur,6) + 
+         (Power(ct,7)*P(7,1))/Power(dur,7)))/ss,(-21*Power(ct,2)*Power(1 - \
+ct/dur,5)*
+       ((q11*(x2 - Power(1 - ct/dur,7)*P(0,0) - (7*ct*Power(1 - \
+ct/dur,6)*P(1,0))/dur - (21*Power(ct,2)*Power(1 - \
+ct/dur,5)*P(2,0))/Power(dur,2) - (35*Power(ct,3)*Power(1 - \
+ct/dur,4)*P(3,0))/Power(dur,3) - 
+              (35*Power(ct,4)*Power(1 - ct/dur,3)*P(4,0))/Power(dur,4) - \
+(21*Power(ct,5)*Power(1 - ct/dur,2)*P(5,0))/Power(dur,5) - (7*Power(ct,6)*(1 \
+- ct/dur)*P(6,0))/Power(dur,6) - 
+              (Power(ct,7)*P(7,0))/Power(dur,7)))/ss + (q21*(-x1 + Power(1 - \
+ct/dur,7)*P(0,0) + (7*ct*Power(1 - ct/dur,6)*P(1,0))/dur + \
+(21*Power(ct,2)*Power(1 - ct/dur,5)*P(2,0))/Power(dur,2) + 
+              (35*Power(ct,3)*Power(1 - ct/dur,4)*P(3,0))/Power(dur,3) + \
+(35*Power(ct,4)*Power(1 - ct/dur,3)*P(4,0))/Power(dur,4) + \
+(21*Power(ct,5)*Power(1 - ct/dur,2)*P(5,0))/Power(dur,5) + 
+              (7*Power(ct,6)*(1 - ct/dur)*P(6,0))/Power(dur,6) + \
+(Power(ct,7)*P(7,0))/Power(dur,7)))/ss))/(Power(dur,2)*ss) + 
+    (21*Power(ct,2)*Power(1 - ct/dur,5)*((q12*(x2 - Power(1 - \
+ct/dur,7)*P(0,0) - (7*ct*Power(1 - ct/dur,6)*P(1,0))/dur - \
+(21*Power(ct,2)*Power(1 - ct/dur,5)*P(2,0))/Power(dur,2) - 
+              (35*Power(ct,3)*Power(1 - ct/dur,4)*P(3,0))/Power(dur,3) - \
+(35*Power(ct,4)*Power(1 - ct/dur,3)*P(4,0))/Power(dur,4) - \
+(21*Power(ct,5)*Power(1 - ct/dur,2)*P(5,0))/Power(dur,5) - 
+              (7*Power(ct,6)*(1 - ct/dur)*P(6,0))/Power(dur,6) - \
+(Power(ct,7)*P(7,0))/Power(dur,7)))/ss + 
+         (q22*(-x1 + Power(1 - ct/dur,7)*P(0,0) + (7*ct*Power(1 - \
+ct/dur,6)*P(1,0))/dur + (21*Power(ct,2)*Power(1 - \
+ct/dur,5)*P(2,0))/Power(dur,2) + 
+              (35*Power(ct,3)*Power(1 - ct/dur,4)*P(3,0))/Power(dur,3) + \
+(35*Power(ct,4)*Power(1 - ct/dur,3)*P(4,0))/Power(dur,4) + \
+(21*Power(ct,5)*Power(1 - ct/dur,2)*P(5,0))/Power(dur,5) + 
+              (7*Power(ct,6)*(1 - ct/dur)*P(6,0))/Power(dur,6) + \
+(Power(ct,7)*P(7,0))/Power(dur,7)))/ss))/(Power(dur,2)*ss),
+   (((-35*Power(ct,3)*Power(1 - ct/dur,4)*q11)/(Power(dur,3)*ss) + \
+(35*Power(ct,3)*Power(1 - ct/dur,4)*q21)/(Power(dur,3)*ss))*
+       (y2 - Power(1 - ct/dur,7)*P(0,1) - (7*ct*Power(1 - \
+ct/dur,6)*P(1,1))/dur - (21*Power(ct,2)*Power(1 - \
+ct/dur,5)*P(2,1))/Power(dur,2) - (35*Power(ct,3)*Power(1 - \
+ct/dur,4)*P(3,1))/Power(dur,3) - 
+         (35*Power(ct,4)*Power(1 - ct/dur,3)*P(4,1))/Power(dur,4) - \
+(21*Power(ct,5)*Power(1 - ct/dur,2)*P(5,1))/Power(dur,5) - (7*Power(ct,6)*(1 \
+- ct/dur)*P(6,1))/Power(dur,6) - 
+         (Power(ct,7)*P(7,1))/Power(dur,7)))/ss + (((-35*Power(ct,3)*Power(1 \
+- ct/dur,4)*q12)/(Power(dur,3)*ss) + (35*Power(ct,3)*Power(1 - \
+ct/dur,4)*q22)/(Power(dur,3)*ss))*
+       (-y1 + Power(1 - ct/dur,7)*P(0,1) + (7*ct*Power(1 - \
+ct/dur,6)*P(1,1))/dur + (21*Power(ct,2)*Power(1 - \
+ct/dur,5)*P(2,1))/Power(dur,2) + (35*Power(ct,3)*Power(1 - \
+ct/dur,4)*P(3,1))/Power(dur,3) + 
+         (35*Power(ct,4)*Power(1 - ct/dur,3)*P(4,1))/Power(dur,4) + \
+(21*Power(ct,5)*Power(1 - ct/dur,2)*P(5,1))/Power(dur,5) + (7*Power(ct,6)*(1 \
+- ct/dur)*P(6,1))/Power(dur,6) + 
+         (Power(ct,7)*P(7,1))/Power(dur,7)))/ss,(-35*Power(ct,3)*Power(1 - \
+ct/dur,4)*
+       ((q11*(x2 - Power(1 - ct/dur,7)*P(0,0) - (7*ct*Power(1 - \
+ct/dur,6)*P(1,0))/dur - (21*Power(ct,2)*Power(1 - \
+ct/dur,5)*P(2,0))/Power(dur,2) - (35*Power(ct,3)*Power(1 - \
+ct/dur,4)*P(3,0))/Power(dur,3) - 
+              (35*Power(ct,4)*Power(1 - ct/dur,3)*P(4,0))/Power(dur,4) - \
+(21*Power(ct,5)*Power(1 - ct/dur,2)*P(5,0))/Power(dur,5) - (7*Power(ct,6)*(1 \
+- ct/dur)*P(6,0))/Power(dur,6) - 
+              (Power(ct,7)*P(7,0))/Power(dur,7)))/ss + (q21*(-x1 + Power(1 - \
+ct/dur,7)*P(0,0) + (7*ct*Power(1 - ct/dur,6)*P(1,0))/dur + \
+(21*Power(ct,2)*Power(1 - ct/dur,5)*P(2,0))/Power(dur,2) + 
+              (35*Power(ct,3)*Power(1 - ct/dur,4)*P(3,0))/Power(dur,3) + \
+(35*Power(ct,4)*Power(1 - ct/dur,3)*P(4,0))/Power(dur,4) + \
+(21*Power(ct,5)*Power(1 - ct/dur,2)*P(5,0))/Power(dur,5) + 
+              (7*Power(ct,6)*(1 - ct/dur)*P(6,0))/Power(dur,6) + \
+(Power(ct,7)*P(7,0))/Power(dur,7)))/ss))/(Power(dur,3)*ss) + 
+    (35*Power(ct,3)*Power(1 - ct/dur,4)*((q12*(x2 - Power(1 - \
+ct/dur,7)*P(0,0) - (7*ct*Power(1 - ct/dur,6)*P(1,0))/dur - \
+(21*Power(ct,2)*Power(1 - ct/dur,5)*P(2,0))/Power(dur,2) - 
+              (35*Power(ct,3)*Power(1 - ct/dur,4)*P(3,0))/Power(dur,3) - \
+(35*Power(ct,4)*Power(1 - ct/dur,3)*P(4,0))/Power(dur,4) - \
+(21*Power(ct,5)*Power(1 - ct/dur,2)*P(5,0))/Power(dur,5) - 
+              (7*Power(ct,6)*(1 - ct/dur)*P(6,0))/Power(dur,6) - \
+(Power(ct,7)*P(7,0))/Power(dur,7)))/ss + 
+         (q22*(-x1 + Power(1 - ct/dur,7)*P(0,0) + (7*ct*Power(1 - \
+ct/dur,6)*P(1,0))/dur + (21*Power(ct,2)*Power(1 - \
+ct/dur,5)*P(2,0))/Power(dur,2) + 
+              (35*Power(ct,3)*Power(1 - ct/dur,4)*P(3,0))/Power(dur,3) + \
+(35*Power(ct,4)*Power(1 - ct/dur,3)*P(4,0))/Power(dur,4) + \
+(21*Power(ct,5)*Power(1 - ct/dur,2)*P(5,0))/Power(dur,5) + 
+              (7*Power(ct,6)*(1 - ct/dur)*P(6,0))/Power(dur,6) + \
+(Power(ct,7)*P(7,0))/Power(dur,7)))/ss))/(Power(dur,3)*ss),
+   (((-35*Power(ct,4)*Power(1 - ct/dur,3)*q11)/(Power(dur,4)*ss) + \
+(35*Power(ct,4)*Power(1 - ct/dur,3)*q21)/(Power(dur,4)*ss))*
+       (y2 - Power(1 - ct/dur,7)*P(0,1) - (7*ct*Power(1 - \
+ct/dur,6)*P(1,1))/dur - (21*Power(ct,2)*Power(1 - \
+ct/dur,5)*P(2,1))/Power(dur,2) - (35*Power(ct,3)*Power(1 - \
+ct/dur,4)*P(3,1))/Power(dur,3) - 
+         (35*Power(ct,4)*Power(1 - ct/dur,3)*P(4,1))/Power(dur,4) - \
+(21*Power(ct,5)*Power(1 - ct/dur,2)*P(5,1))/Power(dur,5) - (7*Power(ct,6)*(1 \
+- ct/dur)*P(6,1))/Power(dur,6) - 
+         (Power(ct,7)*P(7,1))/Power(dur,7)))/ss + (((-35*Power(ct,4)*Power(1 \
+- ct/dur,3)*q12)/(Power(dur,4)*ss) + (35*Power(ct,4)*Power(1 - \
+ct/dur,3)*q22)/(Power(dur,4)*ss))*
+       (-y1 + Power(1 - ct/dur,7)*P(0,1) + (7*ct*Power(1 - \
+ct/dur,6)*P(1,1))/dur + (21*Power(ct,2)*Power(1 - \
+ct/dur,5)*P(2,1))/Power(dur,2) + (35*Power(ct,3)*Power(1 - \
+ct/dur,4)*P(3,1))/Power(dur,3) + 
+         (35*Power(ct,4)*Power(1 - ct/dur,3)*P(4,1))/Power(dur,4) + \
+(21*Power(ct,5)*Power(1 - ct/dur,2)*P(5,1))/Power(dur,5) + (7*Power(ct,6)*(1 \
+- ct/dur)*P(6,1))/Power(dur,6) + 
+         (Power(ct,7)*P(7,1))/Power(dur,7)))/ss,(-35*Power(ct,4)*Power(1 - \
+ct/dur,3)*
+       ((q11*(x2 - Power(1 - ct/dur,7)*P(0,0) - (7*ct*Power(1 - \
+ct/dur,6)*P(1,0))/dur - (21*Power(ct,2)*Power(1 - \
+ct/dur,5)*P(2,0))/Power(dur,2) - (35*Power(ct,3)*Power(1 - \
+ct/dur,4)*P(3,0))/Power(dur,3) - 
+              (35*Power(ct,4)*Power(1 - ct/dur,3)*P(4,0))/Power(dur,4) - \
+(21*Power(ct,5)*Power(1 - ct/dur,2)*P(5,0))/Power(dur,5) - (7*Power(ct,6)*(1 \
+- ct/dur)*P(6,0))/Power(dur,6) - 
+              (Power(ct,7)*P(7,0))/Power(dur,7)))/ss + (q21*(-x1 + Power(1 - \
+ct/dur,7)*P(0,0) + (7*ct*Power(1 - ct/dur,6)*P(1,0))/dur + \
+(21*Power(ct,2)*Power(1 - ct/dur,5)*P(2,0))/Power(dur,2) + 
+              (35*Power(ct,3)*Power(1 - ct/dur,4)*P(3,0))/Power(dur,3) + \
+(35*Power(ct,4)*Power(1 - ct/dur,3)*P(4,0))/Power(dur,4) + \
+(21*Power(ct,5)*Power(1 - ct/dur,2)*P(5,0))/Power(dur,5) + 
+              (7*Power(ct,6)*(1 - ct/dur)*P(6,0))/Power(dur,6) + \
+(Power(ct,7)*P(7,0))/Power(dur,7)))/ss))/(Power(dur,4)*ss) + 
+    (35*Power(ct,4)*Power(1 - ct/dur,3)*((q12*(x2 - Power(1 - \
+ct/dur,7)*P(0,0) - (7*ct*Power(1 - ct/dur,6)*P(1,0))/dur - \
+(21*Power(ct,2)*Power(1 - ct/dur,5)*P(2,0))/Power(dur,2) - 
+              (35*Power(ct,3)*Power(1 - ct/dur,4)*P(3,0))/Power(dur,3) - \
+(35*Power(ct,4)*Power(1 - ct/dur,3)*P(4,0))/Power(dur,4) - \
+(21*Power(ct,5)*Power(1 - ct/dur,2)*P(5,0))/Power(dur,5) - 
+              (7*Power(ct,6)*(1 - ct/dur)*P(6,0))/Power(dur,6) - \
+(Power(ct,7)*P(7,0))/Power(dur,7)))/ss + 
+         (q22*(-x1 + Power(1 - ct/dur,7)*P(0,0) + (7*ct*Power(1 - \
+ct/dur,6)*P(1,0))/dur + (21*Power(ct,2)*Power(1 - \
+ct/dur,5)*P(2,0))/Power(dur,2) + 
+              (35*Power(ct,3)*Power(1 - ct/dur,4)*P(3,0))/Power(dur,3) + \
+(35*Power(ct,4)*Power(1 - ct/dur,3)*P(4,0))/Power(dur,4) + \
+(21*Power(ct,5)*Power(1 - ct/dur,2)*P(5,0))/Power(dur,5) + 
+              (7*Power(ct,6)*(1 - ct/dur)*P(6,0))/Power(dur,6) + \
+(Power(ct,7)*P(7,0))/Power(dur,7)))/ss))/(Power(dur,4)*ss),
+   (((-21*Power(ct,5)*Power(1 - ct/dur,2)*q11)/(Power(dur,5)*ss) + \
+(21*Power(ct,5)*Power(1 - ct/dur,2)*q21)/(Power(dur,5)*ss))*
+       (y2 - Power(1 - ct/dur,7)*P(0,1) - (7*ct*Power(1 - \
+ct/dur,6)*P(1,1))/dur - (21*Power(ct,2)*Power(1 - \
+ct/dur,5)*P(2,1))/Power(dur,2) - (35*Power(ct,3)*Power(1 - \
+ct/dur,4)*P(3,1))/Power(dur,3) - 
+         (35*Power(ct,4)*Power(1 - ct/dur,3)*P(4,1))/Power(dur,4) - \
+(21*Power(ct,5)*Power(1 - ct/dur,2)*P(5,1))/Power(dur,5) - (7*Power(ct,6)*(1 \
+- ct/dur)*P(6,1))/Power(dur,6) - 
+         (Power(ct,7)*P(7,1))/Power(dur,7)))/ss + (((-21*Power(ct,5)*Power(1 \
+- ct/dur,2)*q12)/(Power(dur,5)*ss) + (21*Power(ct,5)*Power(1 - \
+ct/dur,2)*q22)/(Power(dur,5)*ss))*
+       (-y1 + Power(1 - ct/dur,7)*P(0,1) + (7*ct*Power(1 - \
+ct/dur,6)*P(1,1))/dur + (21*Power(ct,2)*Power(1 - \
+ct/dur,5)*P(2,1))/Power(dur,2) + (35*Power(ct,3)*Power(1 - \
+ct/dur,4)*P(3,1))/Power(dur,3) + 
+         (35*Power(ct,4)*Power(1 - ct/dur,3)*P(4,1))/Power(dur,4) + \
+(21*Power(ct,5)*Power(1 - ct/dur,2)*P(5,1))/Power(dur,5) + (7*Power(ct,6)*(1 \
+- ct/dur)*P(6,1))/Power(dur,6) + 
+         (Power(ct,7)*P(7,1))/Power(dur,7)))/ss,(-21*Power(ct,5)*Power(1 - \
+ct/dur,2)*
+       ((q11*(x2 - Power(1 - ct/dur,7)*P(0,0) - (7*ct*Power(1 - \
+ct/dur,6)*P(1,0))/dur - (21*Power(ct,2)*Power(1 - \
+ct/dur,5)*P(2,0))/Power(dur,2) - (35*Power(ct,3)*Power(1 - \
+ct/dur,4)*P(3,0))/Power(dur,3) - 
+              (35*Power(ct,4)*Power(1 - ct/dur,3)*P(4,0))/Power(dur,4) - \
+(21*Power(ct,5)*Power(1 - ct/dur,2)*P(5,0))/Power(dur,5) - (7*Power(ct,6)*(1 \
+- ct/dur)*P(6,0))/Power(dur,6) - 
+              (Power(ct,7)*P(7,0))/Power(dur,7)))/ss + (q21*(-x1 + Power(1 - \
+ct/dur,7)*P(0,0) + (7*ct*Power(1 - ct/dur,6)*P(1,0))/dur + \
+(21*Power(ct,2)*Power(1 - ct/dur,5)*P(2,0))/Power(dur,2) + 
+              (35*Power(ct,3)*Power(1 - ct/dur,4)*P(3,0))/Power(dur,3) + \
+(35*Power(ct,4)*Power(1 - ct/dur,3)*P(4,0))/Power(dur,4) + \
+(21*Power(ct,5)*Power(1 - ct/dur,2)*P(5,0))/Power(dur,5) + 
+              (7*Power(ct,6)*(1 - ct/dur)*P(6,0))/Power(dur,6) + \
+(Power(ct,7)*P(7,0))/Power(dur,7)))/ss))/(Power(dur,5)*ss) + 
+    (21*Power(ct,5)*Power(1 - ct/dur,2)*((q12*(x2 - Power(1 - \
+ct/dur,7)*P(0,0) - (7*ct*Power(1 - ct/dur,6)*P(1,0))/dur - \
+(21*Power(ct,2)*Power(1 - ct/dur,5)*P(2,0))/Power(dur,2) - 
+              (35*Power(ct,3)*Power(1 - ct/dur,4)*P(3,0))/Power(dur,3) - \
+(35*Power(ct,4)*Power(1 - ct/dur,3)*P(4,0))/Power(dur,4) - \
+(21*Power(ct,5)*Power(1 - ct/dur,2)*P(5,0))/Power(dur,5) - 
+              (7*Power(ct,6)*(1 - ct/dur)*P(6,0))/Power(dur,6) - \
+(Power(ct,7)*P(7,0))/Power(dur,7)))/ss + 
+         (q22*(-x1 + Power(1 - ct/dur,7)*P(0,0) + (7*ct*Power(1 - \
+ct/dur,6)*P(1,0))/dur + (21*Power(ct,2)*Power(1 - \
+ct/dur,5)*P(2,0))/Power(dur,2) + 
+              (35*Power(ct,3)*Power(1 - ct/dur,4)*P(3,0))/Power(dur,3) + \
+(35*Power(ct,4)*Power(1 - ct/dur,3)*P(4,0))/Power(dur,4) + \
+(21*Power(ct,5)*Power(1 - ct/dur,2)*P(5,0))/Power(dur,5) + 
+              (7*Power(ct,6)*(1 - ct/dur)*P(6,0))/Power(dur,6) + \
+(Power(ct,7)*P(7,0))/Power(dur,7)))/ss))/(Power(dur,5)*ss),
+   (((-7*Power(ct,6)*(1 - ct/dur)*q11)/(Power(dur,6)*ss) + (7*Power(ct,6)*(1 \
+- ct/dur)*q21)/(Power(dur,6)*ss))*
+       (y2 - Power(1 - ct/dur,7)*P(0,1) - (7*ct*Power(1 - \
+ct/dur,6)*P(1,1))/dur - (21*Power(ct,2)*Power(1 - \
+ct/dur,5)*P(2,1))/Power(dur,2) - (35*Power(ct,3)*Power(1 - \
+ct/dur,4)*P(3,1))/Power(dur,3) - 
+         (35*Power(ct,4)*Power(1 - ct/dur,3)*P(4,1))/Power(dur,4) - \
+(21*Power(ct,5)*Power(1 - ct/dur,2)*P(5,1))/Power(dur,5) - (7*Power(ct,6)*(1 \
+- ct/dur)*P(6,1))/Power(dur,6) - 
+         (Power(ct,7)*P(7,1))/Power(dur,7)))/ss + (((-7*Power(ct,6)*(1 - \
+ct/dur)*q12)/(Power(dur,6)*ss) + (7*Power(ct,6)*(1 - \
+ct/dur)*q22)/(Power(dur,6)*ss))*
+       (-y1 + Power(1 - ct/dur,7)*P(0,1) + (7*ct*Power(1 - \
+ct/dur,6)*P(1,1))/dur + (21*Power(ct,2)*Power(1 - \
+ct/dur,5)*P(2,1))/Power(dur,2) + (35*Power(ct,3)*Power(1 - \
+ct/dur,4)*P(3,1))/Power(dur,3) + 
+         (35*Power(ct,4)*Power(1 - ct/dur,3)*P(4,1))/Power(dur,4) + \
+(21*Power(ct,5)*Power(1 - ct/dur,2)*P(5,1))/Power(dur,5) + (7*Power(ct,6)*(1 \
+- ct/dur)*P(6,1))/Power(dur,6) + 
+         (Power(ct,7)*P(7,1))/Power(dur,7)))/ss,(-7*Power(ct,6)*(1 - \
+ct/dur)*((q11*
+            (x2 - Power(1 - ct/dur,7)*P(0,0) - (7*ct*Power(1 - \
+ct/dur,6)*P(1,0))/dur - (21*Power(ct,2)*Power(1 - \
+ct/dur,5)*P(2,0))/Power(dur,2) - (35*Power(ct,3)*Power(1 - \
+ct/dur,4)*P(3,0))/Power(dur,3) - 
+              (35*Power(ct,4)*Power(1 - ct/dur,3)*P(4,0))/Power(dur,4) - \
+(21*Power(ct,5)*Power(1 - ct/dur,2)*P(5,0))/Power(dur,5) - (7*Power(ct,6)*(1 \
+- ct/dur)*P(6,0))/Power(dur,6) - 
+              (Power(ct,7)*P(7,0))/Power(dur,7)))/ss + (q21*(-x1 + Power(1 - \
+ct/dur,7)*P(0,0) + (7*ct*Power(1 - ct/dur,6)*P(1,0))/dur + \
+(21*Power(ct,2)*Power(1 - ct/dur,5)*P(2,0))/Power(dur,2) + 
+              (35*Power(ct,3)*Power(1 - ct/dur,4)*P(3,0))/Power(dur,3) + \
+(35*Power(ct,4)*Power(1 - ct/dur,3)*P(4,0))/Power(dur,4) + \
+(21*Power(ct,5)*Power(1 - ct/dur,2)*P(5,0))/Power(dur,5) + 
+              (7*Power(ct,6)*(1 - ct/dur)*P(6,0))/Power(dur,6) + \
+(Power(ct,7)*P(7,0))/Power(dur,7)))/ss))/(Power(dur,6)*ss) + 
+    (7*Power(ct,6)*(1 - ct/dur)*((q12*(x2 - Power(1 - ct/dur,7)*P(0,0) - \
+(7*ct*Power(1 - ct/dur,6)*P(1,0))/dur - (21*Power(ct,2)*Power(1 - \
+ct/dur,5)*P(2,0))/Power(dur,2) - 
+              (35*Power(ct,3)*Power(1 - ct/dur,4)*P(3,0))/Power(dur,3) - \
+(35*Power(ct,4)*Power(1 - ct/dur,3)*P(4,0))/Power(dur,4) - \
+(21*Power(ct,5)*Power(1 - ct/dur,2)*P(5,0))/Power(dur,5) - 
+              (7*Power(ct,6)*(1 - ct/dur)*P(6,0))/Power(dur,6) - \
+(Power(ct,7)*P(7,0))/Power(dur,7)))/ss + 
+         (q22*(-x1 + Power(1 - ct/dur,7)*P(0,0) + (7*ct*Power(1 - \
+ct/dur,6)*P(1,0))/dur + (21*Power(ct,2)*Power(1 - \
+ct/dur,5)*P(2,0))/Power(dur,2) + 
+              (35*Power(ct,3)*Power(1 - ct/dur,4)*P(3,0))/Power(dur,3) + \
+(35*Power(ct,4)*Power(1 - ct/dur,3)*P(4,0))/Power(dur,4) + \
+(21*Power(ct,5)*Power(1 - ct/dur,2)*P(5,0))/Power(dur,5) + 
+              (7*Power(ct,6)*(1 - ct/dur)*P(6,0))/Power(dur,6) + \
+(Power(ct,7)*P(7,0))/Power(dur,7)))/ss))/(Power(dur,6)*ss),
+   ((-((Power(ct,7)*q11)/(Power(dur,7)*ss)) + \
+(Power(ct,7)*q21)/(Power(dur,7)*ss))*
+       (y2 - Power(1 - ct/dur,7)*P(0,1) - (7*ct*Power(1 - \
+ct/dur,6)*P(1,1))/dur - (21*Power(ct,2)*Power(1 - \
+ct/dur,5)*P(2,1))/Power(dur,2) - (35*Power(ct,3)*Power(1 - \
+ct/dur,4)*P(3,1))/Power(dur,3) - 
+         (35*Power(ct,4)*Power(1 - ct/dur,3)*P(4,1))/Power(dur,4) - \
+(21*Power(ct,5)*Power(1 - ct/dur,2)*P(5,1))/Power(dur,5) - (7*Power(ct,6)*(1 \
+- ct/dur)*P(6,1))/Power(dur,6) - 
+         (Power(ct,7)*P(7,1))/Power(dur,7)))/ss + \
+((-((Power(ct,7)*q12)/(Power(dur,7)*ss)) + \
+(Power(ct,7)*q22)/(Power(dur,7)*ss))*
+       (-y1 + Power(1 - ct/dur,7)*P(0,1) + (7*ct*Power(1 - \
+ct/dur,6)*P(1,1))/dur + (21*Power(ct,2)*Power(1 - \
+ct/dur,5)*P(2,1))/Power(dur,2) + (35*Power(ct,3)*Power(1 - \
+ct/dur,4)*P(3,1))/Power(dur,3) + 
+         (35*Power(ct,4)*Power(1 - ct/dur,3)*P(4,1))/Power(dur,4) + \
+(21*Power(ct,5)*Power(1 - ct/dur,2)*P(5,1))/Power(dur,5) + (7*Power(ct,6)*(1 \
+- ct/dur)*P(6,1))/Power(dur,6) + 
+         (Power(ct,7)*P(7,1))/Power(dur,7)))/ss,-((Power(ct,7)*((q11*(x2 - \
+Power(1 - ct/dur,7)*P(0,0) - (7*ct*Power(1 - ct/dur,6)*P(1,0))/dur - \
+(21*Power(ct,2)*Power(1 - ct/dur,5)*P(2,0))/Power(dur,2) - 
+                (35*Power(ct,3)*Power(1 - ct/dur,4)*P(3,0))/Power(dur,3) - \
+(35*Power(ct,4)*Power(1 - ct/dur,3)*P(4,0))/Power(dur,4) - \
+(21*Power(ct,5)*Power(1 - ct/dur,2)*P(5,0))/Power(dur,5) - 
+                (7*Power(ct,6)*(1 - ct/dur)*P(6,0))/Power(dur,6) - \
+(Power(ct,7)*P(7,0))/Power(dur,7)))/ss + 
+           (q21*(-x1 + Power(1 - ct/dur,7)*P(0,0) + (7*ct*Power(1 - \
+ct/dur,6)*P(1,0))/dur + (21*Power(ct,2)*Power(1 - \
+ct/dur,5)*P(2,0))/Power(dur,2) + 
+                (35*Power(ct,3)*Power(1 - ct/dur,4)*P(3,0))/Power(dur,3) + \
+(35*Power(ct,4)*Power(1 - ct/dur,3)*P(4,0))/Power(dur,4) + \
+(21*Power(ct,5)*Power(1 - ct/dur,2)*P(5,0))/Power(dur,5) + 
+                (7*Power(ct,6)*(1 - ct/dur)*P(6,0))/Power(dur,6) + \
+(Power(ct,7)*P(7,0))/Power(dur,7)))/ss))/(Power(dur,7)*ss)) + 
+    (Power(ct,7)*((q12*(x2 - Power(1 - ct/dur,7)*P(0,0) - (7*ct*Power(1 - \
+ct/dur,6)*P(1,0))/dur - (21*Power(ct,2)*Power(1 - \
+ct/dur,5)*P(2,0))/Power(dur,2) - 
+              (35*Power(ct,3)*Power(1 - ct/dur,4)*P(3,0))/Power(dur,3) - \
+(35*Power(ct,4)*Power(1 - ct/dur,3)*P(4,0))/Power(dur,4) - \
+(21*Power(ct,5)*Power(1 - ct/dur,2)*P(5,0))/Power(dur,5) - 
+              (7*Power(ct,6)*(1 - ct/dur)*P(6,0))/Power(dur,6) - \
+(Power(ct,7)*P(7,0))/Power(dur,7)))/ss + 
+         (q22*(-x1 + Power(1 - ct/dur,7)*P(0,0) + (7*ct*Power(1 - \
+ct/dur,6)*P(1,0))/dur + (21*Power(ct,2)*Power(1 - \
+ct/dur,5)*P(2,0))/Power(dur,2) + 
+              (35*Power(ct,3)*Power(1 - ct/dur,4)*P(3,0))/Power(dur,3) + \
+(35*Power(ct,4)*Power(1 - ct/dur,3)*P(4,0))/Power(dur,4) + \
+(21*Power(ct,5)*Power(1 - ct/dur,2)*P(5,0))/Power(dur,5) + 
+              (7*Power(ct,6)*(1 - ct/dur)*P(6,0))/Power(dur,6) + \
+(Power(ct,7)*P(7,0))/Power(dur,7)))/ss))/(Power(dur,7)*ss))\
+\>", "Output",
+ CellChangeTimes->{
+  3.73316881248109*^9},ExpressionUUID->"ff04ea58-255f-4e2b-b683-f37f2f57f2d0"]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{"CForm", "[", "x", "]"}]], "Input",
+ CellChangeTimes->{{3.733167527751636*^9, 
+  3.733167531615226*^9}},ExpressionUUID->"42a745c6-22a9-442c-9986-\
+9d4b81c6e1ff"],
+
+Cell["\<\
+Power(1 - ct/dur,7)*P(0,0) + (7*ct*Power(1 - ct/dur,6)*P(1,0))/dur + \
+(21*Power(ct,2)*Power(1 - ct/dur,5)*P(2,0))/Power(dur,2) + \
+(35*Power(ct,3)*Power(1 - ct/dur,4)*P(3,0))/Power(dur,3) + 
+   (35*Power(ct,4)*Power(1 - ct/dur,3)*P(4,0))/Power(dur,4) + \
+(21*Power(ct,5)*Power(1 - ct/dur,2)*P(5,0))/Power(dur,5) + (7*Power(ct,6)*(1 \
+- ct/dur)*P(6,0))/Power(dur,6) + (Power(ct,7)*P(7,0))/Power(dur,7)\
+\>", "Output",
+ CellChangeTimes->{3.7331675321694*^9, 
+  3.733168795222521*^9},ExpressionUUID->"a730a1a8-4c45-4e23-b16a-\
+83cbf6dfb0ed"]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{"CForm", "[", "y", "]"}]], "Input",
+ CellChangeTimes->{{3.733167557726321*^9, 
+  3.7331675606416883`*^9}},ExpressionUUID->"1a9ded3b-b028-483e-a8b1-\
+7ded22b7c25d"],
+
+Cell["\<\
+Power(1 - ct/dur,7)*P(0,1) + (7*ct*Power(1 - ct/dur,6)*P(1,1))/dur + \
+(21*Power(ct,2)*Power(1 - ct/dur,5)*P(2,1))/Power(dur,2) + \
+(35*Power(ct,3)*Power(1 - ct/dur,4)*P(3,1))/Power(dur,3) + 
+   (35*Power(ct,4)*Power(1 - ct/dur,3)*P(4,1))/Power(dur,4) + \
+(21*Power(ct,5)*Power(1 - ct/dur,2)*P(5,1))/Power(dur,5) + (7*Power(ct,6)*(1 \
+- ct/dur)*P(6,1))/Power(dur,6) + (Power(ct,7)*P(7,1))/Power(dur,7)\
+\>", "Output",
+ CellChangeTimes->{3.733167561742304*^9, 
+  3.733168796771546*^9},ExpressionUUID->"29f1c09d-28cc-46c5-9580-\
+ed9061dc421f"]
+}, Open  ]]
+},
+WindowSize->{1855, 1056},
+WindowMargins->{{0, Automatic}, {Automatic, 0}},
+FrontEndVersion->"11.2 for Linux x86 (64-bit) (September 10, 2017)",
+StyleDefinitions->"Default.nb"
+]
+(* End of Notebook Content *)
+
+(* Internal cache information *)
+(*CellTagsOutline
+CellTagsIndex->{}
+*)
+(*CellTagsIndex
+CellTagsIndex->{}
+*)
+(*NotebookFileOutline
+Notebook[{
+Cell[558, 20, 3210, 102, 193, "Input",ExpressionUUID->"0734218b-0567-4768-b38d-bfb99eb5b6be"],
+Cell[CellGroupData[{
+Cell[3793, 126, 223, 5, 55, "Input",ExpressionUUID->"d0490c74-39c9-41dd-8757-3800aa243060"],
+Cell[4019, 133, 2801, 50, 335, "Output",ExpressionUUID->"489c20f1-ea0c-4c49-9da8-899cd3f2f3a0"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[6857, 188, 189, 4, 31, "Input",ExpressionUUID->"f4589b34-db25-4328-a5f3-6aec955613af"],
+Cell[7049, 194, 24238, 413, 2767, "Output",ExpressionUUID->"ff04ea58-255f-4e2b-b683-f37f2f57f2d0"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[31324, 612, 184, 4, 31, "Input",ExpressionUUID->"42a745c6-22a9-442c-9986-9d4b81c6e1ff"],
+Cell[31511, 618, 549, 10, 69, "Output",ExpressionUUID->"a730a1a8-4c45-4e23-b16a-83cbf6dfb0ed"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[32097, 633, 186, 4, 31, "Input",ExpressionUUID->"1a9ded3b-b028-483e-a8b1-7ded22b7c25d"],
+Cell[32286, 639, 551, 10, 69, "Output",ExpressionUUID->"29f1c09d-28cc-46c5-9580-ed9061dc421f"]
+}, Open  ]]
+}
+]
+*)
+

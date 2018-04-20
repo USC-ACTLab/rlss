@@ -31,3 +31,7 @@ vector<hyperplane> voronoi(vector<vectoreuc>& positions, int robotidx) {
   return res;
 
 }
+
+double hyperplane::dist(vectoreuc& pt) {
+  return normal.dot(pt) - distance;
+}

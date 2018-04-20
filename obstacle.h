@@ -19,6 +19,8 @@ class obstacle2D {
     void print_current_hull();
     void convex_hull();
     void ch_planes();
+    bool point_inside(vectoreuc& pt);
+    double closest_distance(vectoreuc& pt);
 };
 
 #endif

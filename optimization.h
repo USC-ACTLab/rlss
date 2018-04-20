@@ -5,6 +5,7 @@
 #include <vector>
 #include "hyperplane.h"
 #include "vectoreuc.h"
+#include "edt.h"
 
 using namespace std;
 
@@ -67,12 +68,21 @@ class maxnvalue_data {
     double max_val;
 };
 
+class edt_data {
+  public:
+    problem_data* pdata;
+    edt* distance_transform;
+};
+
 class optimization {
   public:
     static double objective(const vector<double>& x, vector<double>& grad, void* f_data);
     static double alt_objective(const vector<double>& x, vector<double>& grad, void* f_data);
     static double voronoi_constraint(const vector<double>& x, vector<double>& grad, void* v_data);
     static double obstacle_constraint(const vector<double>& x, vector<double>& grad, void* o_data);
+
+    static double edt_constraint(const vector<double>& x, vector<double>& grad, void* e_data);
+
     /* requires distance between two points to be zero, use it with add_equality_constraint*/
     static double continuity_constraint(const vector<double>& x, vector<double>& grad, void* c_data);
 

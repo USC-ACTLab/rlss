@@ -19,6 +19,7 @@
 #include <chrono>
 #include "svmoptimization.h"
 #include "utility.h"
+#include "edt.h"
 
 
 
@@ -166,6 +167,9 @@ int main(int argc, char** argv) {
     obs_idx++;
   }
 
+  edt distance_transform(0.01, -10, 10, -10, 10);
+  distance_transform.construct(&obstacles);
+
 
 
   double total_t = 0;
@@ -257,6 +261,11 @@ int main(int argc, char** argv) {
 
     //  problem.set_min_objective(optimization::alt_objective, (void*)&alt_data);
 
+      edt_data edata;
+      edata.pdata = &data;
+      edata.distance_transform = &distance_transform;
+
+      problem.add_inequality_constraint(optimization::edt_constraint, (void*)&edata, 0.0000001);
 
       /* all control points should be in range [-10, 10].
         since curves are bezier, resulting curve will be inside the corresponding rectangle
@@ -321,14 +330,14 @@ int main(int argc, char** argv) {
       /* obstacle avoidance v1 */
       vector<obstacle_data*> obspts;
 
-      for(int j=0; j<obstacles.size(); j++) {
+      /*for(int j=0; j<obstacles.size(); j++) {
         obstacle_data* od = new obstacle_data;
         od->pdata = &data;
         od->hps = &(obstacles[j].chplanes);
 
         problem.add_inequality_constraint(optimization::obstacle_constraint, (void*)od, obstacle_tolerance);
         obspts.push_back(od);
-      }
+      }*/
 
 
       vector<svmopt_data*> svmoptpts;

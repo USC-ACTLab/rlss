@@ -152,6 +152,67 @@ double optimization::voronoi_constraint(const vector<double>& x, vector<double>&
   return result;
 }
 
+double optimization::edt_constraint(const vector<double>& x, vector<double>& grad, void* e_data) {
+  edt_data& ed = *((edt_data*)e_data);
+  edt& distance_transform = *(ed.distance_transform);
+  problem_data& pdata = *(ed.pdata);
+
+  trajectory& ot = *(pdata.original_trajectory);
+
+  double ct = pdata.current_t;
+  double hor = pdata.time_horizon;
+  double total_time = pdata.tt;
+  int pd = pdata.problem_dimension;
+  int ppc = pdata.ppc;
+
+  int cpts = pd*ppc;
+
+  if(grad.size() > 0) {
+    for(int i=0; i<grad.size(); i++)
+      grad[i] = 0;
+  }
+
+
+  double obsdt = 0.01;
+
+  double constraint_result = 0;
+
+  for(double t = ct; t<=min(total_time, ct+hor); t+=obsdt) {
+    pair<int, double> cdata = ot.curvedata(t);
+    int cidx = cdata.first;
+    double T = cdata.second;
+
+    vector<double> P;
+    P.resize(cpts);
+    for(int i=0; i<ppc; i++) {
+      for(int j=0; j<pd; j++) {
+        P[i*pd+j] = x[cpts*cidx+i*pd+j];
+      }
+    }
+
+    vector<double> innergrad;
+    if(grad.size() > 0) {
+      innergrad.resize(cpts);
+    }
+
+    double result = distance_transform.interpolate_for(P, ot[cidx].duration, T, innergrad);
+
+    constraint_result += result*obsdt;
+
+    if(grad.size() > 0) {
+      for(int i=0; i<ppc; i++) {
+        for(int j=0; j<pd; j++) {
+          grad[cidx*cpts+i*pd+j] += innergrad[i*pd+j] * obsdt;
+        }
+      }
+    }
+
+  }
+  //cout << "edt results: " << constraint_result << endl;
+  return constraint_result;
+
+}
+
 double optimization::obstacle_constraint(const vector<double>& x, vector<double>& grad, void* o_data) {
   /*
     if a point (dot) obstacle hyperplane - b < 0 than it is in free space

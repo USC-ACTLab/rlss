@@ -3593,15 +3593,16 @@ double bezier_2d_8pts_ndistance_from_point(vector<double>& P, vectoreuc& C, vect
         (105*pow(T,4)*pow(1 - T/dur,2)*P[5*2+1])/pow(dur,5) - (7*pow(T,6)*P[6*2+1])/pow(dur,7) + (42*pow(T,5)*(1 - T/dur)*P[6*2+1])/pow(dur,6) + (7*pow(T,6)*P[7*2+1])/pow(dur,7)))/pow(dur,7)
         };
 
-        return pow(-C[0] - (7*pow(1 - T/dur,6)*P[0*2+0])/dur - (42*T*pow(1 - T/dur,5)*P[1*2+0])/pow(dur,2) + (7*pow(1 - T/dur,6)*P[1*2+0])/dur - (105*pow(T,2)*pow(1 - T/dur,4)*P[2*2+0])/pow(dur,3) +
-     (42*T*pow(1 - T/dur,5)*P[2*2+0])/pow(dur,2) - (140*pow(T,3)*pow(1 - T/dur,3)*P[3*2+0])/pow(dur,4) + (105*pow(T,2)*pow(1 - T/dur,4)*P[3*2+0])/pow(dur,3) -
-     (105*pow(T,4)*pow(1 - T/dur,2)*P[4*2+0])/pow(dur,5) + (140*pow(T,3)*pow(1 - T/dur,3)*P[4*2+0])/pow(dur,4) - (42*pow(T,5)*(1 - T/dur)*P[5*2+0])/pow(dur,6) +
-     (105*pow(T,4)*pow(1 - T/dur,2)*P[5*2+0])/pow(dur,5) - (7*pow(T,6)*P[6*2+0])/pow(dur,7) + (42*pow(T,5)*(1 - T/dur)*P[6*2+0])/pow(dur,6) + (7*pow(T,6)*P[7*2+0])/pow(dur,7),2) +
-   pow(-C[1] - (7*pow(1 - T/dur,6)*P[0*2+1])/dur - (42*T*pow(1 - T/dur,5)*P[1*2+1])/pow(dur,2) + (7*pow(1 - T/dur,6)*P[1*2+1])/dur - (105*pow(T,2)*pow(1 - T/dur,4)*P[2*2+1])/pow(dur,3) +
-     (42*T*pow(1 - T/dur,5)*P[2*2+1])/pow(dur,2) - (140*pow(T,3)*pow(1 - T/dur,3)*P[3*2+1])/pow(dur,4) + (105*pow(T,2)*pow(1 - T/dur,4)*P[3*2+1])/pow(dur,3) -
-     (105*pow(T,4)*pow(1 - T/dur,2)*P[4*2+1])/pow(dur,5) + (140*pow(T,3)*pow(1 - T/dur,3)*P[4*2+1])/pow(dur,4) - (42*pow(T,5)*(1 - T/dur)*P[5*2+1])/pow(dur,6) +
-     (105*pow(T,4)*pow(1 - T/dur,2)*P[5*2+1])/pow(dur,5) - (7*pow(T,6)*P[6*2+1])/pow(dur,7) + (42*pow(T,5)*(1 - T/dur)*P[6*2+1])/pow(dur,6) + (7*pow(T,6)*P[7*2+1])/pow(dur,7),2);
       }
+      return pow(-C[0] - (7*pow(1 - T/dur,6)*P[0*2+0])/dur - (42*T*pow(1 - T/dur,5)*P[1*2+0])/pow(dur,2) + (7*pow(1 - T/dur,6)*P[1*2+0])/dur - (105*pow(T,2)*pow(1 - T/dur,4)*P[2*2+0])/pow(dur,3) +
+   (42*T*pow(1 - T/dur,5)*P[2*2+0])/pow(dur,2) - (140*pow(T,3)*pow(1 - T/dur,3)*P[3*2+0])/pow(dur,4) + (105*pow(T,2)*pow(1 - T/dur,4)*P[3*2+0])/pow(dur,3) -
+   (105*pow(T,4)*pow(1 - T/dur,2)*P[4*2+0])/pow(dur,5) + (140*pow(T,3)*pow(1 - T/dur,3)*P[4*2+0])/pow(dur,4) - (42*pow(T,5)*(1 - T/dur)*P[5*2+0])/pow(dur,6) +
+   (105*pow(T,4)*pow(1 - T/dur,2)*P[5*2+0])/pow(dur,5) - (7*pow(T,6)*P[6*2+0])/pow(dur,7) + (42*pow(T,5)*(1 - T/dur)*P[6*2+0])/pow(dur,6) + (7*pow(T,6)*P[7*2+0])/pow(dur,7),2) +
+ pow(-C[1] - (7*pow(1 - T/dur,6)*P[0*2+1])/dur - (42*T*pow(1 - T/dur,5)*P[1*2+1])/pow(dur,2) + (7*pow(1 - T/dur,6)*P[1*2+1])/dur - (105*pow(T,2)*pow(1 - T/dur,4)*P[2*2+1])/pow(dur,3) +
+   (42*T*pow(1 - T/dur,5)*P[2*2+1])/pow(dur,2) - (140*pow(T,3)*pow(1 - T/dur,3)*P[3*2+1])/pow(dur,4) + (105*pow(T,2)*pow(1 - T/dur,4)*P[3*2+1])/pow(dur,3) -
+   (105*pow(T,4)*pow(1 - T/dur,2)*P[4*2+1])/pow(dur,5) + (140*pow(T,3)*pow(1 - T/dur,3)*P[4*2+1])/pow(dur,4) - (42*pow(T,5)*(1 - T/dur)*P[5*2+1])/pow(dur,6) +
+   (105*pow(T,4)*pow(1 - T/dur,2)*P[5*2+1])/pow(dur,5) - (7*pow(T,6)*P[6*2+1])/pow(dur,7) + (42*pow(T,5)*(1 - T/dur)*P[6*2+1])/pow(dur,6) + (7*pow(T,6)*P[7*2+1])/pow(dur,7),2);
+
    } else if(degree == 2) {
      if(grad.size() > 0) {
        grad = vector<double> {
@@ -3713,19 +3714,20 @@ double bezier_2d_8pts_ndistance_from_point(vector<double>& P, vectoreuc& C, vect
                  (210*pow(T,4)*(1 - T/dur)*P[6*2+1])/pow(dur,6) + (42*pow(T,5)*P[7*2+1])/pow(dur,7)))/pow(dur,7)
        };
 
-       return pow(-C[0] + (42*pow(1 - T/dur,5)*P[0*2+0])/pow(dur,2) + (210*T*pow(1 - T/dur,4)*P[1*2+0])/pow(dur,3) - (84*pow(1 - T/dur,5)*P[1*2+0])/pow(dur,2) +
-     (420*pow(T,2)*pow(1 - T/dur,3)*P[2*2+0])/pow(dur,4) - (420*T*pow(1 - T/dur,4)*P[2*2+0])/pow(dur,3) + (42*pow(1 - T/dur,5)*P[2*2+0])/pow(dur,2) +
-     (420*pow(T,3)*pow(1 - T/dur,2)*P[3*2+0])/pow(dur,5) - (840*pow(T,2)*pow(1 - T/dur,3)*P[3*2+0])/pow(dur,4) + (210*T*pow(1 - T/dur,4)*P[3*2+0])/pow(dur,3) +
-     (210*pow(T,4)*(1 - T/dur)*P[4*2+0])/pow(dur,6) - (840*pow(T,3)*pow(1 - T/dur,2)*P[4*2+0])/pow(dur,5) + (420*pow(T,2)*pow(1 - T/dur,3)*P[4*2+0])/pow(dur,4) +
-     (42*pow(T,5)*P[5*2+0])/pow(dur,7) - (420*pow(T,4)*(1 - T/dur)*P[5*2+0])/pow(dur,6) + (420*pow(T,3)*pow(1 - T/dur,2)*P[5*2+0])/pow(dur,5) - (84*pow(T,5)*P[6*2+0])/pow(dur,7) +
-     (210*pow(T,4)*(1 - T/dur)*P[6*2+0])/pow(dur,6) + (42*pow(T,5)*P[7*2+0])/pow(dur,7),2) +
-   pow(-C[1] + (42*pow(1 - T/dur,5)*P[0*2+1])/pow(dur,2) + (210*T*pow(1 - T/dur,4)*P[1*2+1])/pow(dur,3) - (84*pow(1 - T/dur,5)*P[1*2+1])/pow(dur,2) +
-     (420*pow(T,2)*pow(1 - T/dur,3)*P[2*2+1])/pow(dur,4) - (420*T*pow(1 - T/dur,4)*P[2*2+1])/pow(dur,3) + (42*pow(1 - T/dur,5)*P[2*2+1])/pow(dur,2) +
-     (420*pow(T,3)*pow(1 - T/dur,2)*P[3*2+1])/pow(dur,5) - (840*pow(T,2)*pow(1 - T/dur,3)*P[3*2+1])/pow(dur,4) + (210*T*pow(1 - T/dur,4)*P[3*2+1])/pow(dur,3) +
-     (210*pow(T,4)*(1 - T/dur)*P[4*2+1])/pow(dur,6) - (840*pow(T,3)*pow(1 - T/dur,2)*P[4*2+1])/pow(dur,5) + (420*pow(T,2)*pow(1 - T/dur,3)*P[4*2+1])/pow(dur,4) +
-     (42*pow(T,5)*P[5*2+1])/pow(dur,7) - (420*pow(T,4)*(1 - T/dur)*P[5*2+1])/pow(dur,6) + (420*pow(T,3)*pow(1 - T/dur,2)*P[5*2+1])/pow(dur,5) - (84*pow(T,5)*P[6*2+1])/pow(dur,7) +
-     (210*pow(T,4)*(1 - T/dur)*P[6*2+1])/pow(dur,6) + (42*pow(T,5)*P[7*2+1])/pow(dur,7),2);
+
      }
+     return pow(-C[0] + (42*pow(1 - T/dur,5)*P[0*2+0])/pow(dur,2) + (210*T*pow(1 - T/dur,4)*P[1*2+0])/pow(dur,3) - (84*pow(1 - T/dur,5)*P[1*2+0])/pow(dur,2) +
+   (420*pow(T,2)*pow(1 - T/dur,3)*P[2*2+0])/pow(dur,4) - (420*T*pow(1 - T/dur,4)*P[2*2+0])/pow(dur,3) + (42*pow(1 - T/dur,5)*P[2*2+0])/pow(dur,2) +
+   (420*pow(T,3)*pow(1 - T/dur,2)*P[3*2+0])/pow(dur,5) - (840*pow(T,2)*pow(1 - T/dur,3)*P[3*2+0])/pow(dur,4) + (210*T*pow(1 - T/dur,4)*P[3*2+0])/pow(dur,3) +
+   (210*pow(T,4)*(1 - T/dur)*P[4*2+0])/pow(dur,6) - (840*pow(T,3)*pow(1 - T/dur,2)*P[4*2+0])/pow(dur,5) + (420*pow(T,2)*pow(1 - T/dur,3)*P[4*2+0])/pow(dur,4) +
+   (42*pow(T,5)*P[5*2+0])/pow(dur,7) - (420*pow(T,4)*(1 - T/dur)*P[5*2+0])/pow(dur,6) + (420*pow(T,3)*pow(1 - T/dur,2)*P[5*2+0])/pow(dur,5) - (84*pow(T,5)*P[6*2+0])/pow(dur,7) +
+   (210*pow(T,4)*(1 - T/dur)*P[6*2+0])/pow(dur,6) + (42*pow(T,5)*P[7*2+0])/pow(dur,7),2) +
+ pow(-C[1] + (42*pow(1 - T/dur,5)*P[0*2+1])/pow(dur,2) + (210*T*pow(1 - T/dur,4)*P[1*2+1])/pow(dur,3) - (84*pow(1 - T/dur,5)*P[1*2+1])/pow(dur,2) +
+   (420*pow(T,2)*pow(1 - T/dur,3)*P[2*2+1])/pow(dur,4) - (420*T*pow(1 - T/dur,4)*P[2*2+1])/pow(dur,3) + (42*pow(1 - T/dur,5)*P[2*2+1])/pow(dur,2) +
+   (420*pow(T,3)*pow(1 - T/dur,2)*P[3*2+1])/pow(dur,5) - (840*pow(T,2)*pow(1 - T/dur,3)*P[3*2+1])/pow(dur,4) + (210*T*pow(1 - T/dur,4)*P[3*2+1])/pow(dur,3) +
+   (210*pow(T,4)*(1 - T/dur)*P[4*2+1])/pow(dur,6) - (840*pow(T,3)*pow(1 - T/dur,2)*P[4*2+1])/pow(dur,5) + (420*pow(T,2)*pow(1 - T/dur,3)*P[4*2+1])/pow(dur,4) +
+   (42*pow(T,5)*P[5*2+1])/pow(dur,7) - (420*pow(T,4)*(1 - T/dur)*P[5*2+1])/pow(dur,6) + (420*pow(T,3)*pow(1 - T/dur,2)*P[5*2+1])/pow(dur,5) - (84*pow(T,5)*P[6*2+1])/pow(dur,7) +
+   (210*pow(T,4)*(1 - T/dur)*P[6*2+1])/pow(dur,6) + (42*pow(T,5)*P[7*2+1])/pow(dur,7),2);
    } else if(degree == 3) {
      if(grad.size() > 0) {
        grad = vector<double> {
@@ -3838,19 +3840,20 @@ double bezier_2d_8pts_ndistance_from_point(vector<double>& P, vectoreuc& C, vect
              pow(dur,7)
        };
 
-       return pow(-C[0] - (210*pow(1 - T/dur,4)*P[0*2+0])/pow(dur,3) - (840*T*pow(1 - T/dur,3)*P[1*2+0])/pow(dur,4) + (630*pow(1 - T/dur,4)*P[1*2+0])/pow(dur,3) -
-     (1260*pow(T,2)*pow(1 - T/dur,2)*P[2*2+0])/pow(dur,5) + (2520*T*pow(1 - T/dur,3)*P[2*2+0])/pow(dur,4) - (630*pow(1 - T/dur,4)*P[2*2+0])/pow(dur,3) -
-     (840*pow(T,3)*(1 - T/dur)*P[3*2+0])/pow(dur,6) + (3780*pow(T,2)*pow(1 - T/dur,2)*P[3*2+0])/pow(dur,5) - (2520*T*pow(1 - T/dur,3)*P[3*2+0])/pow(dur,4) +
-     (210*pow(1 - T/dur,4)*P[3*2+0])/pow(dur,3) - (210*pow(T,4)*P[4*2+0])/pow(dur,7) + (2520*pow(T,3)*(1 - T/dur)*P[4*2+0])/pow(dur,6) - (3780*pow(T,2)*pow(1 - T/dur,2)*P[4*2+0])/pow(dur,5) +
-     (840*T*pow(1 - T/dur,3)*P[4*2+0])/pow(dur,4) + (630*pow(T,4)*P[5*2+0])/pow(dur,7) - (2520*pow(T,3)*(1 - T/dur)*P[5*2+0])/pow(dur,6) + (1260*pow(T,2)*pow(1 - T/dur,2)*P[5*2+0])/pow(dur,5) -
-     (630*pow(T,4)*P[6*2+0])/pow(dur,7) + (840*pow(T,3)*(1 - T/dur)*P[6*2+0])/pow(dur,6) + (210*pow(T,4)*P[7*2+0])/pow(dur,7),2) +
-   pow(-C[1] - (210*pow(1 - T/dur,4)*P[0*2+1])/pow(dur,3) - (840*T*pow(1 - T/dur,3)*P[1*2+1])/pow(dur,4) + (630*pow(1 - T/dur,4)*P[1*2+1])/pow(dur,3) -
-     (1260*pow(T,2)*pow(1 - T/dur,2)*P[2*2+1])/pow(dur,5) + (2520*T*pow(1 - T/dur,3)*P[2*2+1])/pow(dur,4) - (630*pow(1 - T/dur,4)*P[2*2+1])/pow(dur,3) -
-     (840*pow(T,3)*(1 - T/dur)*P[3*2+1])/pow(dur,6) + (3780*pow(T,2)*pow(1 - T/dur,2)*P[3*2+1])/pow(dur,5) - (2520*T*pow(1 - T/dur,3)*P[3*2+1])/pow(dur,4) +
-     (210*pow(1 - T/dur,4)*P[3*2+1])/pow(dur,3) - (210*pow(T,4)*P[4*2+1])/pow(dur,7) + (2520*pow(T,3)*(1 - T/dur)*P[4*2+1])/pow(dur,6) - (3780*pow(T,2)*pow(1 - T/dur,2)*P[4*2+1])/pow(dur,5) +
-     (840*T*pow(1 - T/dur,3)*P[4*2+1])/pow(dur,4) + (630*pow(T,4)*P[5*2+1])/pow(dur,7) - (2520*pow(T,3)*(1 - T/dur)*P[5*2+1])/pow(dur,6) + (1260*pow(T,2)*pow(1 - T/dur,2)*P[5*2+1])/pow(dur,5) -
-     (630*pow(T,4)*P[6*2+1])/pow(dur,7) + (840*pow(T,3)*(1 - T/dur)*P[6*2+1])/pow(dur,6) + (210*pow(T,4)*P[7*2+1])/pow(dur,7),2);
+
      }
+     return pow(-C[0] - (210*pow(1 - T/dur,4)*P[0*2+0])/pow(dur,3) - (840*T*pow(1 - T/dur,3)*P[1*2+0])/pow(dur,4) + (630*pow(1 - T/dur,4)*P[1*2+0])/pow(dur,3) -
+   (1260*pow(T,2)*pow(1 - T/dur,2)*P[2*2+0])/pow(dur,5) + (2520*T*pow(1 - T/dur,3)*P[2*2+0])/pow(dur,4) - (630*pow(1 - T/dur,4)*P[2*2+0])/pow(dur,3) -
+   (840*pow(T,3)*(1 - T/dur)*P[3*2+0])/pow(dur,6) + (3780*pow(T,2)*pow(1 - T/dur,2)*P[3*2+0])/pow(dur,5) - (2520*T*pow(1 - T/dur,3)*P[3*2+0])/pow(dur,4) +
+   (210*pow(1 - T/dur,4)*P[3*2+0])/pow(dur,3) - (210*pow(T,4)*P[4*2+0])/pow(dur,7) + (2520*pow(T,3)*(1 - T/dur)*P[4*2+0])/pow(dur,6) - (3780*pow(T,2)*pow(1 - T/dur,2)*P[4*2+0])/pow(dur,5) +
+   (840*T*pow(1 - T/dur,3)*P[4*2+0])/pow(dur,4) + (630*pow(T,4)*P[5*2+0])/pow(dur,7) - (2520*pow(T,3)*(1 - T/dur)*P[5*2+0])/pow(dur,6) + (1260*pow(T,2)*pow(1 - T/dur,2)*P[5*2+0])/pow(dur,5) -
+   (630*pow(T,4)*P[6*2+0])/pow(dur,7) + (840*pow(T,3)*(1 - T/dur)*P[6*2+0])/pow(dur,6) + (210*pow(T,4)*P[7*2+0])/pow(dur,7),2) +
+ pow(-C[1] - (210*pow(1 - T/dur,4)*P[0*2+1])/pow(dur,3) - (840*T*pow(1 - T/dur,3)*P[1*2+1])/pow(dur,4) + (630*pow(1 - T/dur,4)*P[1*2+1])/pow(dur,3) -
+   (1260*pow(T,2)*pow(1 - T/dur,2)*P[2*2+1])/pow(dur,5) + (2520*T*pow(1 - T/dur,3)*P[2*2+1])/pow(dur,4) - (630*pow(1 - T/dur,4)*P[2*2+1])/pow(dur,3) -
+   (840*pow(T,3)*(1 - T/dur)*P[3*2+1])/pow(dur,6) + (3780*pow(T,2)*pow(1 - T/dur,2)*P[3*2+1])/pow(dur,5) - (2520*T*pow(1 - T/dur,3)*P[3*2+1])/pow(dur,4) +
+   (210*pow(1 - T/dur,4)*P[3*2+1])/pow(dur,3) - (210*pow(T,4)*P[4*2+1])/pow(dur,7) + (2520*pow(T,3)*(1 - T/dur)*P[4*2+1])/pow(dur,6) - (3780*pow(T,2)*pow(1 - T/dur,2)*P[4*2+1])/pow(dur,5) +
+   (840*T*pow(1 - T/dur,3)*P[4*2+1])/pow(dur,4) + (630*pow(T,4)*P[5*2+1])/pow(dur,7) - (2520*pow(T,3)*(1 - T/dur)*P[5*2+1])/pow(dur,6) + (1260*pow(T,2)*pow(1 - T/dur,2)*P[5*2+1])/pow(dur,5) -
+   (630*pow(T,4)*P[6*2+1])/pow(dur,7) + (840*pow(T,3)*(1 - T/dur)*P[6*2+1])/pow(dur,6) + (210*pow(T,4)*P[7*2+1])/pow(dur,7),2);
    } else if(degree == 4) {
      if(grad.size() > 0) {
        grad = vector<double> {
@@ -3951,18 +3954,19 @@ double bezier_2d_8pts_ndistance_from_point(vector<double>& P, vectoreuc& C, vect
                  (840*pow(T,3)*P[7*2+1])/pow(dur,7)))/pow(dur,7)
        };
 
-       return pow(-C[0] + (840*pow(1 - T/dur,3)*P[0*2+0])/pow(dur,4) + (2520*T*pow(1 - T/dur,2)*P[1*2+0])/pow(dur,5) - (3360*pow(1 - T/dur,3)*P[1*2+0])/pow(dur,4) +
-     (2520*pow(T,2)*(1 - T/dur)*P[2*2+0])/pow(dur,6) - (10080*T*pow(1 - T/dur,2)*P[2*2+0])/pow(dur,5) + (5040*pow(1 - T/dur,3)*P[2*2+0])/pow(dur,4) + (840*pow(T,3)*P[3*2+0])/pow(dur,7) -
-     (10080*pow(T,2)*(1 - T/dur)*P[3*2+0])/pow(dur,6) + (15120*T*pow(1 - T/dur,2)*P[3*2+0])/pow(dur,5) - (3360*pow(1 - T/dur,3)*P[3*2+0])/pow(dur,4) - (3360*pow(T,3)*P[4*2+0])/pow(dur,7) +
-     (15120*pow(T,2)*(1 - T/dur)*P[4*2+0])/pow(dur,6) - (10080*T*pow(1 - T/dur,2)*P[4*2+0])/pow(dur,5) + (840*pow(1 - T/dur,3)*P[4*2+0])/pow(dur,4) + (5040*pow(T,3)*P[5*2+0])/pow(dur,7) -
-     (10080*pow(T,2)*(1 - T/dur)*P[5*2+0])/pow(dur,6) + (2520*T*pow(1 - T/dur,2)*P[5*2+0])/pow(dur,5) - (3360*pow(T,3)*P[6*2+0])/pow(dur,7) + (2520*pow(T,2)*(1 - T/dur)*P[6*2+0])/pow(dur,6) +
-     (840*pow(T,3)*P[7*2+0])/pow(dur,7),2) + pow(-C[1] + (840*pow(1 - T/dur,3)*P[0*2+1])/pow(dur,4) + (2520*T*pow(1 - T/dur,2)*P[1*2+1])/pow(dur,5) - (3360*pow(1 - T/dur,3)*P[1*2+1])/pow(dur,4) +
-     (2520*pow(T,2)*(1 - T/dur)*P[2*2+1])/pow(dur,6) - (10080*T*pow(1 - T/dur,2)*P[2*2+1])/pow(dur,5) + (5040*pow(1 - T/dur,3)*P[2*2+1])/pow(dur,4) + (840*pow(T,3)*P[3*2+1])/pow(dur,7) -
-     (10080*pow(T,2)*(1 - T/dur)*P[3*2+1])/pow(dur,6) + (15120*T*pow(1 - T/dur,2)*P[3*2+1])/pow(dur,5) - (3360*pow(1 - T/dur,3)*P[3*2+1])/pow(dur,4) - (3360*pow(T,3)*P[4*2+1])/pow(dur,7) +
-     (15120*pow(T,2)*(1 - T/dur)*P[4*2+1])/pow(dur,6) - (10080*T*pow(1 - T/dur,2)*P[4*2+1])/pow(dur,5) + (840*pow(1 - T/dur,3)*P[4*2+1])/pow(dur,4) + (5040*pow(T,3)*P[5*2+1])/pow(dur,7) -
-     (10080*pow(T,2)*(1 - T/dur)*P[5*2+1])/pow(dur,6) + (2520*T*pow(1 - T/dur,2)*P[5*2+1])/pow(dur,5) - (3360*pow(T,3)*P[6*2+1])/pow(dur,7) + (2520*pow(T,2)*(1 - T/dur)*P[6*2+1])/pow(dur,6) +
-     (840*pow(T,3)*P[7*2+1])/pow(dur,7),2);
+
      }
+     return pow(-C[0] + (840*pow(1 - T/dur,3)*P[0*2+0])/pow(dur,4) + (2520*T*pow(1 - T/dur,2)*P[1*2+0])/pow(dur,5) - (3360*pow(1 - T/dur,3)*P[1*2+0])/pow(dur,4) +
+   (2520*pow(T,2)*(1 - T/dur)*P[2*2+0])/pow(dur,6) - (10080*T*pow(1 - T/dur,2)*P[2*2+0])/pow(dur,5) + (5040*pow(1 - T/dur,3)*P[2*2+0])/pow(dur,4) + (840*pow(T,3)*P[3*2+0])/pow(dur,7) -
+   (10080*pow(T,2)*(1 - T/dur)*P[3*2+0])/pow(dur,6) + (15120*T*pow(1 - T/dur,2)*P[3*2+0])/pow(dur,5) - (3360*pow(1 - T/dur,3)*P[3*2+0])/pow(dur,4) - (3360*pow(T,3)*P[4*2+0])/pow(dur,7) +
+   (15120*pow(T,2)*(1 - T/dur)*P[4*2+0])/pow(dur,6) - (10080*T*pow(1 - T/dur,2)*P[4*2+0])/pow(dur,5) + (840*pow(1 - T/dur,3)*P[4*2+0])/pow(dur,4) + (5040*pow(T,3)*P[5*2+0])/pow(dur,7) -
+   (10080*pow(T,2)*(1 - T/dur)*P[5*2+0])/pow(dur,6) + (2520*T*pow(1 - T/dur,2)*P[5*2+0])/pow(dur,5) - (3360*pow(T,3)*P[6*2+0])/pow(dur,7) + (2520*pow(T,2)*(1 - T/dur)*P[6*2+0])/pow(dur,6) +
+   (840*pow(T,3)*P[7*2+0])/pow(dur,7),2) + pow(-C[1] + (840*pow(1 - T/dur,3)*P[0*2+1])/pow(dur,4) + (2520*T*pow(1 - T/dur,2)*P[1*2+1])/pow(dur,5) - (3360*pow(1 - T/dur,3)*P[1*2+1])/pow(dur,4) +
+   (2520*pow(T,2)*(1 - T/dur)*P[2*2+1])/pow(dur,6) - (10080*T*pow(1 - T/dur,2)*P[2*2+1])/pow(dur,5) + (5040*pow(1 - T/dur,3)*P[2*2+1])/pow(dur,4) + (840*pow(T,3)*P[3*2+1])/pow(dur,7) -
+   (10080*pow(T,2)*(1 - T/dur)*P[3*2+1])/pow(dur,6) + (15120*T*pow(1 - T/dur,2)*P[3*2+1])/pow(dur,5) - (3360*pow(1 - T/dur,3)*P[3*2+1])/pow(dur,4) - (3360*pow(T,3)*P[4*2+1])/pow(dur,7) +
+   (15120*pow(T,2)*(1 - T/dur)*P[4*2+1])/pow(dur,6) - (10080*T*pow(1 - T/dur,2)*P[4*2+1])/pow(dur,5) + (840*pow(1 - T/dur,3)*P[4*2+1])/pow(dur,4) + (5040*pow(T,3)*P[5*2+1])/pow(dur,7) -
+   (10080*pow(T,2)*(1 - T/dur)*P[5*2+1])/pow(dur,6) + (2520*T*pow(1 - T/dur,2)*P[5*2+1])/pow(dur,5) - (3360*pow(T,3)*P[6*2+1])/pow(dur,7) + (2520*pow(T,2)*(1 - T/dur)*P[6*2+1])/pow(dur,6) +
+   (840*pow(T,3)*P[7*2+1])/pow(dur,7),2);
    } else if(degree == 5) {
      if(grad.size() > 0) {
        grad = vector<double> {
@@ -4058,17 +4062,18 @@ double bezier_2d_8pts_ndistance_from_point(vector<double>& P, vectoreuc& C, vect
                  (12600*pow(T,2)*P[6*2+1])/pow(dur,7) + (5040*T*(1 - T/dur)*P[6*2+1])/pow(dur,6) + (2520*pow(T,2)*P[7*2+1])/pow(dur,7)))/pow(dur,7)
        };
 
-       return pow(-C[0] - (2520*pow(1 - T/dur,2)*P[0*2+0])/pow(dur,5) - (5040*T*(1 - T/dur)*P[1*2+0])/pow(dur,6) + (12600*pow(1 - T/dur,2)*P[1*2+0])/pow(dur,5) - (2520*pow(T,2)*P[2*2+0])/pow(dur,7) +
-     (25200*T*(1 - T/dur)*P[2*2+0])/pow(dur,6) - (25200*pow(1 - T/dur,2)*P[2*2+0])/pow(dur,5) + (12600*pow(T,2)*P[3*2+0])/pow(dur,7) - (50400*T*(1 - T/dur)*P[3*2+0])/pow(dur,6) +
-     (25200*pow(1 - T/dur,2)*P[3*2+0])/pow(dur,5) - (25200*pow(T,2)*P[4*2+0])/pow(dur,7) + (50400*T*(1 - T/dur)*P[4*2+0])/pow(dur,6) - (12600*pow(1 - T/dur,2)*P[4*2+0])/pow(dur,5) +
-     (25200*pow(T,2)*P[5*2+0])/pow(dur,7) - (25200*T*(1 - T/dur)*P[5*2+0])/pow(dur,6) + (2520*pow(1 - T/dur,2)*P[5*2+0])/pow(dur,5) - (12600*pow(T,2)*P[6*2+0])/pow(dur,7) +
-     (5040*T*(1 - T/dur)*P[6*2+0])/pow(dur,6) + (2520*pow(T,2)*P[7*2+0])/pow(dur,7),2) +
-   pow(-C[1] - (2520*pow(1 - T/dur,2)*P[0*2+1])/pow(dur,5) - (5040*T*(1 - T/dur)*P[1*2+1])/pow(dur,6) + (12600*pow(1 - T/dur,2)*P[1*2+1])/pow(dur,5) - (2520*pow(T,2)*P[2*2+1])/pow(dur,7) +
-     (25200*T*(1 - T/dur)*P[2*2+1])/pow(dur,6) - (25200*pow(1 - T/dur,2)*P[2*2+1])/pow(dur,5) + (12600*pow(T,2)*P[3*2+1])/pow(dur,7) - (50400*T*(1 - T/dur)*P[3*2+1])/pow(dur,6) +
-     (25200*pow(1 - T/dur,2)*P[3*2+1])/pow(dur,5) - (25200*pow(T,2)*P[4*2+1])/pow(dur,7) + (50400*T*(1 - T/dur)*P[4*2+1])/pow(dur,6) - (12600*pow(1 - T/dur,2)*P[4*2+1])/pow(dur,5) +
-     (25200*pow(T,2)*P[5*2+1])/pow(dur,7) - (25200*T*(1 - T/dur)*P[5*2+1])/pow(dur,6) + (2520*pow(1 - T/dur,2)*P[5*2+1])/pow(dur,5) - (12600*pow(T,2)*P[6*2+1])/pow(dur,7) +
-     (5040*T*(1 - T/dur)*P[6*2+1])/pow(dur,6) + (2520*pow(T,2)*P[7*2+1])/pow(dur,7),2);
+
      }
+     return pow(-C[0] - (2520*pow(1 - T/dur,2)*P[0*2+0])/pow(dur,5) - (5040*T*(1 - T/dur)*P[1*2+0])/pow(dur,6) + (12600*pow(1 - T/dur,2)*P[1*2+0])/pow(dur,5) - (2520*pow(T,2)*P[2*2+0])/pow(dur,7) +
+   (25200*T*(1 - T/dur)*P[2*2+0])/pow(dur,6) - (25200*pow(1 - T/dur,2)*P[2*2+0])/pow(dur,5) + (12600*pow(T,2)*P[3*2+0])/pow(dur,7) - (50400*T*(1 - T/dur)*P[3*2+0])/pow(dur,6) +
+   (25200*pow(1 - T/dur,2)*P[3*2+0])/pow(dur,5) - (25200*pow(T,2)*P[4*2+0])/pow(dur,7) + (50400*T*(1 - T/dur)*P[4*2+0])/pow(dur,6) - (12600*pow(1 - T/dur,2)*P[4*2+0])/pow(dur,5) +
+   (25200*pow(T,2)*P[5*2+0])/pow(dur,7) - (25200*T*(1 - T/dur)*P[5*2+0])/pow(dur,6) + (2520*pow(1 - T/dur,2)*P[5*2+0])/pow(dur,5) - (12600*pow(T,2)*P[6*2+0])/pow(dur,7) +
+   (5040*T*(1 - T/dur)*P[6*2+0])/pow(dur,6) + (2520*pow(T,2)*P[7*2+0])/pow(dur,7),2) +
+ pow(-C[1] - (2520*pow(1 - T/dur,2)*P[0*2+1])/pow(dur,5) - (5040*T*(1 - T/dur)*P[1*2+1])/pow(dur,6) + (12600*pow(1 - T/dur,2)*P[1*2+1])/pow(dur,5) - (2520*pow(T,2)*P[2*2+1])/pow(dur,7) +
+   (25200*T*(1 - T/dur)*P[2*2+1])/pow(dur,6) - (25200*pow(1 - T/dur,2)*P[2*2+1])/pow(dur,5) + (12600*pow(T,2)*P[3*2+1])/pow(dur,7) - (50400*T*(1 - T/dur)*P[3*2+1])/pow(dur,6) +
+   (25200*pow(1 - T/dur,2)*P[3*2+1])/pow(dur,5) - (25200*pow(T,2)*P[4*2+1])/pow(dur,7) + (50400*T*(1 - T/dur)*P[4*2+1])/pow(dur,6) - (12600*pow(1 - T/dur,2)*P[4*2+1])/pow(dur,5) +
+   (25200*pow(T,2)*P[5*2+1])/pow(dur,7) - (25200*T*(1 - T/dur)*P[5*2+1])/pow(dur,6) + (2520*pow(1 - T/dur,2)*P[5*2+1])/pow(dur,5) - (12600*pow(T,2)*P[6*2+1])/pow(dur,7) +
+   (5040*T*(1 - T/dur)*P[6*2+1])/pow(dur,6) + (2520*pow(T,2)*P[7*2+1])/pow(dur,7),2);
    } else if(degree == 6) {
      if(grad.size() > 0) {
        grad = vector<double> {
@@ -4128,13 +4133,14 @@ double bezier_2d_8pts_ndistance_from_point(vector<double>& P, vectoreuc& C, vect
                  (75600*T*P[5*2+1])/pow(dur,7) - (30240*(1 - T/dur)*P[5*2+1])/pow(dur,6) - (30240*T*P[6*2+1])/pow(dur,7) + (5040*(1 - T/dur)*P[6*2+1])/pow(dur,6) + (5040*T*P[7*2+1])/pow(dur,7)))/pow(dur,7)
        };
 
-       return pow(-C[0] + (5040*(1 - T/dur)*P[0*2+0])/pow(dur,6) + (5040*T*P[1*2+0])/pow(dur,7) - (30240*(1 - T/dur)*P[1*2+0])/pow(dur,6) - (30240*T*P[2*2+0])/pow(dur,7) + (75600*(1 - T/dur)*P[2*2+0])/pow(dur,6) +
-     (75600*T*P[3*2+0])/pow(dur,7) - (100800*(1 - T/dur)*P[3*2+0])/pow(dur,6) - (100800*T*P[4*2+0])/pow(dur,7) + (75600*(1 - T/dur)*P[4*2+0])/pow(dur,6) + (75600*T*P[5*2+0])/pow(dur,7) -
-     (30240*(1 - T/dur)*P[5*2+0])/pow(dur,6) - (30240*T*P[6*2+0])/pow(dur,7) + (5040*(1 - T/dur)*P[6*2+0])/pow(dur,6) + (5040*T*P[7*2+0])/pow(dur,7),2) +
-   pow(-C[1] + (5040*(1 - T/dur)*P[0*2+1])/pow(dur,6) + (5040*T*P[1*2+1])/pow(dur,7) - (30240*(1 - T/dur)*P[1*2+1])/pow(dur,6) - (30240*T*P[2*2+1])/pow(dur,7) + (75600*(1 - T/dur)*P[2*2+1])/pow(dur,6) +
-     (75600*T*P[3*2+1])/pow(dur,7) - (100800*(1 - T/dur)*P[3*2+1])/pow(dur,6) - (100800*T*P[4*2+1])/pow(dur,7) + (75600*(1 - T/dur)*P[4*2+1])/pow(dur,6) + (75600*T*P[5*2+1])/pow(dur,7) -
-     (30240*(1 - T/dur)*P[5*2+1])/pow(dur,6) - (30240*T*P[6*2+1])/pow(dur,7) + (5040*(1 - T/dur)*P[6*2+1])/pow(dur,6) + (5040*T*P[7*2+1])/pow(dur,7),2);
+
      }
+     return pow(-C[0] + (5040*(1 - T/dur)*P[0*2+0])/pow(dur,6) + (5040*T*P[1*2+0])/pow(dur,7) - (30240*(1 - T/dur)*P[1*2+0])/pow(dur,6) - (30240*T*P[2*2+0])/pow(dur,7) + (75600*(1 - T/dur)*P[2*2+0])/pow(dur,6) +
+   (75600*T*P[3*2+0])/pow(dur,7) - (100800*(1 - T/dur)*P[3*2+0])/pow(dur,6) - (100800*T*P[4*2+0])/pow(dur,7) + (75600*(1 - T/dur)*P[4*2+0])/pow(dur,6) + (75600*T*P[5*2+0])/pow(dur,7) -
+   (30240*(1 - T/dur)*P[5*2+0])/pow(dur,6) - (30240*T*P[6*2+0])/pow(dur,7) + (5040*(1 - T/dur)*P[6*2+0])/pow(dur,6) + (5040*T*P[7*2+0])/pow(dur,7),2) +
+ pow(-C[1] + (5040*(1 - T/dur)*P[0*2+1])/pow(dur,6) + (5040*T*P[1*2+1])/pow(dur,7) - (30240*(1 - T/dur)*P[1*2+1])/pow(dur,6) - (30240*T*P[2*2+1])/pow(dur,7) + (75600*(1 - T/dur)*P[2*2+1])/pow(dur,6) +
+   (75600*T*P[3*2+1])/pow(dur,7) - (100800*(1 - T/dur)*P[3*2+1])/pow(dur,6) - (100800*T*P[4*2+1])/pow(dur,7) + (75600*(1 - T/dur)*P[4*2+1])/pow(dur,6) + (75600*T*P[5*2+1])/pow(dur,7) -
+   (30240*(1 - T/dur)*P[5*2+1])/pow(dur,6) - (30240*T*P[6*2+1])/pow(dur,7) + (5040*(1 - T/dur)*P[6*2+1])/pow(dur,6) + (5040*T*P[7*2+1])/pow(dur,7),2);
    } else if(degree == 7) {
      if(grad.size() > 0) {
        grad = vector<double> {
@@ -4172,18 +4178,20 @@ double bezier_2d_8pts_ndistance_from_point(vector<double>& P, vectoreuc& C, vect
                  (35280*P[6*2+1])/pow(dur,7) + (5040*P[7*2+1])/pow(dur,7)))/pow(dur,7)
        };
 
-       return pow(-C[0] - (5040*P[0*2+0])/pow(dur,7) + (35280*P[1*2+0])/pow(dur,7) - (105840*P[2*2+0])/pow(dur,7) + (176400*P[3*2+0])/pow(dur,7) - (176400*P[4*2+0])/pow(dur,7) + (105840*P[5*2+0])/pow(dur,7) -
-     (35280*P[6*2+0])/pow(dur,7) + (5040*P[7*2+0])/pow(dur,7),2) + pow(-C[1] - (5040*P[0*2+1])/pow(dur,7) + (35280*P[1*2+1])/pow(dur,7) - (105840*P[2*2+1])/pow(dur,7) + (176400*P[3*2+1])/pow(dur,7) -
-     (176400*P[4*2+1])/pow(dur,7) + (105840*P[5*2+1])/pow(dur,7) - (35280*P[6*2+1])/pow(dur,7) + (5040*P[7*2+1])/pow(dur,7),2);
+
      }
+     return pow(-C[0] - (5040*P[0*2+0])/pow(dur,7) + (35280*P[1*2+0])/pow(dur,7) - (105840*P[2*2+0])/pow(dur,7) + (176400*P[3*2+0])/pow(dur,7) - (176400*P[4*2+0])/pow(dur,7) + (105840*P[5*2+0])/pow(dur,7) -
+   (35280*P[6*2+0])/pow(dur,7) + (5040*P[7*2+0])/pow(dur,7),2) + pow(-C[1] - (5040*P[0*2+1])/pow(dur,7) + (35280*P[1*2+1])/pow(dur,7) - (105840*P[2*2+1])/pow(dur,7) + (176400*P[3*2+1])/pow(dur,7) -
+   (176400*P[4*2+1])/pow(dur,7) + (105840*P[5*2+1])/pow(dur,7) - (35280*P[6*2+1])/pow(dur,7) + (5040*P[7*2+1])/pow(dur,7),2);
    } else {
      if(grad.size() > 0) {
        grad = vector<double> {
         0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
        };
 
-       return pow(C[0],2) + pow(C[1],2);
      }
+
+    return pow(C[0],2) + pow(C[1],2);
    }
 }
 

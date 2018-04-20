@@ -7,6 +7,7 @@ class hyperplane {
   public:
     vectoreuc normal;
     double distance;
+    double dist(vectoreuc& pt);
 };
 vector<hyperplane> voronoi(vector<vectoreuc>& positions, int robotidx);
 #endif

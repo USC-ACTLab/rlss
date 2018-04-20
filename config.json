@@ -1,6 +1,6 @@
 {
   "trajectories": "../test_data/trajectories/straight_to_right/",
-  "obstacles": "../test_data/obstacles/only1obs_2/",
+  "obstacles": "../test_data/obstacles/obsdiamond/",
   "replan_period": 0.1,
   "set_max_time_as_replan_period": false,
   "planning_horizon": 3,

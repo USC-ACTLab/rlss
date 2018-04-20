@@ -83,3 +83,20 @@ void obstacle2D::ch_planes() {
     chplanes.push_back(hp);
   }
 }
+
+bool obstacle2D::point_inside(vectoreuc& pt) {
+  for(int i=0; i<chplanes.size(); i++) {
+    if(chplanes[i].dist(pt) < 0) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+double obstacle2D::closest_distance(vectoreuc& pt) {
+  double mindist = numeric_limits<double>::infinity();
+  for(int i=0; i<chplanes.size(); i++) {
+    mindist = min(mindist, chplanes[i].dist(pt));
+  }
+}
