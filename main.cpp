@@ -963,6 +963,62 @@ int main(int argc, char** argv) {
       }
 
 
+
+      // Sanity check of constraints:
+      vector<double> dummyGradient(initial_values.size());
+
+      for (auto& vd : vdpts) {
+        double val = optimization::voronoi_constraint(initial_values, dummyGradient, vd);
+        if (val > 1e-3) {
+          std::stringstream sstr;
+          sstr << "Voronoi constraint violated: " << val;
+          std::cout << sstr.str() << std::endl;
+          // throw std::runtime_error(sstr.str());
+        }
+      }
+
+      for (auto& od : obspts) {
+        double val = optimization::obstacle_constraint(initial_values, dummyGradient, od);
+        if (val > obstacle_tolerance) {
+          std::stringstream sstr;
+      cout << "nlopt result: " << res << " objective value: " << opt_f << endl;
+          std::cout << sstr.str() << std::endl;
+          // throw std::runtime_error(sstr.str());
+        }
+      }
+
+      for (auto& cd : contpts) {
+        double val = optimization::continuity_constraint(initial_values, dummyGradient, cd);
+        if (val > continuity_tols[cd->n]) {
+          std::stringstream sstr;
+          sstr << "continuity constraint violated: " << val << " (max: " << continuity_tols[cd->n] << ", degree: " << cd->n << ")";
+          std::cout << sstr.str() << std::endl;
+          // throw std::runtime_error(sstr.str());
+        }
+      }
+
+      for (auto& dd : maxpts) {
+        double val = optimization::maximum_nvalue_of_curve(initial_values, dummyGradient, dd);
+        if (val > 0) {
+          std::stringstream sstr;
+          sstr << "maximum_nvalue_of_curve constraint violated: " << val << " (max: " << 0 << ")";
+          std::cout << sstr.str() << std::endl;
+          // throw std::runtime_error(sstr.str());
+        }
+      }
+
+      for (auto& pd : pointpts) {
+        double val = optimization::point_constraint(initial_values, dummyGradient, pd);
+        if (val > initial_point_tols[pd->degree]) {
+          std::stringstream sstr;
+          sstr << "point constraint violated: " << val << " (max: " << initial_point_tols[pd->degree] << ")";
+          std::cout << sstr.str() << std::endl;
+          // throw std::runtime_error(sstr.str());
+        }
+      }
+
+
+
       /*int a; cin >> a;*/
 
       /*initidx = 0;
