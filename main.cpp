@@ -20,6 +20,8 @@
 #include "svmoptimization.h"
 #include "utility.h"
 
+#include <coin/IpTNLP.hpp>
+#include <coin/IpIpoptApplication.hpp>
 
 
 #define PATHREPLAN_EPSILON 0.00001
@@ -31,6 +33,315 @@ using namespace std;
 typedef chrono::high_resolution_clock Time;
 typedef chrono::milliseconds ms;
 typedef chrono::duration<float> fsec;
+
+using namespace Ipopt;
+class IpOptProblem : public Ipopt::TNLP
+{
+
+
+public:
+  /** default constructor */
+  IpOptProblem(
+    int varcount,
+    const vector<double>& lower_bounds,
+    const vector<double>& upper_bounds,
+    const vector<voronoi_data*>& vdpts,
+    const vector<continuity_data*>& contpts,
+    const vector<double>& continuity_tols,
+    const vector<point_data*>& pointpts,
+    const vector<double>& initial_point_tols,
+    const vector<double>& initial_values,
+    problem_data* pdata,
+    alt_obj_data* altpdata)
+    : m_varcount(varcount)
+    , m_lower_bounds(lower_bounds)
+    , m_upper_bounds(upper_bounds)
+    , m_vdpts(vdpts)
+    , m_contpts(contpts)
+    , m_continuity_tols(continuity_tols)
+    , m_pointpts(pointpts)
+    , m_initial_point_tols(initial_point_tols)
+    , m_initial_values(initial_values)
+    , m_problem_data(pdata)
+    , m_alt_problem_data(altpdata)
+  {
+
+  }
+
+  /** default destructor */
+  virtual ~IpOptProblem()
+  {
+  }
+
+  /**@name Overloaded from TNLP */
+  //@{
+  /** Method to return some info about the nlp */
+  virtual bool get_nlp_info(Index& n, Index& m, Index& nnz_jac_g,
+                            Index& nnz_h_lag, IndexStyleEnum& index_style)
+  {
+    // number of variables
+    n = m_varcount;
+
+    // number of constraints
+    m = m_vdpts.size() + m_contpts.size() + m_pointpts.size();
+
+    // in this example the jacobian is dense
+    nnz_jac_g = m  * n;
+
+    // the hessian is also dense
+    nnz_h_lag = n * n;
+
+    // use the C style indexing (0-based)
+    index_style = TNLP::C_STYLE;
+
+    return true;
+  }
+
+
+  /** Method to return the bounds for my problem */
+  virtual bool get_bounds_info(Index n, Number* x_l, Number* x_u,
+                               Index m, Number* g_l, Number* g_u)
+  {
+    // set lower and upper bounds of variables
+    for (int i = 0; i < m_varcount; ++i) {
+      x_l[i] = m_lower_bounds[i];
+      x_u[i] = m_upper_bounds[i];
+    }
+
+    // set bounds for voronoi constraints
+    int constraintIdx = 0;
+    for (int i = 0; i < m_vdpts.size(); ++i) {
+      g_l[constraintIdx] = std::numeric_limits<Number>::lowest();
+      g_u[constraintIdx] = 0;
+      ++constraintIdx;
+    }
+
+    // set bounds for continuity constraints
+    for (int i = 0; i < m_contpts.size(); ++i) {
+      g_l[constraintIdx] = std::numeric_limits<Number>::lowest();
+      g_u[constraintIdx] = m_continuity_tols[m_contpts[i]->n];
+      ++constraintIdx;
+    }
+
+    // set bounds for point constraints
+    for (int i = 0; i < m_pointpts.size(); ++i) {
+      g_l[constraintIdx] = std::numeric_limits<Number>::lowest();
+      g_u[constraintIdx] = m_initial_point_tols[m_pointpts[i]->degree];
+      ++constraintIdx;
+    }
+
+    return true;
+  }
+
+  /** Method to return the starting point for the algorithm */
+  virtual bool get_starting_point(Index n, bool init_x, Number* x,
+                                  bool init_z, Number* z_L, Number* z_U,
+                                  Index m, bool init_lambda,
+                                  Number* lambda)
+  {
+    // Here, we assume we only have starting values for x, if you code
+    // your own NLP, you can provide starting values for the dual variables
+    // if you wish
+    assert(init_x == true);
+    assert(init_z == false);
+    assert(init_lambda == false);
+
+    // initialize to the given starting point
+    for (int i = 0; i < m_varcount; ++i) {
+      x[i] = m_initial_values[i];
+    }
+
+    return true;
+  }
+
+  /** Method to return the objective value */
+  virtual bool eval_f(Index n, const Number* x, bool new_x, Number& obj_value)
+  {
+    std::vector<double> vecX(x, x + n);
+    std::vector<double> grad;
+    // obj_value = optimization::alt_objective(vecX, grad, m_alt_problem_data);
+    obj_value = optimization::objective(vecX, grad, m_problem_data);
+
+    return true;
+  }
+
+  /** Method to return the gradient of the objective */
+  virtual bool eval_grad_f(Index n, const Number* x, bool new_x, Number* grad_f)
+  {
+    std::vector<double> vecX(x, x + n);
+    std::vector<double> grad(n);
+    // optimization::alt_objective(vecX, grad, m_alt_problem_data);
+    optimization::objective(vecX, grad, m_problem_data);
+
+    for (int i = 0; i < n; ++i) {
+      grad_f[i] = grad[i];
+    }
+
+    return true;
+  }
+
+  /** Method to return the constraint residuals */
+  virtual bool eval_g(Index n, const Number* x, bool new_x, Index m, Number* g)
+  {
+    std::vector<double> vecX(x, x + n);
+    std::vector<double> grad;
+
+    int constraintIdx = 0;
+
+    // voronoi constraints
+    for (int i = 0; i < m_vdpts.size(); ++i) {
+      g[constraintIdx] = optimization::voronoi_constraint(vecX, grad, m_vdpts[i]);
+      ++constraintIdx;
+    }
+
+    // continuity constraints
+    for (int i = 0; i < m_contpts.size(); ++i) {
+      g[constraintIdx] = optimization::continuity_constraint(vecX, grad, m_contpts[i]);
+      ++constraintIdx;
+    }
+
+    // point constraints
+    for (int i = 0; i < m_pointpts.size(); ++i) {
+      g[constraintIdx] = optimization::point_constraint(vecX, grad, m_pointpts[i]);
+      // std::cout << "g[constraintIdx]" << g[constraintIdx] << " " << constraintIdx << std::endl;
+      ++constraintIdx;
+    }
+
+    return true;
+  }
+
+  /** Method to return:
+   *   1) The structure of the jacobian (if "values" is NULL)
+   *   2) The values of the jacobian (if "values" is not NULL)
+   */
+  virtual bool eval_jac_g(Index n, const Number* x, bool new_x,
+                          Index m, Index nele_jac, Index* iRow, Index *jCol,
+                          Number* values)
+  {
+    if (values == NULL) {
+      // return the structure of the jacobian
+      // row i, column j: derivative of constraint g^i with respect to variable x^j
+
+      // this particular jacobian is dense
+      for (int i = 0; i < m * n; ++i) {
+        iRow[i] = i / n;
+        jCol[i] = i % n;
+      }
+    }
+    else {
+      // return the values of the jacobian of the constraints
+
+      std::vector<double> vecX(x, x + n);
+      std::vector<double> grad(n);
+
+      int constraintIdx = 0;
+
+      // voronoi constraints
+      for (int i = 0; i < m_vdpts.size(); ++i) {
+        optimization::voronoi_constraint(vecX, grad, m_vdpts[i]);
+        for (int j = 0; j < n; ++j) {
+          values[constraintIdx * n + j] = grad[j];
+        }
+        ++constraintIdx;
+      }
+
+      // continuity constraints
+      for (int i = 0; i < m_contpts.size(); ++i) {
+        optimization::continuity_constraint(vecX, grad, m_contpts[i]);
+        for (int j = 0; j < n; ++j) {
+          values[constraintIdx * n + j] = grad[j];
+        }
+        ++constraintIdx;
+      }
+
+      // point constraints
+      for (int i = 0; i < m_pointpts.size(); ++i) {
+        optimization::point_constraint(vecX, grad, m_pointpts[i]);
+        for (int j = 0; j < n; ++j) {
+          values[constraintIdx * n + j] = grad[j];
+        }
+        ++constraintIdx;
+      }
+    }
+
+    return true;
+  }
+
+  /** Method to return:
+   *   1) The structure of the hessian of the lagrangian (if "values" is NULL)
+   *   2) The values of the hessian of the lagrangian (if "values" is not NULL)
+   */
+  virtual bool eval_h(Index n, const Number* x, bool new_x,
+                      Number obj_factor, Index m, const Number* lambda,
+                      bool new_lambda, Index nele_hess, Index* iRow,
+                      Index* jCol, Number* values)
+  {
+    // We rely on quasi-newton approximation here, see https://www.coin-or.org/Ipopt/documentation/node31.html
+    return false;
+  }
+
+  //@}
+
+  /** @name Solution Methods */
+  //@{
+  /** This method is called when the algorithm is complete so the TNLP can store/write the solution */
+  virtual void finalize_solution(SolverReturn status,
+                                 Index n, const Number* x, const Number* z_L, const Number* z_U,
+                                 Index m, const Number* g, const Number* lambda,
+                                 Number obj_value,
+         const IpoptData* ip_data,
+         IpoptCalculatedQuantities* ip_cq)
+  {
+    // here is where we would store the solution to variables, or write to a file, etc
+    // so we could use the solution.
+
+    // For this example, we write the solution to the console
+    // std::cout << std::endl << std::endl << "Solution of the primal variables, x" << std::endl;
+    // for (Index i=0; i<n; i++) {
+    //    std::cout << "x[" << i << "] = " << x[i] << std::endl;
+    // }
+
+    // std::cout << std::endl << std::endl << "Solution of the bound multipliers, z_L and z_U" << std::endl;
+    // for (Index i=0; i<n; i++) {
+    //   std::cout << "z_L[" << i << "] = " << z_L[i] << std::endl;
+    // }
+    // for (Index i=0; i<n; i++) {
+    //   std::cout << "z_U[" << i << "] = " << z_U[i] << std::endl;
+    // }
+
+    std::cout << std::endl << std::endl << "Objective value" << std::endl;
+    std::cout << "f(x*) = " << obj_value << std::endl;
+
+    std::cout << std::endl << "Final value of the constraints:" << std::endl;
+    for (Index i=0; i<m ;i++) {
+      std::cout << "g(" << i << ") = " << g[i] << std::endl;
+    }
+
+    m_finalValues.resize(n);
+    for (Index i=0; i<n; i++) {
+      m_finalValues[i] = x[i];
+    }
+  }
+  //@}
+
+public:
+  vector<double> m_finalValues;
+
+private:
+  int m_varcount;
+  vector<double> m_lower_bounds;
+  vector<double> m_upper_bounds;
+  vector<voronoi_data*> m_vdpts;
+  vector<continuity_data*> m_contpts;
+  vector<double> m_continuity_tols;
+  vector<point_data*> m_pointpts;
+  vector<double> m_initial_point_tols;
+
+  vector<double> m_initial_values;
+
+  problem_data* m_problem_data;
+  alt_obj_data* m_alt_problem_data;
+};
 
 
 int main(int argc, char** argv) {
@@ -549,6 +860,73 @@ int main(int argc, char** argv) {
       }
       cout << endl << endl;*/
 
+#if 0
+
+  // Create a new instance of your nlp
+  //  (use a SmartPtr, not raw)
+  SmartPtr<IpOptProblem> mynlp = new IpOptProblem(
+    varcount,
+    lower_bounds,
+    upper_bounds,
+    vdpts,
+    contpts,
+    continuity_tols,
+    pointpts,
+    initial_point_tols,
+    initial_values,
+    &data,
+    &alt_data);
+
+  // Create a new instance of IpoptApplication
+  //  (use a SmartPtr, not raw)
+  // We are using the factory, since this allows us to compile this
+  // example with an Ipopt Windows DLL
+  SmartPtr<IpoptApplication> app = IpoptApplicationFactory();
+  app->RethrowNonIpoptException(true);
+
+  // Change some options
+  // Note: The following choices are only examples, they might not be
+  //       suitable for your optimization problem.
+  app->Options()->SetStringValue("hessian_approximation", "limited-memory");
+  app->Options()->SetNumericValue("tol", 1e-5);
+  // app->Options()->SetStringValue("mu_strategy", "adaptive");
+  // app->Options()->SetStringValue("output_file", "ipopt.out");
+
+  app->Options()->SetStringValue("derivative_test", "first-order");
+
+  app->Options()->SetIntegerValue("max_iter", 5000);
+  // app->Options()->SetStringValue("jacobian_approximation", "finite-difference-values");
+
+
+  // The following overwrites the default name (ipopt.opt) of the
+  // options file
+  // app->Options()->SetStringValue("option_file_name", "hs071.opt");
+
+  // Initialize the IpoptApplication and process the options
+  ApplicationReturnStatus status;
+  status = app->Initialize();
+  if (status != Solve_Succeeded) {
+    std::cout << std::endl << std::endl << "*** Error during initialization!" << std::endl;
+    return (int) status;
+  }
+
+  // Ask Ipopt to solve the problem
+  status = app->OptimizeTNLP(mynlp);
+
+  if (status == Solve_Succeeded) {
+    std::cout << std::endl << std::endl << "*** The problem solved!" << std::endl;
+  }
+  else {
+    std::cout << std::endl << std::endl << "*** The problem FAILED!" << std::endl;
+    throw std::runtime_error("IpOpt failed!");
+  }
+
+  initial_values = mynlp->m_finalValues;
+
+
+#else
+
+
 
       nlopt::result res;
 
@@ -562,6 +940,8 @@ int main(int argc, char** argv) {
         cout << e.what()<< endl;
       }
 
+      cout << "nlopt result: " << res << " objective value: " << opt_f << endl;
+#endif
 
 
       initidx = 0;
@@ -573,8 +953,6 @@ int main(int argc, char** argv) {
         }
       }
 
-
-      cout << "nlopt result: " << res << " objective value: " << opt_f << endl;
 
       /*int a; cin >> a;*/
 
