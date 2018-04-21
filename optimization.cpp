@@ -7,9 +7,9 @@ using namespace std;
 
 
 double optimization::energy_objective(const vector<double>& x, vector<double>& grad, void* f_data) {
-  double alpha_vel = 1;
+  double alpha_vel = 0;
   double alpha_acc = 1;
-  double alpha_jerk = 1;
+  double alpha_jerk = 1e-4;
 
 
   problem_data& pdata = *((problem_data*)f_data);
@@ -67,14 +67,16 @@ double optimization::energy_objective(const vector<double>& x, vector<double>& g
     double energy = bezier_2d_8pts_nthderivative_normsqintegrate(P, innergrad, ot[i].duration, 1);
     total_energy += alpha_vel * energy;
 
-    for(int j=0; j<ppc; j++) {
-      for(int k=0; k<pd; k++) {
-        grad[i*cpts+j*pd+k] += innergrad[j*pd+k] * alpha_vel;
+    if(grad.size()>  0) {
+      for(int j=0; j<ppc; j++) {
+        for(int k=0; k<pd; k++) {
+          grad[i*cpts+j*pd+k] += innergrad[j*pd+k] * alpha_vel;
+        }
       }
     }
 
     energy = bezier_2d_8pts_nthderivative_normsqintegrate(P, innergrad, ot[i].duration, 2);
-    total_energy += alpha_vel * energy;
+    total_energy += alpha_acc * energy;
 
     if(grad.size()>  0) {
       for(int j=0; j<ppc; j++) {
@@ -85,7 +87,7 @@ double optimization::energy_objective(const vector<double>& x, vector<double>& g
     }
 
     energy = bezier_2d_8pts_nthderivative_normsqintegrate(P, innergrad, ot[i].duration, 3);
-    total_energy += alpha_vel * energy;
+    total_energy += alpha_jerk * energy;
 
 
     if(grad.size() > 0) {
@@ -188,8 +190,8 @@ double optimization::pos_energy_combine_objective(const vector<double>& x, vecto
   int ppc = pdata.ppc;
   int cpts = pd*ppc;
 
-  double alpha_pos = 100;
-  double alpha_energy = 1;
+  double alpha_pos = 1;
+  double alpha_energy = 0.01;
 
   for(int i=0; i<grad.size(); i++) {
     grad[i] = 0;
