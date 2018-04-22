@@ -79,3 +79,18 @@ LD_PRELOAD="/usr/lib/libprofiler.so" CPUPROFILE=prof.out ./main
 https://github.com/scipy/scipy/issues/7618
 https://scicomp.stackexchange.com/questions/83/is-there-a-high-quality-nonlinear-programming-solver-for-python
 https://www.jstage.jst.go.jp/article/jrsj/32/6/32_32_536/_pdf
+
+## Test Cases
+
+### Standard cases
+
+* Obstacle appears for one (or multiple) robots
+* One robot breaks down (suddenly stobs on its trajectory)
+* One robot gets moved externally (e.g., temporary control issue, wind gust etc.)
+* Obstacle no longer present
+
+### Hard cases
+
+* Moving obstacle
+* New robot participates that was unaware of other robots (e.g, head-to-head collision)
+
