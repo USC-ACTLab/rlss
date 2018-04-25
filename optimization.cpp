@@ -7,6 +7,7 @@ using namespace std;
 
 
 double optimization::energy_objective(const vector<double>& x, vector<double>& grad, void* f_data) {
+  //cout << "energy start" << endl;
   double alpha_vel = 0;
   double alpha_acc = 1;
   double alpha_jerk = 1e-4;
@@ -100,11 +101,13 @@ double optimization::energy_objective(const vector<double>& x, vector<double>& g
 
   }
 
+  //cout << "energy result: " << total_energy << endl;
   return total_energy;
 }
 
 
 double optimization::alt_objective(const vector<double>& x, vector<double>& grad, void* f_data) {
+  //cout << "alt obj start" << endl;
   double alpha_pos = 1;
   double alpha_vel = 0;
   double alpha_acc = 0;
@@ -172,13 +175,14 @@ double optimization::alt_objective(const vector<double>& x, vector<double>& grad
   }
 
   double cost = alpha_pos * posdis + alpha_vel * veldis + alpha_acc * accdis;
-  //cout << "obj cost: " << cost << endl;
+  //cout << "alt obj cost: " << cost << endl;
   return cost;
 
 }
 
 
 double optimization::pos_energy_combine_objective(const vector<double>& x, vector<double>& grad, void* f_data) {
+  //cout << "objective start" << endl;
   alt_obj_data& odata = *((alt_obj_data*)f_data);
   problem_data& pdata = *(odata.pdata);
   vectoreuc& pos = *(odata.pos);
@@ -214,6 +218,8 @@ double optimization::pos_energy_combine_objective(const vector<double>& x, vecto
       grad[i] += alpha_energy * innergrad[i];
     }
   }
+
+  //cout << "obj result: " << res << endl;
 
   return res;
 }
@@ -257,6 +263,7 @@ double optimization::objective(const vector<double>& x, vector<double>& grad, vo
 }
 
 double optimization::voronoi_constraint(const vector<double>& x, vector<double>& grad, void* v_data) {
+  //cout << "voronoi start" << endl;
   voronoi_data& vd = *((voronoi_data*)v_data);
   problem_data& pdata = *(vd.pdata);
 
@@ -291,6 +298,7 @@ double optimization::voronoi_constraint(const vector<double>& x, vector<double>&
 }
 
 double optimization::edt_constraint(const vector<double>& x, vector<double>& grad, void* e_data) {
+  //cout << "edt start" << endl;
   edt_data& ed = *((edt_data*)e_data);
   edt& distance_transform = *(ed.distance_transform);
   problem_data& pdata = *(ed.pdata);
@@ -443,6 +451,7 @@ double optimization::obstacle_constraint(const vector<double>& x, vector<double>
 }
 
 double optimization::continuity_constraint(const vector<double>& x, vector<double>& grad, void* c_data) {
+  //cout << "continuity start" << endl;
   continuity_data& cd = *((continuity_data*)c_data);
   problem_data& pdata = *(cd.pdata);
 
@@ -487,6 +496,7 @@ double optimization::continuity_constraint(const vector<double>& x, vector<doubl
 }
 
 double optimization::point_constraint(const vector<double>& x, vector<double>& grad, void* p_data) {
+  //cout << "point start" << endl;
   point_data& poidata = *((point_data*)p_data);
   problem_data& pdata = *(poidata.pdata);
   int ppc = pdata.ppc; //pts per curve
@@ -543,6 +553,7 @@ double optimization::point_constraint(const vector<double>& x, vector<double>& g
 }
 
 double optimization::maximum_nvalue_of_curve(const vector<double>& x, vector<double>& grad, void* d_data) {
+  //cout << "dyn start" << endl;
   maxnvalue_data& maxdata = *((maxnvalue_data*)d_data);
   problem_data& pdata = *(maxdata.pdata);
   int ppc = pdata.ppc; //pts per curve

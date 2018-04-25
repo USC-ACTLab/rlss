@@ -448,7 +448,7 @@ int main(int argc, char** argv) {
   }
 
 
-  vector<trajectory> orijinal_trajectories = trajectories;
+  vector<trajectory> original_trajectories = trajectories;
 
 /*
   cout << "Number of trajectories: " << trajectories.size() << endl;
@@ -483,9 +483,15 @@ int main(int argc, char** argv) {
 
 
 
+  vector<double> total_times(original_trajectories.size());
   double total_t = 0;
-  for(int i=0; i<trajectories[0].size(); i++) {
-    total_t += trajectories[0][i].duration;
+  for(int i=0; i<original_trajectories.size(); i++) {
+    double tt = 0;
+    for(int j=0; j<original_trajectories[i].size(); j++) {
+      tt += original_trajectories[i][j].duration;
+    }
+    total_t = max(total_t, tt);
+    total_times[i] = tt;
   }
 
 
@@ -505,7 +511,7 @@ int main(int argc, char** argv) {
 
   for(int i=0; i<trajectories.size(); i++) {
     for(double t=0; t<=total_t; t+=printdt) {
-      vectoreuc eu = orijinal_trajectories[i].eval(t);
+      vectoreuc eu = original_trajectories[i].eval(t);
       output_json["originals"][i]["x"].push_back(eu[0]);
       output_json["originals"][i]["y"].push_back(eu[1]);
     }
@@ -517,8 +523,10 @@ int main(int argc, char** argv) {
       output_json["points"][output_iter].push_back(positions[i].crds);
       //out << i << " (" << positions[i][0] << "," << positions[i][1] << ")" << endl;
     }
+    cout << "ct: " << ct << endl;
 
     for(int i=0; i<trajectories.size(); i++ ) {
+      cout << "traj " << i << " start" << endl;
       auto t0 = Time::now();
 
       /*calculate voronoi hyperplanes for robot i*/
@@ -553,19 +561,19 @@ int main(int argc, char** argv) {
       problem_data data;
       data.current_t = ct;
       data.time_horizon = hor;
-      data.original_trajectory = &(orijinal_trajectories[i]);
+      data.original_trajectory = &(original_trajectories[i]);
       //data.original_trajectory = &(trajectories[i]);
       data.problem_dimension = problem_dimension;
       data.ppc = ppc;
-      data.tt = total_t;
+      data.tt = min(total_t, total_times[i]);
 
       //problem.set_min_objective(optimization::objective, (void*)&data);
 
       alt_obj_data alt_data;
       alt_data.pdata = &data;
-      vectoreuc OBJPOS = orijinal_trajectories[i].neval(min(ct+hor, total_t), 0);
-      vectoreuc OBJVEL = orijinal_trajectories[i].neval(min(ct+hor, total_t), 1);
-      vectoreuc OBJACC = orijinal_trajectories[i].neval(min(ct+hor, total_t), 2);
+      vectoreuc OBJPOS = original_trajectories[i].neval(min(ct+hor, total_times[i]), 0);
+      vectoreuc OBJVEL = original_trajectories[i].neval(min(ct+hor, total_times[i]), 1);
+      vectoreuc OBJACC = original_trajectories[i].neval(min(ct+hor, total_times[i]), 2);
       alt_data.pos = &OBJPOS;
       alt_data.vel = &OBJVEL;
       alt_data.acc = &OBJACC;
@@ -819,12 +827,12 @@ int main(int argc, char** argv) {
       for(int j=0; j<=max_initial_point_degree; j++) {
         point_data* pd = new point_data;
         pd->pdata = &data;
-        pd->point = trajectories[i].neval(ct, j);
+        pd->point = trajectories[i].neval(min(ct, total_times[i]), j);
         /*if(j==0) {
           pd->point[0] += fRand(-0.002, 0.002);
           pd->point[1] += fRand(-0.002, 0.002);
         }*/
-        pd->time = ct;
+        pd->time = min(ct, total_times[i]);
         pd->degree = j;
 
         problem.add_inequality_constraint(optimization::point_constraint, (void*)pd, initial_point_tols[j]);
@@ -872,7 +880,7 @@ int main(int argc, char** argv) {
       }
       cout << endl << endl;*/
 
-#if 0
+#if 1
 
   // Create a new instance of your nlp
   //  (use a SmartPtr, not raw)
@@ -930,7 +938,7 @@ int main(int argc, char** argv) {
   }
   else {
     std::cout << std::endl << std::endl << "*** The problem FAILED!" << std::endl;
-    throw std::runtime_error("IpOpt failed!");
+    //throw std::runtime_error("IpOpt failed!");
   }
 
   initial_values = mynlp->m_finalValues;
@@ -984,7 +992,7 @@ int main(int argc, char** argv) {
         double val = optimization::obstacle_constraint(initial_values, dummyGradient, od);
         if (val > obstacle_tolerance) {
           std::stringstream sstr;
-      cout << "nlopt result: " << res << " objective value: " << opt_f << endl;
+          sstr << "obstacle contraint violated: " << val;
           std::cout << sstr.str() << std::endl;
           // throw std::runtime_error(sstr.str());
         }
@@ -1038,6 +1046,7 @@ int main(int argc, char** argv) {
 
 
 
+      cout << "before deletes" << endl;
 
       for(int j=0; j<vdpts.size(); j++) {
         delete vdpts[j];
@@ -1075,6 +1084,8 @@ int main(int argc, char** argv) {
         output_json["planned_trajs"][output_iter][i]["x"].push_back(ev[0]);
         output_json["planned_trajs"][output_iter][i]["y"].push_back(ev[1]);
       }
+
+      cout << "traj " << i << " end" << endl;
     }
     output_iter++;
     int v = 0;

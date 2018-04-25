@@ -32,7 +32,7 @@ vectoreuc trajectory::eval(double t, int& curveidx, double& ct) {
   }
   if(i==curves.size()) {
     curveidx = i-1;
-    ct = 1;
+    ct = curves[i-1].duration;
     return curves[i-1].eval(curves[i-1].duration);
   }
   curveidx = i;
