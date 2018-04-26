@@ -9,7 +9,7 @@ add_executable(main main.cpp)
 target_include_directories(main PRIVATE lib)
 
 find_package(stdc++fs)
-add_library(geometry hyperplane.cpp vectoreuc.cpp edt.cpp)
+add_library(geometry hyperplane.cpp vectoreuc.cpp edt.cpp edtv2.cpp)
 add_library(obstacle obstacle.cpp)
 add_library(traj curve.cpp trajectory.cpp bezier_2d_8pts.cpp)
 add_library(csv lib/csv/CSVparser.cpp)

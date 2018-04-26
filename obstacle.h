@@ -21,6 +21,7 @@ class obstacle2D {
     void ch_planes();
     bool point_inside(vectoreuc& pt);
     double closest_distance(vectoreuc& pt);
+    double farthest_distance(vectoreuc& pt);
 };
 
 #endif

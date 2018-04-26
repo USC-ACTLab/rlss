@@ -99,4 +99,15 @@ double obstacle2D::closest_distance(vectoreuc& pt) {
   for(int i=0; i<chplanes.size(); i++) {
     mindist = min(mindist, chplanes[i].dist(pt));
   }
+  return mindist;
+}
+
+double obstacle2D::farthest_distance(vectoreuc& pt) {
+  double maxdist = -numeric_limits<double>::infinity();
+
+  for(int i=0; i<chplanes.size(); i++) {
+    maxdist = max(maxdist, chplanes[i].dist(pt));
+  }
+
+  return maxdist;
 }

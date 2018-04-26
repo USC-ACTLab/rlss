@@ -1,5 +1,5 @@
 {
-  "trajectories": "../test_data/trajectories/head_to_head_trajs/",
+  "trajectories": "../test_data/trajectories/head_to_head_trajs_3/",
   "obstacles": "../test_data/obstacles/obsdiamondsup/",
   "replan_period": 0.2,
   "set_max_time_as_replan_period": false,
