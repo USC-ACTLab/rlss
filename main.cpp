@@ -492,6 +492,7 @@ int main(int argc, char** argv) {
     }
     total_t = max(total_t, tt);
     total_times[i] = tt;
+    cout << total_times[i] << endl;
   }
 
 
@@ -547,538 +548,541 @@ int main(int argc, char** argv) {
         number of curves \times number of points per curve \times problem_dimension
       */
 
-      unsigned varcount = trajectories[i].size() * ppc * problem_dimension;
-      //nlopt::opt problem(nlopt::AUGLAG, varcount);
-      //problem.set_local_optimizer(local_opt);
-      nlopt::opt problem;
-      if(alg == "MMA") {
-        problem = nlopt::opt(nlopt::LD_MMA, varcount);
-      } else if(alg == "SLSQP") {
-        problem = nlopt::opt(nlopt::LD_SLSQP, varcount);
-      } else {
-        throw "no such algorithm";
-      }
-      problem_data data;
-      data.current_t = ct;
-      data.time_horizon = hor;
-      data.original_trajectory = &(original_trajectories[i]);
-      //data.original_trajectory = &(trajectories[i]);
-      data.problem_dimension = problem_dimension;
-      data.ppc = ppc;
-      data.tt = min(total_t, total_times[i]);
+      if(ct <= total_times[i]) {
 
-      //problem.set_min_objective(optimization::objective, (void*)&data);
-
-      alt_obj_data alt_data;
-      alt_data.pdata = &data;
-      vectoreuc OBJPOS = original_trajectories[i].neval(min(ct+hor, total_times[i]), 0);
-      vectoreuc OBJVEL = original_trajectories[i].neval(min(ct+hor, total_times[i]), 1);
-      vectoreuc OBJACC = original_trajectories[i].neval(min(ct+hor, total_times[i]), 2);
-      alt_data.pos = &OBJPOS;
-      alt_data.vel = &OBJVEL;
-      alt_data.acc = &OBJACC;
-
-    //  problem.set_min_objective(optimization::alt_objective, (void*)&alt_data);
-
-      problem.set_min_objective(optimization::pos_energy_combine_objective, (void*)&alt_data);
-
-
-      edt_data edata;
-      edata.pdata = &data;
-      edata.distance_transform = &distance_transform;
-
-      problem.add_inequality_constraint(optimization::edt_constraint, (void*)&edata, 0.0000001);
-
-      /* all control points should be in range [-10, 10].
-        since curves are bezier, resulting curve will be inside the corresponding rectangle
-        */
-      vector<double> lower_bounds(varcount);
-      vector<double> upper_bounds(varcount);
-      for(int j=0; j<varcount; j+=2) {
-        lower_bounds[j] = lower_bounds[j+1] = -10;
-        upper_bounds[j] = upper_bounds[j+1] = 10;
-      }
-      problem.set_lower_bounds(lower_bounds);
-      problem.set_upper_bounds(upper_bounds);
-
-      // just to delete them from heap later.
-      vector<voronoi_data*> vdpts;
-
-
-      for(int j=0; j<voronoi_hyperplanes.size(); j++) {
-        hyperplane& plane = voronoi_hyperplanes[j];
-
-
-        double current_time = ct;
-        double end_time  = ct+2*dt;
-        //double end_time  = ct+dt;
-
-        int idx = 0;
-
-        while(idx < trajectories[i].size() && current_time >= trajectories[i][idx].duration) {
-          current_time -= trajectories[i][idx].duration;
-          end_time -= trajectories[i][idx].duration;
-          idx++;
+        unsigned varcount = trajectories[i].size() * ppc * problem_dimension;
+        //nlopt::opt problem(nlopt::AUGLAG, varcount);
+        //problem.set_local_optimizer(local_opt);
+        nlopt::opt problem;
+        if(alg == "MMA") {
+          problem = nlopt::opt(nlopt::LD_MMA, varcount);
+        } else if(alg == "SLSQP") {
+          problem = nlopt::opt(nlopt::LD_SLSQP, varcount);
+        } else {
+          throw "no such algorithm";
         }
+        problem_data data;
+        data.current_t = ct;
+        data.time_horizon = hor;
+        data.original_trajectory = &(original_trajectories[i]);
+        //data.original_trajectory = &(trajectories[i]);
+        data.problem_dimension = problem_dimension;
+        data.ppc = ppc;
+        data.tt = total_times[i];
 
-        current_time = max(current_time, 0.0); // to resolve underflows. just for ct == 0.
+        //problem.set_min_objective(optimization::objective, (void*)&data);
 
-        while(end_time > 0 && idx < trajectories[i].size()) {
-          double cend_time = min(end_time, trajectories[i][idx].duration);
-          double curvet = 0;
-          double step = trajectories[i][idx].duration / (trajectories[i][idx].size()-1);
-          for(int p=0; p<trajectories[i][idx].size(); p++) {
-            //if((curvet > current_time || fabs(curvet - current_time) < PATHREPLAN_EPSILON) /*&& (curvet < cend_time || fabs(curvet - cend_time) < PATHREPLAN_EPSILON)*/) {
-              voronoi_data* vd = new voronoi_data;
-              vd->pdata = &data;
-              vd->plane = plane;
-              vd->curve_idx = idx;
-              vd->point_idx = p;
-              problem.add_inequality_constraint(optimization::voronoi_constraint, (void*)vd, 0);
-              vdpts.push_back(vd);
-          //}
-            curvet += step;
+        alt_obj_data alt_data;
+        alt_data.pdata = &data;
+        vectoreuc OBJPOS = original_trajectories[i].neval(min(ct+hor, total_times[i]), 0);
+        vectoreuc OBJVEL = original_trajectories[i].neval(min(ct+hor, total_times[i]), 1);
+        vectoreuc OBJACC = original_trajectories[i].neval(min(ct+hor, total_times[i]), 2);
+        alt_data.pos = &OBJPOS;
+        alt_data.vel = &OBJVEL;
+        alt_data.acc = &OBJACC;
+
+      //  problem.set_min_objective(optimization::alt_objective, (void*)&alt_data);
+
+        problem.set_min_objective(optimization::pos_energy_combine_objective, (void*)&alt_data);
+
+
+        edt_data edata;
+        edata.pdata = &data;
+        edata.distance_transform = &distance_transform;
+
+        problem.add_inequality_constraint(optimization::edt_constraint, (void*)&edata, 0.0000001);
+
+        /* all control points should be in range [-10, 10].
+          since curves are bezier, resulting curve will be inside the corresponding rectangle
+          */
+        vector<double> lower_bounds(varcount);
+        vector<double> upper_bounds(varcount);
+        for(int j=0; j<varcount; j+=2) {
+          lower_bounds[j] = lower_bounds[j+1] = -10;
+          upper_bounds[j] = upper_bounds[j+1] = 10;
+        }
+        problem.set_lower_bounds(lower_bounds);
+        problem.set_upper_bounds(upper_bounds);
+
+        // just to delete them from heap later.
+        vector<voronoi_data*> vdpts;
+
+
+        for(int j=0; j<voronoi_hyperplanes.size(); j++) {
+          hyperplane& plane = voronoi_hyperplanes[j];
+
+
+          double current_time = ct;
+          double end_time  = ct+2*dt;
+          //double end_time  = ct+dt;
+
+          int idx = 0;
+
+          while(idx < trajectories[i].size() && current_time >= trajectories[i][idx].duration) {
+            current_time -= trajectories[i][idx].duration;
+            end_time -= trajectories[i][idx].duration;
+            idx++;
           }
 
+          current_time = max(current_time, 0.0); // to resolve underflows. just for ct == 0.
 
-          end_time -= cend_time;
-          current_time = 0;
-          idx++;
-        }
-
-      }
-
-      // just to delete them from heap later.
-      /* obstacle avoidance v1 */
-      vector<obstacle_data*> obspts;
-
-      /*for(int j=0; j<obstacles.size(); j++) {
-        obstacle_data* od = new obstacle_data;
-        od->pdata = &data;
-        od->hps = &(obstacles[j].chplanes);
-
-        problem.add_inequality_constraint(optimization::obstacle_constraint, (void*)od, obstacle_tolerance);
-        obspts.push_back(od);
-      }*/
-
-
-      vector<svmopt_data*> svmoptpts;
-      vector<svmobs_data*> svmobspts;
-      vector<svmrobot_data*> svmrobotpts;
-      /* SVM STUFF
-      for(int j=0; j<obstacles.size(); j++) {
-        nlopt::opt obstaclesvm(nlopt::LD_SLSQP, problem_dimension+1);
-        svmopt_data* objdata = new svmopt_data;
-        vectoreuc vel = trajectories[i].neval(ct, 1);
-        objdata->velocity_direction = vel.normalized();
-        objdata->alpha = 1;
-        objdata->beta = 1;
-        svmoptpts.push_back(objdata);
-        obstaclesvm.set_min_objective(svmoptimization::objective, (void*)objdata);
-
-        for(int k=0; k<obstacles[j].ch.size()-1; k++) {
-          svmobs_data* svmobsdata = new svmobs_data;
-          svmobspts.push_back(svmobsdata);
-          svmobsdata->obspt = &obstacles[j][obstacles[j].ch[k]];
-          obstaclesvm.add_inequality_constraint(svmoptimization::obspointconstraint, (void*)svmobsdata, 0.00001);
-          cout << "obs: " << obstacles[j][obstacles[j].ch[k]] << endl;
-        }
-
-        svmrobot_data* svmrobotdata = new svmrobot_data;
-        svmrobotdata->robotpt = &positions[i];
-        cout << "ro: " << positions[i] << endl;
-        svmrobotpts.push_back(svmrobotdata);
-        obstaclesvm.add_inequality_constraint(svmoptimization::robotpointconstraint, (void*)svmrobotdata,0.00001);
-        obstaclesvm.set_ftol_rel(0.00000000001);
-        vector<double> init_points(problem_dimension+1);
-        for(int k=0; k<init_points.size(); k++) {
-          init_points[k] = 1;
-        }
-        double f_opt;
-        nlopt::result res;
-        try {
-          res = obstaclesvm.optimize(init_points, f_opt);
-        } catch(nlopt::roundoff_limited& e) {
-        }
-        cout << "pla: ";
-        for(int j=0; j<init_points.size(); j++) {
-          cout << init_points[j] << " ";
-        }
-        cout << endl;
-        for(int l=0; l<svmobspts.size(); l++) {
-          vector<double> a;
-          cout << svmoptimization::obspointconstraint(init_points, a, svmobspts[l]) << endl;
-        }
-        cout << "svm ret: " << res << " val: " << f_opt << endl;
-        hyperplane sep_plane;
-        vectoreuc normal(2);
-        normal[0] = init_points[0];
-        normal[1] = init_points[1];
-        double norm = normal.L2norm();
-        sep_plane.normal = normal.normalized();
-        sep_plane.distance = init_points[2]/norm;
-
-        double current_time = ct;
-        double end_time  = ct+obstacle_horizon;
-
-        int idx = 0;
-
-        while(idx < trajectories[i].size() && current_time >= trajectories[i][idx].duration) {
-          current_time -= trajectories[i][idx].duration;
-          end_time -= trajectories[i][idx].duration;
-          idx++;
-        }
-
-        current_time = max(current_time, 0.0); // to resolve underflows. just for ct == 0.
-        int cnt = 0;
-        while(end_time >= 0 && idx < trajectories[i].size()) {
-          double cend_time = min(end_time, trajectories[i][idx].duration);
-          double curvet = 0;
-          double step = trajectories[i][idx].duration / (trajectories[i][idx].size()-1);
-          for(int p=0; p<trajectories[i][idx].size(); p++) {
-            if((curvet >= current_time || fabs(curvet - current_time) < PATHREPLAN_EPSILON) && (curvet <= cend_time || fabs(curvet - cend_time) < PATHREPLAN_EPSILON)) {
-              voronoi_data* vd = new voronoi_data;
-              vd->pdata = &data;
-              vd->plane = sep_plane;
-              vd->curve_idx = idx;
-              vd->point_idx = p;
-              problem.add_inequality_constraint(optimization::voronoi_constraint, (void*)vd, 0);
-              vdpts.push_back(vd);
-              cnt++;
+          while(end_time > 0 && idx < trajectories[i].size()) {
+            double cend_time = min(end_time, trajectories[i][idx].duration);
+            double curvet = 0;
+            double step = trajectories[i][idx].duration / (trajectories[i][idx].size()-1);
+            for(int p=0; p<trajectories[i][idx].size(); p++) {
+              //if((curvet > current_time || fabs(curvet - current_time) < PATHREPLAN_EPSILON) /*&& (curvet < cend_time || fabs(curvet - cend_time) < PATHREPLAN_EPSILON)*/) {
+                voronoi_data* vd = new voronoi_data;
+                vd->pdata = &data;
+                vd->plane = plane;
+                vd->curve_idx = idx;
+                vd->point_idx = p;
+                problem.add_inequality_constraint(optimization::voronoi_constraint, (void*)vd, 0);
+                vdpts.push_back(vd);
+            //}
+              curvet += step;
             }
-            curvet += step;
+
+
+            end_time -= cend_time;
+            current_time = 0;
+            idx++;
           }
 
-
-          end_time -= cend_time;
-          current_time = 0;
-          idx++;
-        }
-        cout << "number of effected points: " << cnt << endl;
-      }
-*/
-
-      vector<continuity_data*> contpts;
-      vector<maxnvalue_data*> maxpts;
-      /*vector<double> continuity_tolerances(problem_dimension);
-      for(int i=0; i<problem_dimension; i++) {
-        continuity_tolerances[i] = continuity_tol;
-      }*/
-      double current_time = ct;
-      double end_time = ct+hor;
-      int start_curve = 0;
-      int end_curve = 0;
-      int j;
-      for(j=0; j<trajectories[i].size(); j++) {
-        if(current_time > trajectories[i][j].duration) {
-          current_time -= trajectories[i][j].duration;
-          end_time -= trajectories[i][j].duration;
-          start_curve++;
-          end_curve++;
-        } else {
-          break;
-        }
-      }
-
-      for(; j<trajectories[i].size(); j++) {
-        if(end_time > trajectories[i][j].duration) {
-          end_time -= trajectories[i][j].duration;
-          end_curve++;
-        } else {
-          break;
-        }
-      }
-
-      end_curve = min((int)trajectories[i].size()-1, end_curve);
-      //start_curve = max(0, start_curve-1);
-      for(int j=start_curve; j <= end_curve && j<trajectories[i].size()-1; j++) {
-        for(int n=0; n<=max_continuity; n++) {
-        // nth degree continuity
-          continuity_data* cd = new continuity_data;
-          cd->pdata = &data;
-          cd->n = n;
-          cd->c = j;
-
-          problem.add_inequality_constraint(optimization::continuity_constraint, (void*)cd, continuity_tols[n]);
-          contpts.push_back(cd);
-
-
         }
 
+        // just to delete them from heap later.
+        /* obstacle avoidance v1 */
+        vector<obstacle_data*> obspts;
 
-      }
-      for(int n=start_curve; n<=end_curve; n++) {
-        for(int j=0; j<dynamic_constraint_degrees.size(); j++) {
-          int deg = dynamic_constraint_degrees[j];
-          double max_val = dynamic_constraint_max_values[j];
+        /*for(int j=0; j<obstacles.size(); j++) {
+          obstacle_data* od = new obstacle_data;
+          od->pdata = &data;
+          od->hps = &(obstacles[j].chplanes);
 
-          maxnvalue_data* dd = new maxnvalue_data;
-          dd->pdata = &data;
-          dd->cidx = n;
-          dd->degree = deg;
-          dd->max_val = max_val;
-
-          problem.add_inequality_constraint(optimization::maximum_nvalue_of_curve, (void*)dd, 0);
-          maxpts.push_back(dd);
-        }
-      }
-      vector<point_data*> pointpts;
-
-      for(int j=0; j<=max_initial_point_degree; j++) {
-        point_data* pd = new point_data;
-        pd->pdata = &data;
-        pd->point = trajectories[i].neval(min(ct, total_times[i]), j);
-        /*if(j==0) {
-          pd->point[0] += fRand(-0.002, 0.002);
-          pd->point[1] += fRand(-0.002, 0.002);
+          problem.add_inequality_constraint(optimization::obstacle_constraint, (void*)od, obstacle_tolerance);
+          obspts.push_back(od);
         }*/
-        pd->time = min(ct, total_times[i]);
-        pd->degree = j;
-
-        problem.add_inequality_constraint(optimization::point_constraint, (void*)pd, initial_point_tols[j]);
-        pointpts.push_back(pd);
-      }
 
 
-      /* if integral is less than this value, stop.*/
-      problem.set_stopval(integral_stopval);
+        vector<svmopt_data*> svmoptpts;
+        vector<svmobs_data*> svmobspts;
+        vector<svmrobot_data*> svmrobotpts;
+        /* SVM STUFF
+        for(int j=0; j<obstacles.size(); j++) {
+          nlopt::opt obstaclesvm(nlopt::LD_SLSQP, problem_dimension+1);
+          svmopt_data* objdata = new svmopt_data;
+          vectoreuc vel = trajectories[i].neval(ct, 1);
+          objdata->velocity_direction = vel.normalized();
+          objdata->alpha = 1;
+          objdata->beta = 1;
+          svmoptpts.push_back(objdata);
+          obstaclesvm.set_min_objective(svmoptimization::objective, (void*)objdata);
 
-      /* if objective function changes relatively less than this value, stop.*/
-      problem.set_ftol_abs(relative_integral_stopval);
+          for(int k=0; k<obstacles[j].ch.size()-1; k++) {
+            svmobs_data* svmobsdata = new svmobs_data;
+            svmobspts.push_back(svmobsdata);
+            svmobsdata->obspt = &obstacles[j][obstacles[j].ch[k]];
+            obstaclesvm.add_inequality_constraint(svmoptimization::obspointconstraint, (void*)svmobsdata, 0.00001);
+            cout << "obs: " << obstacles[j][obstacles[j].ch[k]] << endl;
+          }
 
-      if(set_max_time) {
-        problem.set_maxtime(dt);
-      }
-      //problem.set_maxtime(5);
+          svmrobot_data* svmrobotdata = new svmrobot_data;
+          svmrobotdata->robotpt = &positions[i];
+          cout << "ro: " << positions[i] << endl;
+          svmrobotpts.push_back(svmrobotdata);
+          obstaclesvm.add_inequality_constraint(svmoptimization::robotpointconstraint, (void*)svmrobotdata,0.00001);
+          obstaclesvm.set_ftol_rel(0.00000000001);
+          vector<double> init_points(problem_dimension+1);
+          for(int k=0; k<init_points.size(); k++) {
+            init_points[k] = 1;
+          }
+          double f_opt;
+          nlopt::result res;
+          try {
+            res = obstaclesvm.optimize(init_points, f_opt);
+          } catch(nlopt::roundoff_limited& e) {
+          }
+          cout << "pla: ";
+          for(int j=0; j<init_points.size(); j++) {
+            cout << init_points[j] << " ";
+          }
+          cout << endl;
+          for(int l=0; l<svmobspts.size(); l++) {
+            vector<double> a;
+            cout << svmoptimization::obspointconstraint(init_points, a, svmobspts[l]) << endl;
+          }
+          cout << "svm ret: " << res << " val: " << f_opt << endl;
+          hyperplane sep_plane;
+          vectoreuc normal(2);
+          normal[0] = init_points[0];
+          normal[1] = init_points[1];
+          double norm = normal.L2norm();
+          sep_plane.normal = normal.normalized();
+          sep_plane.distance = init_points[2]/norm;
+
+          double current_time = ct;
+          double end_time  = ct+obstacle_horizon;
+
+          int idx = 0;
+
+          while(idx < trajectories[i].size() && current_time >= trajectories[i][idx].duration) {
+            current_time -= trajectories[i][idx].duration;
+            end_time -= trajectories[i][idx].duration;
+            idx++;
+          }
+
+          current_time = max(current_time, 0.0); // to resolve underflows. just for ct == 0.
+          int cnt = 0;
+          while(end_time >= 0 && idx < trajectories[i].size()) {
+            double cend_time = min(end_time, trajectories[i][idx].duration);
+            double curvet = 0;
+            double step = trajectories[i][idx].duration / (trajectories[i][idx].size()-1);
+            for(int p=0; p<trajectories[i][idx].size(); p++) {
+              if((curvet >= current_time || fabs(curvet - current_time) < PATHREPLAN_EPSILON) && (curvet <= cend_time || fabs(curvet - cend_time) < PATHREPLAN_EPSILON)) {
+                voronoi_data* vd = new voronoi_data;
+                vd->pdata = &data;
+                vd->plane = sep_plane;
+                vd->curve_idx = idx;
+                vd->point_idx = p;
+                problem.add_inequality_constraint(optimization::voronoi_constraint, (void*)vd, 0);
+                vdpts.push_back(vd);
+                cnt++;
+              }
+              curvet += step;
+            }
 
 
-      vector<double> initial_values;
-      for(int j=0; j<trajectories[i].size(); j++) {
-        for(int k=0; k<ppc; k++) {
-          for(int p=0; p<problem_dimension; p++) {
-            initial_values.push_back(trajectories[i][j][k][p] + fRand(-0.004, 0.004));
+            end_time -= cend_time;
+            current_time = 0;
+            idx++;
+          }
+          cout << "number of effected points: " << cnt << endl;
+        }
+  */
+
+        vector<continuity_data*> contpts;
+        vector<maxnvalue_data*> maxpts;
+        /*vector<double> continuity_tolerances(problem_dimension);
+        for(int i=0; i<problem_dimension; i++) {
+          continuity_tolerances[i] = continuity_tol;
+        }*/
+        double current_time = ct;
+        double end_time = ct+hor;
+        int start_curve = 0;
+        int end_curve = 0;
+        int j;
+        for(j=0; j<trajectories[i].size(); j++) {
+          if(current_time > trajectories[i][j].duration) {
+            current_time -= trajectories[i][j].duration;
+            end_time -= trajectories[i][j].duration;
+            start_curve++;
+            end_curve++;
+          } else {
+            break;
           }
         }
-      }
-      //initial_values[initial_values.size()-1]+=frand(-0.1, 0.1);
 
-      //cout << initial_values.size() << endl;
-
-      double opt_f;
-
-      int initidx = 0;
-      //problem.set_maxeval(1000);
-
-      /*for(int j=0; j<trajectories[i].size(); j++) {
-        cout << trajectories[i][j].duration;
-        for(int k=0; k<trajectories[i][j].size(); k++) {
-          for(int p=0; p<trajectories[i][j][k].size(); p++) {
-            cout << "," << initial_values[initidx++];
+        for(; j<trajectories[i].size(); j++) {
+          if(end_time > trajectories[i][j].duration) {
+            end_time -= trajectories[i][j].duration;
+            end_curve++;
+          } else {
+            break;
           }
         }
-        cout << endl;
-      }
-      cout << endl << endl;*/
 
-#if 1
+        end_curve = min((int)trajectories[i].size()-1, end_curve);
+        //start_curve = max(0, start_curve-1);
+        for(int j=start_curve; j <= end_curve && j<trajectories[i].size()-1; j++) {
+          for(int n=0; n<=max_continuity; n++) {
+          // nth degree continuity
+            continuity_data* cd = new continuity_data;
+            cd->pdata = &data;
+            cd->n = n;
+            cd->c = j;
 
-  // Create a new instance of your nlp
-  //  (use a SmartPtr, not raw)
-  SmartPtr<IpOptProblem> mynlp = new IpOptProblem(
-    varcount,
-    lower_bounds,
-    upper_bounds,
-    vdpts,
-    contpts,
-    continuity_tols,
-    pointpts,
-    initial_point_tols,
-    initial_values,
-    &data,
-    &alt_data);
-
-  // Create a new instance of IpoptApplication
-  //  (use a SmartPtr, not raw)
-  // We are using the factory, since this allows us to compile this
-  // example with an Ipopt Windows DLL
-  SmartPtr<IpoptApplication> app = IpoptApplicationFactory();
-  app->RethrowNonIpoptException(true);
-
-  // Change some options
-  // Note: The following choices are only examples, they might not be
-  //       suitable for your optimization problem.
-  app->Options()->SetStringValue("hessian_approximation", "limited-memory");
-  app->Options()->SetNumericValue("tol", 1e-5);
-  // app->Options()->SetStringValue("mu_strategy", "adaptive");
-  // app->Options()->SetStringValue("output_file", "ipopt.out");
-
-  app->Options()->SetStringValue("derivative_test", "first-order");
-
-  app->Options()->SetIntegerValue("max_iter", 5000);
-  // app->Options()->SetStringValue("jacobian_approximation", "finite-difference-values");
+            problem.add_inequality_constraint(optimization::continuity_constraint, (void*)cd, continuity_tols[n]);
+            contpts.push_back(cd);
 
 
-  // The following overwrites the default name (ipopt.opt) of the
-  // options file
-  // app->Options()->SetStringValue("option_file_name", "hs071.opt");
-
-  // Initialize the IpoptApplication and process the options
-  ApplicationReturnStatus status;
-  status = app->Initialize();
-  if (status != Solve_Succeeded) {
-    std::cout << std::endl << std::endl << "*** Error during initialization!" << std::endl;
-    return (int) status;
-  }
-
-  // Ask Ipopt to solve the problem
-  status = app->OptimizeTNLP(mynlp);
-
-  if (status == Solve_Succeeded) {
-    std::cout << std::endl << std::endl << "*** The problem solved!" << std::endl;
-  }
-  else {
-    std::cout << std::endl << std::endl << "*** The problem FAILED!" << std::endl;
-    //throw std::runtime_error("IpOpt failed!");
-  }
-
-  initial_values = mynlp->m_finalValues;
+          }
 
 
-#else
+        }
+        for(int n=start_curve; n<=end_curve; n++) {
+          for(int j=0; j<dynamic_constraint_degrees.size(); j++) {
+            int deg = dynamic_constraint_degrees[j];
+            double max_val = dynamic_constraint_max_values[j];
 
+            maxnvalue_data* dd = new maxnvalue_data;
+            dd->pdata = &data;
+            dd->cidx = n;
+            dd->degree = deg;
+            dd->max_val = max_val;
 
-
-      nlopt::result res;
-
-
-      try {
-        res = problem.optimize(initial_values, opt_f);
-      } catch(nlopt::roundoff_limited& e) {
-        cout << "roundoff_limited" << endl;
-      } catch(std::runtime_error& e) {
-        cout << "runtime error " << i << endl;
-        cout << e.what()<< endl;
-      }
-
-      cout << "nlopt result: " << res << " objective value: " << opt_f << endl;
-#endif
-
-
-      initidx = 0;
-      for(int j=0; j<trajectories[i].size(); j++) {
-        for(int k=0; k<ppc; k++) {
-          for(int p=0; p<problem_dimension; p++) {
-            trajectories[i][j][k][p] = initial_values[initidx++];
+            problem.add_inequality_constraint(optimization::maximum_nvalue_of_curve, (void*)dd, 0);
+            maxpts.push_back(dd);
           }
         }
-      }
+        vector<point_data*> pointpts;
 
+        for(int j=0; j<=max_initial_point_degree; j++) {
+          point_data* pd = new point_data;
+          pd->pdata = &data;
+          pd->point = trajectories[i].neval(min(ct, total_times[i]), j);
+          /*if(j==0) {
+            pd->point[0] += fRand(-0.002, 0.002);
+            pd->point[1] += fRand(-0.002, 0.002);
+          }*/
+          pd->time = min(ct, total_times[i]);
+          pd->degree = j;
 
-
-      // Sanity check of constraints:
-      vector<double> dummyGradient(initial_values.size());
-
-      for (auto& vd : vdpts) {
-        double val = optimization::voronoi_constraint(initial_values, dummyGradient, vd);
-        if (val > 1e-3) {
-          std::stringstream sstr;
-          sstr << "Voronoi constraint violated: " << val;
-          std::cout << sstr.str() << std::endl;
-          // throw std::runtime_error(sstr.str());
+          problem.add_inequality_constraint(optimization::point_constraint, (void*)pd, initial_point_tols[j]);
+          pointpts.push_back(pd);
         }
-      }
 
-      for (auto& od : obspts) {
-        double val = optimization::obstacle_constraint(initial_values, dummyGradient, od);
-        if (val > obstacle_tolerance) {
-          std::stringstream sstr;
-          sstr << "obstacle contraint violated: " << val;
-          std::cout << sstr.str() << std::endl;
-          // throw std::runtime_error(sstr.str());
+
+        /* if integral is less than this value, stop.*/
+        problem.set_stopval(integral_stopval);
+
+        /* if objective function changes relatively less than this value, stop.*/
+        problem.set_ftol_abs(relative_integral_stopval);
+
+        if(set_max_time) {
+          problem.set_maxtime(dt);
         }
-      }
-
-      for (auto& cd : contpts) {
-        double val = optimization::continuity_constraint(initial_values, dummyGradient, cd);
-        if (val > continuity_tols[cd->n]) {
-          std::stringstream sstr;
-          sstr << "continuity constraint violated: " << val << " (max: " << continuity_tols[cd->n] << ", degree: " << cd->n << ")";
-          std::cout << sstr.str() << std::endl;
-          // throw std::runtime_error(sstr.str());
-        }
-      }
-
-      for (auto& dd : maxpts) {
-        double val = optimization::maximum_nvalue_of_curve(initial_values, dummyGradient, dd);
-        if (val > 0) {
-          std::stringstream sstr;
-          sstr << "maximum_nvalue_of_curve constraint violated: " << val << " (max: " << 0 << ")";
-          std::cout << sstr.str() << std::endl;
-          // throw std::runtime_error(sstr.str());
-        }
-      }
-
-      for (auto& pd : pointpts) {
-        double val = optimization::point_constraint(initial_values, dummyGradient, pd);
-        if (val > initial_point_tols[pd->degree]) {
-          std::stringstream sstr;
-          sstr << "point constraint violated: " << val << " (max: " << initial_point_tols[pd->degree] << ")";
-          std::cout << sstr.str() << std::endl;
-          // throw std::runtime_error(sstr.str());
-        }
-      }
+        //problem.set_maxtime(5);
 
 
-
-      /*int a; cin >> a;*/
-
-      /*initidx = 0;
-      for(int j=0; j<trajectories[i].size(); j++) {
-        cout << trajectories[i][j].duration;
-        for(int k=0; k<trajectories[i][j].size(); k++) {
-          for(int p=0; p<trajectories[i][j][k].size(); p++) {
-            cout << "," << initial_values[initidx++];
+        vector<double> initial_values;
+        for(int j=0; j<trajectories[i].size(); j++) {
+          for(int k=0; k<ppc; k++) {
+            for(int p=0; p<problem_dimension; p++) {
+              initial_values.push_back(trajectories[i][j][k][p] + fRand(-0.004, 0.004));
+            }
           }
         }
-        cout << endl;
-      }
-      cout << endl << endl;*/
+        //initial_values[initial_values.size()-1]+=frand(-0.1, 0.1);
+
+        //cout << initial_values.size() << endl;
+
+        double opt_f;
+
+        int initidx = 0;
+        //problem.set_maxeval(1000);
+
+        /*for(int j=0; j<trajectories[i].size(); j++) {
+          cout << trajectories[i][j].duration;
+          for(int k=0; k<trajectories[i][j].size(); k++) {
+            for(int p=0; p<trajectories[i][j][k].size(); p++) {
+              cout << "," << initial_values[initidx++];
+            }
+          }
+          cout << endl;
+        }
+        cout << endl << endl;*/
+
+  #if 0
+
+    // Create a new instance of your nlp
+    //  (use a SmartPtr, not raw)
+    SmartPtr<IpOptProblem> mynlp = new IpOptProblem(
+      varcount,
+      lower_bounds,
+      upper_bounds,
+      vdpts,
+      contpts,
+      continuity_tols,
+      pointpts,
+      initial_point_tols,
+      initial_values,
+      &data,
+      &alt_data);
+
+    // Create a new instance of IpoptApplication
+    //  (use a SmartPtr, not raw)
+    // We are using the factory, since this allows us to compile this
+    // example with an Ipopt Windows DLL
+    SmartPtr<IpoptApplication> app = IpoptApplicationFactory();
+    app->RethrowNonIpoptException(true);
+
+    // Change some options
+    // Note: The following choices are only examples, they might not be
+    //       suitable for your optimization problem.
+    app->Options()->SetStringValue("hessian_approximation", "limited-memory");
+    app->Options()->SetNumericValue("tol", 1e-5);
+    // app->Options()->SetStringValue("mu_strategy", "adaptive");
+    // app->Options()->SetStringValue("output_file", "ipopt.out");
+
+    app->Options()->SetStringValue("derivative_test", "first-order");
+
+    app->Options()->SetIntegerValue("max_iter", 5000);
+    // app->Options()->SetStringValue("jacobian_approximation", "finite-difference-values");
+
+
+    // The following overwrites the default name (ipopt.opt) of the
+    // options file
+    // app->Options()->SetStringValue("option_file_name", "hs071.opt");
+
+    // Initialize the IpoptApplication and process the options
+    ApplicationReturnStatus status;
+    status = app->Initialize();
+    if (status != Solve_Succeeded) {
+      std::cout << std::endl << std::endl << "*** Error during initialization!" << std::endl;
+      return (int) status;
+    }
+
+    // Ask Ipopt to solve the problem
+    status = app->OptimizeTNLP(mynlp);
+
+    if (status == Solve_Succeeded) {
+      std::cout << std::endl << std::endl << "*** The problem solved!" << std::endl;
+    }
+    else {
+      std::cout << std::endl << std::endl << "*** The problem FAILED!" << std::endl;
+      //throw std::runtime_error("IpOpt failed!");
+    }
+
+    initial_values = mynlp->m_finalValues;
+
+
+  #else
 
 
 
-      cout << "before deletes" << endl;
+        nlopt::result res;
 
-      for(int j=0; j<vdpts.size(); j++) {
-        delete vdpts[j];
-      }
-      for(int j=0; j<obspts.size(); j++) {
-        delete obspts[j];
-      }
-      for(int j=0; j<contpts.size(); j++) {
-        delete contpts[j];
-      }
-      for(int j=0; j<pointpts.size(); j++) {
-        delete pointpts[j];
-      }
-      for(int j=0; j<maxpts.size(); j++) {
-        delete maxpts[j];
-      }
-      for(int j=0; j<svmoptpts.size(); j++) {
-        delete svmoptpts[j];
-      }
-      for(int j=0; j<svmobspts.size(); j++) {
-        delete svmobspts[j];
-      }
-      for(int j=0; j<svmrobotpts.size(); j++) {
-        delete svmrobotpts[j];
-      }
-      auto t1 = Time::now();
-      fsec fs = t1 - t0;
-      ms d = chrono::duration_cast<ms>(fs);
-      total_time_for_opt += d.count();
-      total_count_for_opt++;
-      cout << "optimization time: " << d.count() << "ms" << endl;
 
+        try {
+          res = problem.optimize(initial_values, opt_f);
+        } catch(nlopt::roundoff_limited& e) {
+          cout << "roundoff_limited" << endl;
+        } catch(std::runtime_error& e) {
+          cout << "runtime error " << i << endl;
+          cout << e.what()<< endl;
+        }
+
+        cout << "nlopt result: " << res << " objective value: " << opt_f << endl;
+  #endif
+
+
+        initidx = 0;
+        for(int j=0; j<trajectories[i].size(); j++) {
+          for(int k=0; k<ppc; k++) {
+            for(int p=0; p<problem_dimension; p++) {
+              trajectories[i][j][k][p] = initial_values[initidx++];
+            }
+          }
+        }
+
+
+
+        // Sanity check of constraints:
+        vector<double> dummyGradient(initial_values.size());
+
+        for (auto& vd : vdpts) {
+          double val = optimization::voronoi_constraint(initial_values, dummyGradient, vd);
+          if (val > 1e-3) {
+            std::stringstream sstr;
+            sstr << "Voronoi constraint violated: " << val;
+            std::cout << sstr.str() << std::endl;
+            // throw std::runtime_error(sstr.str());
+          }
+        }
+
+        for (auto& od : obspts) {
+          double val = optimization::obstacle_constraint(initial_values, dummyGradient, od);
+          if (val > obstacle_tolerance) {
+            std::stringstream sstr;
+            sstr << "obstacle contraint violated: " << val;
+            std::cout << sstr.str() << std::endl;
+            // throw std::runtime_error(sstr.str());
+          }
+        }
+
+        for (auto& cd : contpts) {
+          double val = optimization::continuity_constraint(initial_values, dummyGradient, cd);
+          if (val > continuity_tols[cd->n]) {
+            std::stringstream sstr;
+            sstr << "continuity constraint violated: " << val << " (max: " << continuity_tols[cd->n] << ", degree: " << cd->n << ")";
+            std::cout << sstr.str() << std::endl;
+            // throw std::runtime_error(sstr.str());
+          }
+        }
+
+        for (auto& dd : maxpts) {
+          double val = optimization::maximum_nvalue_of_curve(initial_values, dummyGradient, dd);
+          if (val > 0) {
+            std::stringstream sstr;
+            sstr << "maximum_nvalue_of_curve constraint violated: " << val << " (max: " << 0 << ")";
+            std::cout << sstr.str() << std::endl;
+            // throw std::runtime_error(sstr.str());
+          }
+        }
+
+        for (auto& pd : pointpts) {
+          double val = optimization::point_constraint(initial_values, dummyGradient, pd);
+          if (val > initial_point_tols[pd->degree]) {
+            std::stringstream sstr;
+            sstr << "point constraint violated: " << val << " (max: " << initial_point_tols[pd->degree] << ")";
+            std::cout << sstr.str() << std::endl;
+            // throw std::runtime_error(sstr.str());
+          }
+        }
+
+
+
+        /*int a; cin >> a;*/
+
+        /*initidx = 0;
+        for(int j=0; j<trajectories[i].size(); j++) {
+          cout << trajectories[i][j].duration;
+          for(int k=0; k<trajectories[i][j].size(); k++) {
+            for(int p=0; p<trajectories[i][j][k].size(); p++) {
+              cout << "," << initial_values[initidx++];
+            }
+          }
+          cout << endl;
+        }
+        cout << endl << endl;*/
+
+
+
+        cout << "before deletes" << endl;
+
+        for(int j=0; j<vdpts.size(); j++) {
+          delete vdpts[j];
+        }
+        for(int j=0; j<obspts.size(); j++) {
+          delete obspts[j];
+        }
+        for(int j=0; j<contpts.size(); j++) {
+          delete contpts[j];
+        }
+        for(int j=0; j<pointpts.size(); j++) {
+          delete pointpts[j];
+        }
+        for(int j=0; j<maxpts.size(); j++) {
+          delete maxpts[j];
+        }
+        for(int j=0; j<svmoptpts.size(); j++) {
+          delete svmoptpts[j];
+        }
+        for(int j=0; j<svmobspts.size(); j++) {
+          delete svmobspts[j];
+        }
+        for(int j=0; j<svmrobotpts.size(); j++) {
+          delete svmrobotpts[j];
+        }
+        auto t1 = Time::now();
+        fsec fs = t1 - t0;
+        ms d = chrono::duration_cast<ms>(fs);
+        total_time_for_opt += d.count();
+        total_count_for_opt++;
+        cout << "optimization time: " << d.count() << "ms" << endl;
+      }
+      
       for(double t = ct; t<min(total_t, ct+hor); t+=printdt) {
         vectoreuc ev = trajectories[i].eval(t);
         output_json["planned_trajs"][output_iter][i]["x"].push_back(ev[0]);

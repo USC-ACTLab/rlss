@@ -194,7 +194,7 @@ double optimization::pos_energy_combine_objective(const vector<double>& x, vecto
   int ppc = pdata.ppc;
   int cpts = pd*ppc;
 
-  double alpha_pos = 1;
+  double alpha_pos = 10;
   double alpha_energy = 0.01;
 
   for(int i=0; i<grad.size(); i++) {
