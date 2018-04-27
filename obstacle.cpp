@@ -102,12 +102,16 @@ double obstacle2D::closest_distance(vectoreuc& pt) {
   return mindist;
 }
 
-double obstacle2D::farthest_distance(vectoreuc& pt) {
+double obstacle2D::biggest_negative_distance(vectoreuc& pt) {
   double maxdist = -numeric_limits<double>::infinity();
 
   for(int i=0; i<chplanes.size(); i++) {
-    maxdist = max(maxdist, chplanes[i].dist(pt));
+    double dist = chplanes[i].dist(pt);
+    if(dist < 0) {
+      maxdist = max(maxdist, dist);
+    }
   }
+
 
   return maxdist;
 }

@@ -482,7 +482,7 @@ int main(int argc, char** argv) {
   edt distance_transform(0.01, -10, 10, -10, 10);
   distance_transform.construct(&obstacles);
 
-  edtv2 distance_transformv2(0.01, -10, 10, -10, 10, -0.3);
+  edtv2 distance_transformv2(0.01, -10, 10, -10, 10, -0.20);
   distance_transformv2.construct(&obstacles);
 
 
@@ -607,7 +607,9 @@ int main(int argc, char** argv) {
         aecombdata.edt = &edatacol;
         aecombdata.alt = &alt_data;
 
-        problem.set_min_objective(optimization::pos_energy_edt_combine_objective, (void*)&aecombdata);
+        //problem.set_min_objective(optimization::pos_energy_edt_combine_objective, (void*)&aecombdata);
+
+        problem.set_min_objective(optimization::integral_edt_combine_objective, (void*)&aecombdata);
 
 
         /* all control points should be in range [-10, 10].

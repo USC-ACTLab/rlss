@@ -6,6 +6,30 @@
 
 using namespace std;
 
+double optimization::integral_edt_combine_objective(const vector<double>& x, vector<double>& grad, void* f_data) {
+  double alpha_integral = 1;
+  double alpha_edt = 100;
+
+  alt_edt_combination_data& aedata = *((alt_edt_combination_data*) f_data);
+
+  edt_collision_data* edata = aedata.edt;
+  problem_data* pdata = edata->pdata;
+
+  vector<double> innergrad(grad.size());
+
+  double res = alpha_edt * optimization::edt_cost(x, innergrad, (void*)edata);
+
+  for(int i=0; i<grad.size(); i++)
+    grad[i] = innergrad[i] * alpha_edt;
+
+  res += alpha_integral * optimization::objective(x, innergrad, (void*) pdata);
+
+  for(int i=0; i<grad.size(); i++)
+    grad[i] += innergrad[i] * alpha_integral;
+
+  return res;
+}
+
 double optimization::pos_energy_edt_combine_objective(const vector<double>& x, vector<double>& grad, void* f_data) {
   double alpha_poseng = 1;
   double alpha_edt = 100;
@@ -337,6 +361,10 @@ double optimization::objective(const vector<double>& x, vector<double>& grad, vo
     nt.add_curve(nc);
   }
 
+  for(int i=0; i<grad.size(); i++) {
+    grad[i] = 0;
+  }
+
   nt -= ot;
   double result = nt.integrate(ct, ct+T, grad);
   //cout << ct << ct+T << " objective: " << result << endl;
@@ -400,7 +428,7 @@ double optimization::edt_constraint(const vector<double>& x, vector<double>& gra
   }
 
 
-  double obsdt = 0.003;
+  double obsdt = 0.005;
 
   double constraint_result = 0;
 

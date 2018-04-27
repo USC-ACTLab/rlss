@@ -95,6 +95,7 @@ class optimization {
     static double pos_energy_combine_objective(const vector<double>& x, vector<double>& grad, void* f_data);
     static double edt_cost(const vector<double>& x, vector<double>& grad, void* f_data);
     static double pos_energy_edt_combine_objective(const vector<double>& x, vector<double>& grad, void* f_data);
+    static double integral_edt_combine_objective(const vector<double>& x, vector<double>& grad, void* f_data);
 
 
     static double voronoi_constraint(const vector<double>& x, vector<double>& grad, void* v_data);

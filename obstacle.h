@@ -20,8 +20,8 @@ class obstacle2D {
     void convex_hull();
     void ch_planes();
     bool point_inside(vectoreuc& pt);
-    double closest_distance(vectoreuc& pt);
-    double farthest_distance(vectoreuc& pt);
+    double closest_distance(vectoreuc& pt); // should be called only when point is inside
+    double biggest_negative_distance(vectoreuc& pt); // should be called only when point is outside
 };
 
 #endif

@@ -33,10 +33,10 @@ void edtv2::construct(vector<obstacle2D>* obstacles) {
           }
         } else {
           if(!dist_changed) {
-            dist = obs.farthest_distance(pt);
+            dist = obs.biggest_negative_distance(pt);
             dist_changed = true;
           } else {
-            dist = max(dist, obs.farthest_distance(pt));
+            dist = max(dist, obs.biggest_negative_distance(pt));
           }
         }
       }
