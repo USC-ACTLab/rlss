@@ -20,6 +20,7 @@
 #include "svmoptimization.h"
 #include "utility.h"
 #include "edt.h"
+#include "edtv2.h"
 
 #include <coin/IpTNLP.hpp>
 #include <coin/IpIpoptApplication.hpp>
@@ -481,6 +482,9 @@ int main(int argc, char** argv) {
   edt distance_transform(0.01, -10, 10, -10, 10);
   distance_transform.construct(&obstacles);
 
+  edtv2 distance_transformv2(0.01, -10, 10, -10, 10, -0.3);
+  distance_transformv2.construct(&obstacles);
+
 
 
   vector<double> total_times(original_trajectories.size());
@@ -583,14 +587,28 @@ int main(int argc, char** argv) {
 
       //  problem.set_min_objective(optimization::alt_objective, (void*)&alt_data);
 
-        problem.set_min_objective(optimization::pos_energy_combine_objective, (void*)&alt_data);
+      //  problem.set_min_objective(optimization::pos_energy_combine_objective, (void*)&alt_data);
 
 
         edt_data edata;
         edata.pdata = &data;
         edata.distance_transform = &distance_transform;
 
-        problem.add_inequality_constraint(optimization::edt_constraint, (void*)&edata, 0.0000001);
+        //problem.add_inequality_constraint(optimization::edt_constraint, (void*)&edata, 0.0000001);
+
+
+        edt_collision_data edatacol;
+        edatacol.pdata = &data;
+        edatacol.distance_transform = &distance_transformv2;
+
+
+        alt_edt_combination_data aecombdata;
+
+        aecombdata.edt = &edatacol;
+        aecombdata.alt = &alt_data;
+
+        problem.set_min_objective(optimization::pos_energy_edt_combine_objective, (void*)&aecombdata);
+
 
         /* all control points should be in range [-10, 10].
           since curves are bezier, resulting curve will be inside the corresponding rectangle
@@ -1082,7 +1100,7 @@ int main(int argc, char** argv) {
         total_count_for_opt++;
         cout << "optimization time: " << d.count() << "ms" << endl;
       }
-      
+
       for(double t = ct; t<min(total_t, ct+hor); t+=printdt) {
         vectoreuc ev = trajectories[i].eval(t);
         output_json["planned_trajs"][output_iter][i]["x"].push_back(ev[0]);

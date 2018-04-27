@@ -6,6 +6,7 @@
 #include "hyperplane.h"
 #include "vectoreuc.h"
 #include "edt.h"
+#include "edtv2.h"
 
 using namespace std;
 
@@ -26,6 +27,18 @@ class alt_obj_data {
     vectoreuc* pos;
     vectoreuc* vel;
     vectoreuc* acc;
+};
+
+class edt_collision_data {
+  public:
+    problem_data* pdata;
+    edtv2* distance_transform;
+};
+
+class alt_edt_combination_data {
+  public:
+    edt_collision_data* edt;
+    alt_obj_data* alt;
 };
 
 /*
@@ -80,6 +93,9 @@ class optimization {
     static double alt_objective(const vector<double>& x, vector<double>& grad, void* f_data);
     static double energy_objective(const vector<double>& x, vector<double>& grad, void* f_data);
     static double pos_energy_combine_objective(const vector<double>& x, vector<double>& grad, void* f_data);
+    static double edt_cost(const vector<double>& x, vector<double>& grad, void* f_data);
+    static double pos_energy_edt_combine_objective(const vector<double>& x, vector<double>& grad, void* f_data);
+
 
     static double voronoi_constraint(const vector<double>& x, vector<double>& grad, void* v_data);
     static double obstacle_constraint(const vector<double>& x, vector<double>& grad, void* o_data);

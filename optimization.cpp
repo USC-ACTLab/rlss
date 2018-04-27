@@ -3,8 +3,89 @@
 #include <iostream>
 #include <limits>
 #include "bezier_mathematica.h"
+
 using namespace std;
 
+double optimization::pos_energy_edt_combine_objective(const vector<double>& x, vector<double>& grad, void* f_data) {
+  double alpha_poseng = 1;
+  double alpha_edt = 100;
+
+  alt_edt_combination_data& aedata = *((alt_edt_combination_data*) f_data);
+
+  edt_collision_data* edata = aedata.edt;
+  alt_obj_data* adata = aedata.alt;
+
+  vector<double> innergrad(grad.size());
+
+  double res = alpha_edt * optimization::edt_cost(x, innergrad, (void*)edata);
+
+  for(int i=0; i<grad.size(); i++)
+    grad[i] = innergrad[i] * alpha_edt;
+
+  res += alpha_poseng * optimization::pos_energy_combine_objective(x, innergrad, (void*)adata);
+
+  for(int i=0; i<grad.size(); i++)
+    grad[i] += innergrad[i] * alpha_poseng;
+
+  return res;
+}
+
+double optimization::edt_cost(const vector<double>& x, vector<double>& grad, void* f_data) {
+  edt_collision_data& edata = *((edt_collision_data*) f_data);
+
+  problem_data& pdata = *(edata.pdata);
+
+  double ct = pdata.current_t;
+  double hor = pdata.time_horizon;
+  trajectory& ot = *(pdata.original_trajectory);
+  int pd = pdata.problem_dimension;
+  int ppc = pdata.ppc;
+  double tt = pdata.tt;
+
+  edtv2 distance_transform = *(edata.distance_transform);
+
+  int cpts = pd * ppc;
+
+  for(int i=0; i<grad.size(); i++)
+    grad[i] = 0;
+
+
+
+  double edtdt = 0.01;
+
+  double cost = 0;
+
+  for(double t = ct; t<=min(ct+hor, tt); t+=edtdt) {
+    pair<int, double> cdata = ot.curvedata(t);
+
+    int cidx = cdata.first;
+    double T = cdata.second;
+
+    vector<double> P(cpts);
+
+    for(int i=0; i<ppc; i++) {
+      for(int j=0; j<pd; j++) {
+        P[i*pd+j] = x[cidx*cpts+i*pd+j];
+      }
+    }
+
+    vector<double> innergrad;
+    if(grad.size() > 0)
+      innergrad.resize(cpts);
+
+    cost += distance_transform.cost(P, ot[cidx].duration, T, innergrad) * edtdt;
+
+    if(innergrad.size() > 0) {
+      for(int i=0; i<ppc; i++) {
+        for(int j=0; j<pd; j++) {
+          grad[cidx*cpts + i*pd + j] += innergrad[i*pd + j] * edtdt;
+        }
+      }
+    }
+  }
+
+  return cost;
+}
 
 double optimization::energy_objective(const vector<double>& x, vector<double>& grad, void* f_data) {
   //cout << "energy start" << endl;

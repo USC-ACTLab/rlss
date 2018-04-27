@@ -21,12 +21,13 @@ class edtv2 {
     positive in inside, negative in outside
     */
     vector<vector<double> > grid;
+    double tau; // if distance is less than this no problem, if not (pt - tau)^2 is the cost, (is negative.)
 
   public:
 
-    edtv2(double ss, double xm, double xM, double ym, double yM);
+    edtv2(double ss, double xm, double xM, double ym, double yM, double T);
     void construct(vector<obstacle2D>*);
-    double interpolate_for(vector<double>& controlpts, double dur, double t, vector<double>& grad);
+    double cost(vector<double>& controlpts, double duration, double t, vector<double>& grad);
 
 };
 
