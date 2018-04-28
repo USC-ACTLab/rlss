@@ -275,14 +275,14 @@ int main(int argc, char** argv) {
 
     //  problem.set_min_objective(optimization::alt_objective, (void*)&alt_data);
 
-      problem.set_min_objective(optimization::pos_energy_combine_objective, (void*)&alt_data);
+      //problem.set_min_objective(optimization::pos_energy_combine_objective, (void*)&alt_data);
 
 
       edt_data edata;
       edata.pdata = &data;
       edata.distance_transform = &distance_transform;
 
-      problem.add_inequality_constraint(optimization::edt_constraint, (void*)&edata, 0.0000001);
+    //  problem.add_inequality_constraint(optimization::edt_constraint, (void*)&edata, 0.0000001);
 
 
       edt_collision_data edatacol;
@@ -295,7 +295,7 @@ int main(int argc, char** argv) {
       aecombdata.edt = &edatacol;
       aecombdata.alt = &alt_data;
 
-      //problem.set_min_objective(optimization::pos_energy_edt_combine_objective, (void*)&aecombdata);
+      problem.set_min_objective(optimization::pos_energy_edt_combine_objective, (void*)&aecombdata);
 
       vector<double> lower_bounds(varcount);
       vector<double> upper_bounds(varcount);
