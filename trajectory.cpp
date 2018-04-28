@@ -4,9 +4,13 @@
 
 using namespace std;
 
+trajectory::trajectory(): total_duration(0) {
+
+}
 
 void trajectory::add_curve(curve& crv) {
   curves.push_back(crv);
+  total_duration += crv.duration;
 }
 
 curve& trajectory::operator[](int idx) {
@@ -44,6 +48,7 @@ vectoreuc trajectory::neval(double t, int n) {
   pair<int, double> cdata = curvedata(t);
   int i = cdata.first;
   t = cdata.second;
+
 
   return curves[i].neval(t, n);
 }

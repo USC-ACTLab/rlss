@@ -7,6 +7,9 @@ using namespace std;
 class trajectory {
   public:
       vector<curve> curves;
+      double total_duration;
+
+      trajectory();
       void add_curve(curve& crv);
       curve& operator[](int idx);
       int size();

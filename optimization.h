@@ -17,8 +17,11 @@ class problem_data {
     double time_horizon;
     double tt;
     trajectory* original_trajectory;
+    trajectory* current_trajectory;
     int problem_dimension;
     int ppc;
+    int curve_count;
+    double time_per_curve;
 };
 
 class alt_obj_data {
@@ -89,28 +92,23 @@ class edt_data {
 
 class optimization {
   public:
-    static double objective(const vector<double>& x, vector<double>& grad, void* f_data);
     static double alt_objective(const vector<double>& x, vector<double>& grad, void* f_data);
     static double energy_objective(const vector<double>& x, vector<double>& grad, void* f_data);
     static double pos_energy_combine_objective(const vector<double>& x, vector<double>& grad, void* f_data);
     static double edt_cost(const vector<double>& x, vector<double>& grad, void* f_data);
     static double pos_energy_edt_combine_objective(const vector<double>& x, vector<double>& grad, void* f_data);
-    static double integral_edt_combine_objective(const vector<double>& x, vector<double>& grad, void* f_data);
 
 
     static double voronoi_constraint(const vector<double>& x, vector<double>& grad, void* v_data);
-    static double obstacle_constraint(const vector<double>& x, vector<double>& grad, void* o_data);
 
     static double edt_constraint(const vector<double>& x, vector<double>& grad, void* e_data);
 
     /* requires distance between two points to be zero, use it with add_equality_constraint*/
     static double continuity_constraint(const vector<double>& x, vector<double>& grad, void* c_data);
 
-    /* enforces being in the given point at the given time */
+
     static double point_constraint(const vector<double>& x, vector<double>& grad, void* p_data);
 
-    /*calculate the maximum value of nth derivative of given curve*/
-    static double maximum_nvalue_of_curve(const vector<double>& x, vector<double>& grad, void* d_data);
 };
 
 
