@@ -49,6 +49,10 @@ python3 vis.py ../build/res.json save
 
 Saving waits until frame number 300 (3 seconds). Until that time, zoom the simulation for better images.
 
+Visualize bezier curves
+```
+python3 bezier.py ../test_data/trajectories/head_to_head_trajs/curve1.csv
+```
 
 ## Profiling
 
