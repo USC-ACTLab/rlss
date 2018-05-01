@@ -98,7 +98,7 @@ public:
           -1,    7,  -21,   35,  -35,  21, -7, 1;
   }
 
-  void addMinDerivativeSquared(
+  void minDerivativeSquared(
     double lambda_vel, double lambda_acc, double lambda_jerk, double lambda_snap)
   {
     Matrix Q = lambda_vel * Qvel;// + lambda_acc * Qacc + lambda_jerk * Qjerk + lambda_snap * Qsnap;
@@ -115,6 +115,19 @@ public:
     // std::cout << m_H;
   }
 
+  // Expand[(Limit[D[f1[t], {t, 0}], t -> 1] - X)^2]
+  // X^2 - 2 X y[7] + y[7]^2
+  void endCloseTo(
+    double lambda,
+    const Vector& value)
+  {
+    for (size_t d = 0; d < m_dimension; ++d) {
+      size_t idx = column(m_numPieces - 1, d) + 7;
+      m_H(idx, idx) += 2 * lambda; // objective function is 1/2 x'Hx => multiply by 2 here
+      m_g(idx) += -2 * value(d) * lambda;
+    }
+  }
+
   const Matrix& H() const
   {
     return m_H;
@@ -123,6 +136,12 @@ public:
   const Vector& g() const
   {
     return m_g;
+  }
+
+private:
+  size_t column(size_t piece, size_t dimension)
+  {
+    return dimension * 8 * m_numPieces + piece * 8;
   }
 
 private:
@@ -442,7 +461,8 @@ int main()
 
   // our previous paper uses: 1 * vel + 0 * acc + 5e-3 * jerk
   ObjectiveBuilder ob(dimension, numPieces);
-  ob.addMinDerivativeSquared(1, 0, 5e-3, 0);
+  ob.minDerivativeSquared(1, 0, 5e-3, 0);
+  ob.endCloseTo(100, waypoints.row(3));
 
   // y are our control points (decision variable)
   // Vector y(numVars);
@@ -462,7 +482,7 @@ int main()
   ConstraintBuilder cb(dimension, numPieces);
 
   cb.addConstraintBeginning(0, 0, waypoints.row(0)); // Position
-  cb.addConstraintEnd(2, 0, waypoints.row(3)); // Position
+  // cb.addConstraintEnd(2, 0, waypoints.row(3)); // Position
 
   Vector normal(dimension);
   normal << 0, 1;
@@ -470,6 +490,9 @@ int main()
   // for (size_t i = 0; i < 1000; ++i) {
   //   cb.addHyperplane(1, normal, -2 + i * 0.1);
   // }
+
+  // test endCloseTo objective
+  cb.addHyperplane(2, normal, -1);
 
 
   for (size_t i = 0; i < numPieces; ++i) {
