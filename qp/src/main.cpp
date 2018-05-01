@@ -29,6 +29,143 @@ bool isPositiveDefinite(const Matrix& A)
   return true;
 }
 
+class ObjectiveBuilder
+{
+public:
+  ObjectiveBuilder(
+    size_t dimension,
+    size_t numPieces)
+    : m_dimension(dimension)
+    , m_numPieces(numPieces)
+    , m_numVars(dimension * 8 * numPieces)
+    , m_H(m_numVars, m_numVars)
+    , m_g(m_numVars)
+  {
+    m_H.setZero();
+    m_g.setZero();
+  }
+
+  static void Init()
+  {
+    Qvel.resize(8,8);
+    Qvel <<   0, 0, 0, 0, 0, 0, 0, 0,
+              0, 1, 1, 1, 1, 1, 1, 1,
+              0, 1, 4/3., 3/2., 8/5., 5/3., 12/7., 7/4.,
+              0, 1, 3/2., 9/5., 2, 15/7., 9/4., 7/3.,
+              0, 1, 8/5., 2, 16/7., 5/2., 8/3., 14/5.,
+              0, 1, 5/3., 15/7., 5/2., 25/9., 3, 35/11.,
+              0, 1, 12/7., 9/4., 8/3., 3, 36/11., 7/2.,
+              0, 1, 7/4., 7/3., 14/5., 35/11., 7/2., 49/13.;
+
+    Qacc.resize(8,8);
+    Qacc <<   0, 0, 0, 0, 0, 0, 0, 0,
+              0, 0, 0, 0, 0, 0, 0, 0,
+              0, 0, 4, 6, 8, 10, 12, 14,
+              0, 0, 6, 12, 18, 24, 30, 36,
+              0, 0, 8, 18, (144/5.), 40, (360/7.), 63,
+              0, 0, 10, 24, 40, (400/7.), 75, (280/3.),
+              0, 0, 12, 30, (360/7.), 75, 100, 126,
+              0, 0, 14, 36, 63, (280/3.), 126, (1764/11.);
+
+    Qjerk.resize(8,8);
+    Qjerk <<  0, 0, 0, 0, 0, 0, 0, 0,
+              0, 0, 0, 0, 0, 0, 0, 0,
+              0, 0, 0, 0, 0, 0, 0, 0,
+              0, 0, 0, 36, 72, 120, 180, 252,
+              0, 0, 0, 72, 192, 360, 576, 840,
+              0, 0, 0, 120, 360, 720, 1200, 1800,
+              0, 0, 0, 180, 576, 1200, 14400/7., 3150,
+              0, 0, 0, 252, 840, 1800, 3150, 4900;
+
+    Qsnap.resize(8,8);
+    Qsnap <<    0,    0,    0,    0,    0,     0,     0,      0,
+                0,    0,    0,    0,    0,     0,     0,      0,
+                0,    0,    0,    0,    0,     0,     0,      0,
+                0,    0,    0,    0,    0,     0,     0,      0,
+                0,    0,    0,    0,  576,  1440,  2880,   5040,
+                0,    0,    0,    0, 1440,  4800, 10800,  20160,
+                0,    0,    0,    0, 2880, 10800, 25920,  50400,
+                0,    0,    0,    0, 5040, 20160, 50400, 100800;
+
+    B.resize(8,8);
+    B <<   1,    0,    0,    0,    0,   0,  0, 0,
+          -7,    7,    0,    0,    0,   0,  0, 0,
+          21,  -42,   21,    0,    0,   0,  0, 0,
+         -35,  105, -105,   35,    0,   0,  0, 0,
+          35, -140,  210, -140,   35,   0,  0, 0,
+         -21,  105, -210,  210, -105,  21,  0, 0,
+           7,  -42,  105, -140,  105, -42,  7, 0,
+          -1,    7,  -21,   35,  -35,  21, -7, 1;
+  }
+
+  void addMinDerivativeSquared(
+    double lambda_vel, double lambda_acc, double lambda_jerk, double lambda_snap)
+  {
+    Matrix Q = lambda_vel * Qvel;// + lambda_acc * Qacc + lambda_jerk * Qjerk + lambda_snap * Qsnap;
+
+    Matrix H_1d_curve = B.transpose() * Q * B;
+
+    std::cout << H_1d_curve << std::endl;
+
+    // H is just blockdiagonal of H_1d_curve
+    for (size_t i = 0; i < m_numVars; i+=8) {
+      m_H.block(i, i, 8, 8) += H_1d_curve;
+    }
+
+    // std::cout << m_H;
+  }
+
+  const Matrix& H() const
+  {
+    return m_H;
+  }
+
+  const Vector& g() const
+  {
+    return m_g;
+  }
+
+private:
+  // static Matrix Qvel = (Matrix(8, 8) <<
+  //   0, 0, 0, 0, 0, 0, 0, 0,
+  //   0, 1, 1, 1, 1, 1, 1, 1,
+  //   0, 1, 4/3, 3/2, 8/5, 5/3, 12/7, 7/4,
+  //   0, 1, 3/2, 9/5, 2, 15/7, 9/4, 7/3,
+  //   0, 1, 8/5, 2, 16/7, 5/2, 8/3, 14/5,
+  //   0, 1, 5/3, 15/7, 5/2, 25/9, 3, 35/11,
+  //   0, 1, 12/7, 9/4, 8/3, 3, 36/11, 7/2,
+  //   0, 1, 7/4, 7/3, 14/5, 35/11, 7/2, 49/13
+  // ).finished();
+
+  // static Matrix Qvel = [] {
+  //   Matrix tmp(8, 8);
+  //   tmp << 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16;
+  //   return tmp;
+  // }();
+
+
+  static Matrix Qvel;
+  static Matrix Qacc;
+  static Matrix Qjerk;
+  static Matrix Qsnap;
+  static Matrix B;
+
+
+private:
+  size_t m_dimension;
+  size_t m_numPieces;
+  const size_t m_numVars;
+
+  Matrix m_H;
+  Vector m_g;
+};
+
+Matrix ObjectiveBuilder::Qvel;
+Matrix ObjectiveBuilder::Qacc;
+Matrix ObjectiveBuilder::Qjerk;
+Matrix ObjectiveBuilder::Qsnap;
+Matrix ObjectiveBuilder::B;
+
 class ConstraintBuilder
 {
 public:
@@ -42,97 +179,63 @@ public:
   }
 
   // adds a constraint for a fixed position at the beginning of the specified piece
-  void addPositionConstraintBeginning(
+  // derivative 0 => position; 1 => velocity, etc.
+  void addConstraintBeginning(
     size_t piece,
-    const Vector& position)
+    size_t derivative,
+    const Vector& value)
   {
-    assert(position.size() == m_dimension);
+    assert(value.size() == m_dimension);
+    assert(derivative < 8);
     size_t idx = addConstraints(m_dimension);
 
     for (size_t d = 0; d < m_dimension; ++d) {
-      m_A(idx + d, column(piece, d) + 0) = 1;
-      m_lbA(idx + d) = position(d);
-      m_ubA(idx + d) = position(d);
+      for (size_t i = 0; i < 8; ++i) {
+        m_A(idx + d, column(piece, d) + i) = derivativeBeginning[derivative][i];
+      }
+      m_lbA(idx + d) = value(d);
+      m_ubA(idx + d) = value(d);
     }
   }
 
   // adds a constraint for a fixed position at the end of the specified piece
-  void addPositionConstraintEnd(
+  // derivative 0 => position; 1 => velocity, etc.
+  void addConstraintEnd(
     size_t piece,
-    const Vector& position)
+    size_t derivative,
+    const Vector& value)
   {
-    assert(position.size() == m_dimension);
+    assert(value.size() == m_dimension);
+    assert(derivative < 8);
     size_t idx = addConstraints(m_dimension);
 
     for (size_t d = 0; d < m_dimension; ++d) {
-      m_A(idx + d, column(piece, d) + 7) = 1;
-      m_lbA(idx + d) = position(d);
-      m_ubA(idx + d) = position(d);
+      for (size_t i = 0; i < 8; ++i) {
+        m_A(idx + d, column(piece, d) + i) = derivativeEnd[derivative][i];
+      }
+      m_lbA(idx + d) = value(d);
+      m_ubA(idx + d) = value(d);
     }
   }
 
-  // adds a constraint for a fixed velocity at the beginning of the specified piece
-  void addVelocityConstraintBeginning(
-    size_t piece,
-    const Vector& velocity)
-  {
-    assert(velocity.size() == m_dimension);
-    size_t idx = addConstraints(m_dimension);
-
-    for (size_t d = 0; d < m_dimension; ++d) {
-      m_A(idx + d, column(piece, d) + 0) = -7;
-      m_A(idx + d, column(piece, d) + 1) = 7;
-      m_lbA(idx + d) = velocity(d);
-      m_ubA(idx + d) = velocity(d);
-    }
-  }
-
-  // adds a constraint for a fixed velocity at the end of the specified piece
-  void addVelocityConstraintEnd(
-    size_t piece,
-    const Vector& velocity)
-  {
-    assert(velocity.size() == m_dimension);
-    size_t idx = addConstraints(m_dimension);
-
-    for (size_t d = 0; d < m_dimension; ++d) {
-      m_A(idx + d, column(piece, d) + 6) = -7;
-      m_A(idx + d, column(piece, d) + 7) = 7;
-      m_lbA(idx + d) = velocity(d);
-      m_ubA(idx + d) = velocity(d);
-    }
-  }
-
-  // ensures that position is identical for firstPiece and firstPiece+1
-  void addContPosition(size_t firstPiece)
+  // ensures that the specified derivative is identical for firstPiece and firstPiece+1
+  // derivative 0 => position; 1 => velocity, etc.
+  void addContinuity(
+    size_t firstPiece,
+    size_t derivative)
   {
     assert(firstPiece < m_numPieces - 1);
     size_t idx = addConstraints(m_dimension);
 
     for (size_t d = 0; d < m_dimension; ++d) {
-      // position of end of first piece
-      m_A(idx + d, column(firstPiece, d) + 7) = 1;
-      // negative position of beginning of next piece
-      m_A(idx + d, column(firstPiece+1, d) + 0) = -1;
-
-      m_lbA(idx + d) = 0;
-      m_ubA(idx + d) = 0;
-    }
-  }
-
-  // ensures that velocity is identical for firstPiece and firstPiece+1
-  void addContVelocity(size_t firstPiece)
-  {
-    assert(firstPiece < m_numPieces - 1);
-    size_t idx = addConstraints(m_dimension);
-
-    for (size_t d = 0; d < m_dimension; ++d) {
-      // velocity of end of first piece
-      m_A(idx + d, column(firstPiece, d) + 6) = -7;
-      m_A(idx + d, column(firstPiece, d) + 7) = 7;
-      // negative velocity of beginning of next piece
-      m_A(idx + d, column(firstPiece+1, d) + 0) = 7;
-      m_A(idx + d, column(firstPiece+1, d) + 1) = -7;
+      // derivative of end of first piece
+      for (size_t i = 0; i < 8; ++i) {
+        m_A(idx + d, column(firstPiece, d) + i) = derivativeEnd[derivative][i];
+      }
+      // negative derivative of beginning of next piece
+      for (size_t i = 0; i < 8; ++i) {
+        m_A(idx + d, column(firstPiece+1, d) + i) = -derivativeBeginning[derivative][i];
+      }
 
       m_lbA(idx + d) = 0;
       m_ubA(idx + d) = 0;
@@ -191,6 +294,47 @@ private:
   }
 
 private:
+  // Limit[D[f1[t], {t, 0}], t -> 0]: y[0]
+  // Limit[D[f1[t], {t, 1}], t -> 0]: -7 y[0] + 7 y[1]
+  // Limit[D[f1[t], {t, 2}], t -> 0]: 42 y[0] - 84 y[1] + 42 y[2]
+  // Limit[D[f1[t], {t, 3}], t -> 0]: -210 y[0] + 630 y[1] - 630 y[2] + 210 y[3]
+  // Limit[D[f1[t], {t, 4}], t -> 0]: 840 y[0] - 3360 y[1] + 5040 y[2] - 3360 y[3] + 840 y[4]
+  // Limit[D[f1[t], {t, 5}], t -> 0]:-2520 y[0] + 12600 y[1] - 25200 y[2] + 25200 y[3] - 12600 y[4] + 2520 y[5]
+  // Limit[D[f1[t], {t, 6}], t -> 0]: 5040 y[0] - 30240 y[1] + 75600 y[2] - 100800 y[3] + 75600 y[4] - 30240 y[5] + 5040 y[6]
+  // Limit[D[f1[t], {t, 7}], t -> 0]: -5040 y[0] + 35280 y[1] - 105840 y[2] + 176400 y[3] - 176400 y[4] + 105840 y[5] - 35280 y[6] + 5040 y[7]
+  static constexpr const double derivativeBeginning[8][8] = {
+    {1 , 0, 0, 0, 0, 0, 0, 0},
+    {-7, 7, 0, 0, 0, 0, 0, 0},
+    {42,-84, 42, 0, 0, 0, 0, 0},
+    {-210, 630, -630, 210, 0, 0, 0, 0},
+    {840, -3360, 5040, -3360, 840, 0, 0, 0},
+    {-2520, 12600, -25200, 25200, -12600, 2520, 0, 0},
+    {5040, -30240, 75600, -100800, 75600, -30240, 5040, 0},
+    {-5040, 35280, -105840, 176400, -176400, 105840, -35280, 5040}
+  };
+
+
+  // Limit[D[f1[t], {t, 0}], t -> 1]: y[7]
+  // Limit[D[f1[t], {t, 1}], t -> 1]: -7 y[6] + 7 y[7]
+  // Limit[D[f1[t], {t, 2}], t -> 1]: 42 y[5] - 84 y[6] + 42 y[7]
+  // Limit[D[f1[t], {t, 3}], t -> 1]: -210 y[4] + 630 y[5] - 630 y[6] + 210 y[7]
+  // Limit[D[f1[t], {t, 4}], t -> 1]: 840 y[3] - 3360 y[4] + 5040 y[5] - 3360 y[6] + 840 y[7]
+  // Limit[D[f1[t], {t, 5}], t -> 1]: -2520 y[2] + 12600 y[3] - 25200 y[4] + 25200 y[5] - 12600 y[6] + 2520 y[7]
+  // Limit[D[f1[t], {t, 6}], t -> 1]: 5040 y[1] - 30240 y[2] + 75600 y[3] - 100800 y[4] + 75600 y[5] - 30240 y[6] + 5040 y[7]
+  // Limit[D[f1[t], {t, 7}], t -> 1]: -5040 y[0] + 35280 y[1] - 105840 y[2] + 176400 y[3] - 176400 y[4] + 105840 y[5] - 35280 y[6] + 5040 y[7]
+  static constexpr double derivativeEnd[8][8] = {
+    {0 , 0, 0, 0, 0, 0, 0, 1},
+    {0, 0, 0, 0, 0, 0, -7, 7},
+    {0, 0, 0, 0, 0, 42,-84, 42},
+    {0, 0, 0, 0, -210, 630, -630, 210},
+    {0, 0, 0, 840, -3360, 5040, -3360, 840},
+    {0, 0, -2520, 12600, -25200, 25200, -12600, 2520},
+    {0, 5040, -30240, 75600, -100800, 75600, -30240, 5040},
+    {-5040, 35280, -105840, 176400, -176400, 105840, -35280, 5040}
+  };
+
+
+private:
   size_t m_dimension;
   size_t m_numPieces;
   const size_t m_numVars;
@@ -200,43 +344,26 @@ private:
   Vector m_ubA;
 };
 
+constexpr double ConstraintBuilder::derivativeBeginning[8][8];
+constexpr double ConstraintBuilder::derivativeEnd[8][8];
+
 int main()
 {
   // Matrix B: converts between Bezier and polynomial trajectories
-  Matrix B(8, 8);
-  B <<   1,    0,    0,    0,    0,   0,  0, 0,
-        -7,    7,    0,    0,    0,   0,  0, 0,
-        21,  -42,   21,    0,    0,   0,  0, 0,
-       -35,  105, -105,   35,    0,   0,  0, 0,
-        35, -140,  210, -140,   35,   0,  0, 0,
-       -21,  105, -210,  210, -105,  21,  0, 0,
-         7,  -42,  105, -140,  105, -42,  7, 0,
-        -1,    7,  -21,   35,  -35,  21, -7, 1;
+
+  ObjectiveBuilder::Init();
+
+
+
 
   // Matrix BI = B.inverse();
   // std::cout << BI << std::endl;
 
   // Matrix Q: cost function (e.g., snap: D[p[t], {t, 4}]^2)
-  Matrix Qsnap(8, 8);
-  Qsnap <<    0,    0,    0,    0,    0,     0,     0,      0,
-              0,    0,    0,    0,    0,     0,     0,      0,
-              0,    0,    0,    0,    0,     0,     0,      0,
-              0,    0,    0,    0,    0,     0,     0,      0,
-              0,    0,    0,    0,  576,  1440,  2880,   5040,
-              0,    0,    0,    0, 1440,  4800, 10800,  20160,
-              0,    0,    0,    0, 2880, 10800, 25920,  50400,
-              0,    0,    0,    0, 5040, 20160, 50400, 100800;
 
-  // TODO: not yet verified
-  Matrix Qvel(8, 8);
-  Qvel <<    0,    0,     0,     0,     0,     0,     0,      0,
-              0,    1,     1,     1,     1,     1,     1,      1,
-              0,    1,  4/3.,  3/2.,16/10., 10/6.,24/14.,   7/4.,
-              0,    1,  3/2.,  9/5.,     2,30/14.,  9/4.,  14/6.,
-              0,    1,16/10.,     2, 16/7.,  5/2., 16/6., 28/10.,
-              0,    1, 10/6.,30/14.,  5/2., 25/9.,     3, 70/22.,
-              0,    1,24/14.,  9/4., 16/6.,     3,36/11.,   7/2.,
-              0,    1,  7/4., 14/6.,28/10.,70/22.,  7/2., 49/13.;
+
+
+
 
   // our previous paper uses: 1 * vel + 0 * acc + 5e-3 * jerk
 
@@ -311,24 +438,18 @@ int main()
   //              10;
 
   const size_t numPieces = waypoints.rows() - 1;
+  const size_t continuity = 2; // up to acc
 
-  Matrix H_1d_curve = B.transpose() * (1 * Qvel + 1e-5 * Qsnap) * B;
-
-  // H is just blockdiagonal of H_1d_curve
-  const size_t numVars = dimension * 8 * numPieces;
-  Matrix H(numVars, numVars);
-  H.setZero();
-  for (size_t i = 0; i < numVars; i+=8) {
-    H.block(i, i, 8, 8) = H_1d_curve;
-  }
-  Vector g(numVars);
-  g.setZero();
+  // our previous paper uses: 1 * vel + 0 * acc + 5e-3 * jerk
+  ObjectiveBuilder ob(dimension, numPieces);
+  ob.addMinDerivativeSquared(1, 0, 5e-3, 0);
 
   // y are our control points (decision variable)
   // Vector y(numVars);
   Matrix y(dimension, 8 * numPieces);
 
   // lower and upper bound for decision variables (i.e., workspace)
+  const size_t numVars = dimension * 8 * numPieces;
   Vector lb(numVars);
   lb.setConstant(-20);
   Vector ub(numVars);
@@ -340,15 +461,15 @@ int main()
   // constraint matrix A
   ConstraintBuilder cb(dimension, numPieces);
 
-  cb.addPositionConstraintBeginning(0, waypoints.row(0));
-  cb.addPositionConstraintEnd(2, waypoints.row(3));
+  cb.addConstraintBeginning(0, 0, waypoints.row(0)); // Position
+  cb.addConstraintEnd(2, 0, waypoints.row(3)); // Position
 
   Vector normal(dimension);
   normal << 0, 1;
   cb.addHyperplane(1, normal, -2);
-  for (size_t i = 0; i < 1000; ++i) {
-    cb.addHyperplane(1, normal, -2 + i * 0.1);
-  }
+  // for (size_t i = 0; i < 1000; ++i) {
+  //   cb.addHyperplane(1, normal, -2 + i * 0.1);
+  // }
 
 
   for (size_t i = 0; i < numPieces; ++i) {
@@ -357,8 +478,9 @@ int main()
     //   cb.addPositionConstraintEnd(i, waypoints.row(i+1));
 
     if (i < numPieces - 1) {
-      cb.addContPosition(i);
-      cb.addContVelocity(i);
+      for (size_t c = 0; c <= continuity; ++c) {
+        cb.addContinuity(i, c);
+      }
     }
 
     // cb.addVelocityConstraintBeginning(i, zeroVec);
@@ -434,7 +556,7 @@ int main()
   int_t nWSR = 10000;
 
   auto t0 = Time::now();
-  returnValue status = qp.init(H.data(), g.data(), cb.A().data(), lb.data(), ub.data(), cb.lbA().data(), cb.ubA().data(), nWSR);
+  returnValue status = qp.init(ob.H().data(), ob.g().data(), cb.A().data(), lb.data(), ub.data(), cb.lbA().data(), cb.ubA().data(), nWSR);
   auto t1 = Time::now();
   fsec fs = t1 - t0;
   ms d = std::chrono::duration_cast<ms>(fs);
