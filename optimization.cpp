@@ -91,7 +91,7 @@ double optimization::energy_objective(const vector<double>& x, vector<double>& g
   //cout << "energy start" << endl;
   double alpha_vel = 0;
   double alpha_acc = 1;
-  double alpha_jerk = 1e-4;
+  double alpha_jerk = 1e-1;
 
 
   problem_data& pdata = *((problem_data*)f_data);
@@ -177,8 +177,8 @@ double optimization::energy_objective(const vector<double>& x, vector<double>& g
 double optimization::alt_objective(const vector<double>& x, vector<double>& grad, void* f_data) {
   //cout << "alt obj start" << endl;
   double alpha_pos = 1;
-  double alpha_vel = 0;
-  double alpha_acc = 0;
+  double alpha_vel = 0.5;
+  double alpha_acc = 0.1;
 
   alt_obj_data& odata = *((alt_obj_data*)f_data);
   problem_data& pdata = *(odata.pdata);
@@ -210,7 +210,6 @@ double optimization::alt_objective(const vector<double>& x, vector<double>& grad
   }
 
 
-  cout <<"T: " <<  T << endl;
   double posdis = bezier_2d_8pts_ndistance_from_point(P, pos, innergrad, T, 0, curtraj[curveidx].duration);
   if(grad.size() > 0) {
     for(int i=0; i<ppc; i++) {
@@ -258,8 +257,8 @@ double optimization::pos_energy_combine_objective(const vector<double>& x, vecto
   int ppc = pdata.ppc;
   int cpts = pd*ppc;
 
-  double alpha_pos = 10;
-  double alpha_energy = 0;
+  double alpha_pos = 100;
+  double alpha_energy = 1;
 
   for(int i=0; i<grad.size(); i++) {
     grad[i] = 0;
@@ -320,6 +319,7 @@ double optimization::voronoi_constraint(const vector<double>& x, vector<double>&
     }
   }
   double result = cur_pt.dot(plane.normal) - plane.distance;
+  //cout << "voro result: " << result << endl;
   return result;
 }
 

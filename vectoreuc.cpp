@@ -78,3 +78,17 @@ double vectoreuc::L2norm() {
   }
   return sqrt(length);
 }
+
+void vectoreuc::zero() {
+  for(int i=0; i<crds.size(); i++)
+    crds[i] = 0;
+}
+
+
+vectoreuc vectoreuc::operator*(double rhs) {
+  vectoreuc res(crds.size());
+  for(int i=0; i<res.size(); i++) {
+    res[i] = rhs * crds[i];
+  }
+  return res;
+}

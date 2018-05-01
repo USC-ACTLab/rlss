@@ -19,6 +19,9 @@ class vectoreuc {
     double L2norm();
     double dot(vectoreuc& rhs);
     friend ostream& operator<<(ostream& out, const vectoreuc& vec);
+    void zero();
+    vectoreuc operator*(double rhs);
+
 };
 
 

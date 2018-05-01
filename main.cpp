@@ -138,6 +138,13 @@ int main(int argc, char** argv) {
     }
   }
 
+  vector<vectoreuc> pos_diffs(trajectories.size());
+  vectoreuc zerovec(2);
+  zerovec.zero();
+  for(int i=0; i<trajectories.size(); i++) {
+    pos_diffs[i] = zerovec;
+  }
+
 /*
   cout << "Number of trajectories: " << trajectories.size() << endl;
 
@@ -205,8 +212,11 @@ int main(int argc, char** argv) {
 
   for(int i=0; i<trajectories.size(); i++) {
     positions[i] = trajectories[i].eval(0);
+    cout << "init pos: " << positions[i]<< endl;
     velocities[i] = trajectories[i].neval(0, 1);
+    cout << "init vel: " << velocities[i]<< endl;
     accelerations[i] = trajectories[i].neval(0, 2);
+    cout << "init acc: " << accelerations[i]<< endl;
   }
 
   for(int i=0; i<original_trajectories.size(); i++) {
@@ -266,6 +276,7 @@ int main(int argc, char** argv) {
 
       alt_obj_data alt_data;
       alt_data.pdata = &data;
+      cout << min(ct+hor, total_times[i]) << endl;
       vectoreuc OBJPOS = original_trajectories[i].neval(min(ct+hor, total_times[i]), 0);
       vectoreuc OBJVEL = original_trajectories[i].neval(min(ct+hor, total_times[i]), 1);
       vectoreuc OBJACC = original_trajectories[i].neval(min(ct+hor, total_times[i]), 2);
@@ -275,14 +286,14 @@ int main(int argc, char** argv) {
 
     //  problem.set_min_objective(optimization::alt_objective, (void*)&alt_data);
 
-      //problem.set_min_objective(optimization::pos_energy_combine_objective, (void*)&alt_data);
+      problem.set_min_objective(optimization::pos_energy_combine_objective, (void*)&alt_data);
 
 
       edt_data edata;
       edata.pdata = &data;
       edata.distance_transform = &distance_transform;
 
-    //  problem.add_inequality_constraint(optimization::edt_constraint, (void*)&edata, 0.0000001);
+      //problem.add_inequality_constraint(optimization::edt_constraint, (void*)&edata, 0.0000001);
 
 
       edt_collision_data edatacol;
@@ -295,7 +306,7 @@ int main(int argc, char** argv) {
       aecombdata.edt = &edatacol;
       aecombdata.alt = &alt_data;
 
-      problem.set_min_objective(optimization::pos_energy_edt_combine_objective, (void*)&aecombdata);
+      //problem.set_min_objective(optimization::pos_energy_edt_combine_objective, (void*)&aecombdata);
 
       vector<double> lower_bounds(varcount);
       vector<double> upper_bounds(varcount);
@@ -370,6 +381,7 @@ int main(int argc, char** argv) {
       if(max_initial_point_degree >= 1) {
         point_data* vel_point_data = new point_data;
         vel_point_data->pdata = &data;
+        cout << velocities[i] << endl;
         vel_point_data->point = velocities[i];
         vel_point_data->time = 0;
         vel_point_data->degree = 1;
@@ -398,10 +410,11 @@ int main(int argc, char** argv) {
 
 
       /* if integral is less than this value, stop.*/
+      cout << integral_stopval << endl;
       problem.set_stopval(integral_stopval);
 
       /* if objective function changes relatively less than this value, stop.*/
-      problem.set_ftol_abs(relative_integral_stopval);
+      //problem.set_ftol_rel(relative_integral_stopval);
 
       if(set_max_time) {
         problem.set_maxtime(dt);
@@ -413,7 +426,7 @@ int main(int argc, char** argv) {
       for(int j=0; j<curve_count; j++) {
         for(int k=0; k<ppc; k++) {
           for(int p=0; p<problem_dimension; p++) {
-            initial_values.push_back(trajectories[i][j][j][p]/* + fRand(-0.004, 0.004)*/);
+            initial_values.push_back(trajectories[i][j][j][p] /*+ fRand(-0.004, 0.004)*/ + pos_diffs[i][p]);
           }
         }
       }
@@ -446,9 +459,8 @@ int main(int argc, char** argv) {
         }
       }
 
-      cout << trajectories[i].eval(0) << endl;
-      cout << positions[i] << endl;
-      cout << "--" << endl;
+      cout << "vel obtained: " << trajectories[i].neval(0, 1) << endl;
+
 
 
       // Sanity check of constraints:
@@ -506,30 +518,41 @@ int main(int argc, char** argv) {
 
       for(double t = 0; t<=hor; t+=printdt) {
         vectoreuc ev = trajectories[i].eval(t);
+        //cout << ev << endl;
         output_json["planned_trajs"][output_iter][i]["x"].push_back(ev[0]);
         output_json["planned_trajs"][output_iter][i]["y"].push_back(ev[1]);
       }
 
+      for(int j=0; j<curve_count; j++) {
+        for(int p=0; p<ppc; p++) {
+          output_json["controlpoints"][output_iter][i].push_back(trajectories[i][j][p].crds);
+          //cout << trajectories[i][j][p] << endl;
+        }
+      }
+
     }
+    //cout << "------" << endl;
     vectoreuc vec;
     for(int v = 0; v < steps_per_cycle; v++) {
       for(int i=0; i<trajectories.size(); i++) {
         vec = trajectories[i].neval(v*printdt, 0);
+        //cout << vec << endl;
         output_json["points"][output_iter].push_back(vec.crds);
       }
       output_iter++;
     }
 
-    cout << vec << endl;
 
 
     for(int i=0; i<trajectories.size(); i++) {
+      pos_diffs[i] = positions[i];
       positions[i] = trajectories[i].neval(dt, 0);
+      pos_diffs[i] = positions[i] - pos_diffs[i];
       velocities[i] = trajectories[i].neval(dt, 1);
+      //cout << "vel wanted: " << velocities[i] << endl;
       accelerations[i] = trajectories[i].neval(dt, 2);
     }
 
-    cout << positions[positions.size() - 1] << endl;
   }
 
 
