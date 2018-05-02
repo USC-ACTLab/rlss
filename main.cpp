@@ -253,7 +253,7 @@ int main(int argc, char** argv) {
 #if USE_QP
   ObjectiveBuilder::Init();
   std::default_random_engine generator;
-  std::normal_distribution<double> distribution(0.0,0.01);
+  std::normal_distribution<double> distribution(0.0,0.001);
 #endif
 
   double everyone_reached = false;
@@ -320,22 +320,20 @@ int main(int argc, char** argv) {
       ConstraintBuilder cb(problem_dimension, curve_count);
 
       // initial point constraints
+
+        // position (with added noise)
       if(max_initial_point_degree >= 0) {
         Vector value(problem_dimension);
         value << positions[i][0] + distribution(generator), positions[i][1] + distribution(generator);
         cb.addConstraintBeginning(0, 0, value); // Position
       }
 
-      if(max_initial_point_degree >= 1) {
+        // higher order constraints
+      for (size_t d = 1; d <= max_initial_point_degree; ++d) {
+        vectoreuc val = trajectories[i].neval(dt, d);
         Vector value(problem_dimension);
-        value << velocities[i][0], velocities[i][1];
-        cb.addConstraintBeginning(0, 1, value); // velocity
-      }
-
-      if(max_initial_point_degree >= 2) {
-        Vector value(problem_dimension);
-        value << accelerations[i][0], accelerations[i][1];
-        cb.addConstraintBeginning(0, 2, value); // acceleration
+        value << val[0], val[1];
+        cb.addConstraintBeginning(0, d, value);
       }
 
       // continuity constraints
@@ -345,28 +343,13 @@ int main(int argc, char** argv) {
         }
       }
 
-      // voronoi constraints
-      // TODO: DISCUSS WHAT THIS DOES
+      // voronoi constraints (for the first curve only)
       for(int j=0; j<voronoi_hyperplanes.size(); j++) {
         hyperplane& plane = voronoi_hyperplanes[j];
 
-        // double current_time = 0;
-        // double end_time  = 2*dt;
-        // //double end_time  = ct+dt;
-
-        // int idx = 0;
-
-        // while(end_time > 0 && idx < trajectories[i].size()) {
-        //   double cend_time = min(end_time, trajectories[i][idx].duration);
-        //   double curvet = 0;
-
-          Vector normal(problem_dimension);
-          normal << plane.normal[0], plane.normal[1];
-          cb.addHyperplane(0, normal, plane.distance);
-
-        //   end_time -= cend_time;
-        //   idx++;
-        // }
+        Vector normal(problem_dimension);
+        normal << plane.normal[0], plane.normal[1];
+        cb.addHyperplane(0, normal, plane.distance);
       }
 
       const size_t numConstraints = cb.A().rows();
@@ -434,6 +417,9 @@ int main(int argc, char** argv) {
       qpOASES::QProblem qp(numVars, numConstraints, qpOASES::HST_SEMIDEF);
 
       qpOASES::Options options;
+      options.setToMPC(); // maximum speed; others: setToDefault() and setToReliable()
+      // options.setToDefault();
+      options.printLevel = qpOASES::PL_LOW; // only show errors
       qp.setOptions(options);
 
       // The  integer  argument nWSR specifies  the  maximum  number  of  working  set
@@ -442,19 +428,37 @@ int main(int argc, char** argv) {
       qpOASES::int_t nWSR = 10000;
 
       // auto t0 = Time::now();
-      qpOASES::returnValue status = qp.init(ob.H().data(), ob.g().data(), cb.A().data(), lb.data(), ub.data(), cb.lbA().data(), cb.ubA().data(), nWSR);
-      // auto t1 = Time::now();
+      qpOASES::returnValue status = qp.init(
+        ob.H().data(),
+        ob.g().data(),
+        cb.A().data(),
+        lb.data(),
+        ub.data(),
+        cb.lbA().data(),
+        cb.ubA().data(),
+        nWSR,
+        /*cputime*/ NULL,
+        y.data());
+
+      qpOASES::int_t simpleStatus = qpOASES::getSimpleStatus(status);
+      if (simpleStatus != 0) {
+        std::stringstream sstr;
+        sstr << "Couldn't solve QP!";
+        throw std::runtime_error(sstr.str());
+        // std::cerr << "Couldn't solve QP!" << std::endl;
+      }
 
       qp.getPrimalSolution(y.data());
 
       std::cout << "status: " << status << std::endl;
       std::cout << "objective: " << qp.getObjVal() << std::endl;
-      std::cout << "y: " << y << std::endl;
+      // std::cout << "y: " << y << std::endl;
 
+      // Update trajectories with our solution
       for(int j=0; j<trajectories[i].size(); j++) {
         for(int k=0; k<ppc; k++) {
           for(int p=0; p<problem_dimension; p++) {
-            trajectories[i][j][k][p] = y(p, j * ppc + k);//initial_values[initidx++];
+            trajectories[i][j][k][p] = y(p, j * ppc + k);
           }
         }
       }
