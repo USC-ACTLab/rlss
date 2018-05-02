@@ -46,7 +46,7 @@ for i in range(jsn["number_of_robots"]):
 
 for i in range(jsn["number_of_robots"]):
     x = jsn["planned_trajs"][0][i]["x"]
-    y = jsn["planned_trajs"][0][i]["x"]
+    y = jsn["planned_trajs"][0][i]["y"]
     tr = ax.plot(x, y, lw=2, zorder = 10, color=colors[i], alpha=0.4)[0]
     plans.append(tr)
     to_animate.append(tr)

@@ -26,6 +26,9 @@
 
 #define USE_IPOPT 0
 #define USE_QP    1
+#define QP_SOLVER_QPOASES 0
+#define QP_SOLVER_OSQP    1
+#define QP_SOLVER QP_SOLVER_QPOASES
 
 #if USE_IPOPT
 #include <coin/IpIpoptApplication.hpp>
@@ -34,8 +37,14 @@ using namespace Ipopt;
 #endif
 
 #if USE_QP
-#include <qpOASES.hpp>
 #include "qp_optimize.h"
+
+  #if QP_SOLVER == QP_SOLVER_QPOASES
+  #include <qpOASES.hpp>
+  #endif
+  #if QP_SOLVER == QP_SOLVER_OSQP
+  #include "osqp.h"
+  #endif
 #endif
 
 #define PATHREPLAN_EPSILON 0.00001
@@ -259,7 +268,7 @@ int main(int argc, char** argv) {
 #if USE_QP
   ObjectiveBuilder::Init();
   std::default_random_engine generator;
-  std::normal_distribution<double> distribution(0.0,0.01);
+  std::normal_distribution<double> distribution(0.0,0.001);
 #endif
 
   double everyone_reached = false;
@@ -269,9 +278,13 @@ int main(int argc, char** argv) {
     cout << ct << " / " << total_t << endl;
 
     for(int i=0; i<original_trajectories.size(); i++ ) {
+<<<<<<< HEAD
 
 
       cout << "traj " << i << " start" << endl;
+=======
+      cout << "traj " << i << " start " << ct << " / " << total_times[i] << endl;
+>>>>>>> 8446b01323a34efcbd3ffdbc8e175432e3c8e1cb
       auto t0 = Time::now();
 
 
@@ -291,6 +304,10 @@ int main(int argc, char** argv) {
         output_json["voronois"][output_iter][i][j].push_back(ct+dt);
       }
 
+      // if (ct >= total_times[i] - 3 * dt) {
+      //   continue;
+      // }
+
 
       unsigned varcount = curve_count * ppc * problem_dimension;
 
@@ -299,10 +316,13 @@ int main(int argc, char** argv) {
       // Create objective (min energy + reach goal)
       ObjectiveBuilder ob(problem_dimension, curve_count);
       ob.minDerivativeSquared(1, 0, 5e-3, 0);
-      vectoreuc OBJPOS = original_trajectories[i].neval(min(ct+hor, total_times[i]), 0);
-      Vector targetPosition(problem_dimension);
-      targetPosition << OBJPOS[0], OBJPOS[1];
-      ob.endCloseTo(100, targetPosition);
+
+      for (size_t j = 0; j < curve_count; ++j) {
+        vectoreuc OBJPOS = original_trajectories[i].neval(min(ct+hor * (j+1)/(double)curve_count, total_times[i]), 0);
+        Vector targetPosition(problem_dimension);
+        targetPosition << OBJPOS[0], OBJPOS[1];
+        ob.endCloseTo(j, 100 * (j+1), targetPosition);
+      }
 
       // y are our control points (decision variable)
       // Vector y(numVars);
@@ -331,22 +351,20 @@ int main(int argc, char** argv) {
       ConstraintBuilder cb(problem_dimension, curve_count);
 
       // initial point constraints
+
+        // position (with added noise)
       if(max_initial_point_degree >= 0) {
         Vector value(problem_dimension);
         value << positions[i][0] + distribution(generator), positions[i][1] + distribution(generator);
         cb.addConstraintBeginning(0, 0, value); // Position
       }
 
-      if(max_initial_point_degree >= 1) {
+        // higher order constraints
+      for (size_t d = 1; d <= max_initial_point_degree; ++d) {
+        vectoreuc val = trajectories[i].neval(dt, d);
         Vector value(problem_dimension);
-        value << velocities[i][0], velocities[i][1];
-        cb.addConstraintBeginning(0, 1, value); // velocity
-      }
-
-      if(max_initial_point_degree >= 2) {
-        Vector value(problem_dimension);
-        value << accelerations[i][0], accelerations[i][1];
-        cb.addConstraintBeginning(0, 2, value); // acceleration
+        value << val[0], val[1];
+        cb.addConstraintBeginning(0, d, value);
       }
 
       // continuity constraints
@@ -356,35 +374,108 @@ int main(int argc, char** argv) {
         }
       }
 
-      // voronoi constraints
-      // TODO: DISCUSS WHAT THIS DOES
+      // if time is nearly up, make sure we stop at the end
+      // if (ct + hor >= total_times[i]) {
+      //   Vector zeroVec(problem_dimension);
+      //   zeroVec.setZero();
+      //   for (size_t c = 1; c <= max_continuity; ++c) {
+      //     cb.addConstraintEnd(curve_count - 1, c, zeroVec);
+      //   }
+      // }
+
+      // voronoi constraints (for the first curve only)
       for(int j=0; j<voronoi_hyperplanes.size(); j++) {
         hyperplane& plane = voronoi_hyperplanes[j];
 
-        // double current_time = 0;
-        // double end_time  = 2*dt;
-        // //double end_time  = ct+dt;
-
-        // int idx = 0;
-
-        // while(end_time > 0 && idx < trajectories[i].size()) {
-        //   double cend_time = min(end_time, trajectories[i][idx].duration);
-        //   double curvet = 0;
-
-          Vector normal(problem_dimension);
-          normal << plane.normal[0], plane.normal[1];
-          cb.addHyperplane(0, normal, plane.distance);
-
-        //   end_time -= cend_time;
-        //   idx++;
-        // }
+        Vector normal(problem_dimension);
+        normal << plane.normal[0], plane.normal[1];
+        cb.addHyperplane(0, normal, plane.distance);
       }
 
-      // const size_t numVars = cb.A().columns();
       const size_t numConstraints = cb.A().rows();
+
+#if QP_SOLVER == QP_SOLVER_OSQP
+      ////
+      // Problem settings
+      OSQPSettings settings;
+      osqp_set_default_settings(&settings);
+      // settings.polish = 1;
+      settings.eps_abs = 1.0e-4;
+      settings.eps_rel = 1.0e-4;
+      settings.max_iter = 20000;
+      settings.verbose = false;
+
+      // Structures
+      typedef Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor> MatrixCM;
+      MatrixCM H_CM = ob.H();
+      std::vector<c_int> rowIndicesH(numVars * numVars);
+      std::vector<c_int> columnIndicesH(numVars + 1);
+      for (size_t c = 0; c < numVars; ++c) {
+        for (size_t r = 0; r < numVars; ++r) {
+          rowIndicesH[c * numVars + r] = r;
+        }
+        columnIndicesH[c] = c * numVars;
+      }
+      columnIndicesH[numVars] = numVars * numVars;
+
+      MatrixCM A_CM = cb.A();
+      std::vector<c_int> rowIndicesA(numConstraints * numVars);
+      std::vector<c_int> columnIndicesA(numVars + 1);
+      for (size_t c = 0; c < numVars; ++c) {
+        for (size_t r = 0; r < numConstraints; ++r) {
+          rowIndicesA[c * numConstraints + r] = r;
+        }
+        columnIndicesA[c] = c * numConstraints;
+      }
+      columnIndicesA[numVars] = numConstraints * numVars;
+
+
+      OSQPData data;
+      data.n = numVars;
+      data.m = numConstraints;
+      data.P = csc_matrix(numVars, numVars, numVars * numVars, H_CM.data(), rowIndicesH.data(), columnIndicesH.data());
+      data.q = const_cast<double*>(ob.g().data());
+      data.A = csc_matrix(numConstraints, numVars, numConstraints * numVars, A_CM.data(), rowIndicesA.data(), columnIndicesA.data());
+      data.l = const_cast<double*>(cb.lbA().data());
+      data.u = const_cast<double*>(cb.ubA().data());
+
+      OSQPWorkspace* work = osqp_setup(&data, &settings);
+
+      // Solve Problem
+      osqp_warm_start_x(work, y.data());
+      osqp_solve(work);
+
+      if (work->info->status_val != OSQP_SOLVED) {
+        std::stringstream sstr;
+        sstr << "Couldn't solve QP!";
+        throw std::runtime_error(sstr.str());
+        // std::cerr << "Couldn't solve QP!" << std::endl;
+      }
+
+      // work->solution->x
+      for (size_t i = 0; i < numVars; ++i) {
+        y(i) = work->solution->x[i];
+      }
+      // for(int j=0; j<trajectories[i].size(); j++) {
+      //   for(int k=0; k<ppc; k++) {
+      //     for(int p=0; p<problem_dimension; p++) {
+      //       trajectories[i][j][k][p] = work->solution->x[p * numVars + j * ppc + k];
+      //     }
+      //   }
+      // }
+
+      // Clean workspace
+      osqp_cleanup(work);
+#endif
+#if QP_SOLVER == QP_SOLVER_QPOASES
+      // const size_t numVars = cb.A().columns();
+
       qpOASES::QProblem qp(numVars, numConstraints, qpOASES::HST_SEMIDEF);
 
       qpOASES::Options options;
+      options.setToMPC(); // maximum speed; others: setToDefault() and setToReliable()
+      // options.setToDefault();
+      options.printLevel = qpOASES::PL_LOW; // only show errors
       qp.setOptions(options);
 
       // The  integer  argument nWSR specifies  the  maximum  number  of  working  set
@@ -393,23 +484,82 @@ int main(int argc, char** argv) {
       qpOASES::int_t nWSR = 10000;
 
       // auto t0 = Time::now();
-      qpOASES::returnValue status = qp.init(ob.H().data(), ob.g().data(), cb.A().data(), lb.data(), ub.data(), cb.lbA().data(), cb.ubA().data(), nWSR);
-      // auto t1 = Time::now();
+      qpOASES::returnValue status = qp.init(
+        ob.H().data(),
+        ob.g().data(),
+        cb.A().data(),
+        lb.data(),
+        ub.data(),
+        cb.lbA().data(),
+        cb.ubA().data(),
+        nWSR,
+        /*cputime*/ NULL,
+        y.data());
+
+      qpOASES::int_t simpleStatus = qpOASES::getSimpleStatus(status);
+      if (simpleStatus != 0) {
+        std::stringstream sstr;
+        sstr << "Couldn't solve QP!";
+        throw std::runtime_error(sstr.str());
+        // std::cerr << "Couldn't solve QP!" << std::endl;
+      }
 
       qp.getPrimalSolution(y.data());
 
       std::cout << "status: " << status << std::endl;
       std::cout << "objective: " << qp.getObjVal() << std::endl;
-      std::cout << "y: " << y << std::endl;
-
-      // initidx = 0;
+      // std::cout << "y: " << y << std::endl;
+#endif
+      // Update trajectories with our solution
       for(int j=0; j<trajectories[i].size(); j++) {
         for(int k=0; k<ppc; k++) {
           for(int p=0; p<problem_dimension; p++) {
-            trajectories[i][j][k][p] = y(p, j * ppc + k);//initial_values[initidx++];
+            trajectories[i][j][k][p] = y(p, j * ppc + k);
           }
         }
       }
+
+      // temporal scaling
+
+      // double desired_time_per_curve = hor / curve_count;
+      double remaining_time = std::max(total_times[i] - ct, 3 * dt * 1.5);
+
+      for (size_t j = 0; j < curve_count; ++j) {
+        trajectories[i][j].duration = /*std::max(*/std::min(hor, remaining_time) / curve_count;//, 1.5 * dt);
+      }
+      // For robot-robot safety make sure that the first piece (with voronoi constraints) lasts until the next planning cycle
+      // trajectories[i][0].duration = std::max(trajectories[i][0].duration, 1.5 * dt);
+
+      // scale until slow enough
+      while (true)
+      {
+        double max_velocity = -1;
+        double max_acceleration = -1;
+        for (double t = 0; t < trajectories[i].duration(); t+=dt/10.0) {
+          double velocity = trajectories[i].neval(t, 1).L2norm();
+          double acceleration = trajectories[i].neval(t, 2).L2norm();
+          max_velocity = std::max(max_velocity, velocity);
+          max_acceleration = std::max(max_acceleration, acceleration);
+        }
+        std::cout << "max_vel " << max_velocity << std::endl;
+        std::cout << "max_acc " << max_acceleration << std::endl;
+        if (   max_velocity > 4.0
+            || max_acceleration > 8.0) {
+          for (size_t j = 0; j < curve_count; ++j) {
+            trajectories[i][j].duration *= 2;
+          }
+        } else {
+          break;
+        }
+      }
+
+      for (size_t j = 0; j < curve_count; ++j) {
+        std::cout << "traj " << j << " " << trajectories[i][j].duration << std::endl;
+      }
+
+
+
+
 
 #else
       //nlopt::opt problem(nlopt::AUGLAG, varcount);
@@ -740,7 +890,7 @@ int main(int argc, char** argv) {
       cout << "optimization time: " << d.count() << "ms" << endl;
 
 
-      for(double t = 0; t<=hor; t+=printdt) {
+      for(double t = 0; t<=trajectories[i].duration(); t+=printdt) {
         vectoreuc ev = trajectories[i].eval(t);
         //cout << ev << endl;
         output_json["planned_trajs"][output_iter][i]["x"].push_back(ev[0]);
@@ -780,7 +930,7 @@ int main(int argc, char** argv) {
     everyone_reached = true;
     for(int i=0; i<trajectories.size(); i++) {
       double diff = (original_trajectories[i].eval(total_times[i]) - positions[i]).L2norm();
-      if(diff > 0.01) {
+      if(diff > 0.1) {
         everyone_reached = false;
         break;
       }

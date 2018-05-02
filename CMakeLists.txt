@@ -10,11 +10,13 @@ add_definitions(-DHAVE_CSTDDEF)
 
 include_directories(
   ${EIGEN3_INCLUDE_DIR}
-  /home/act/qpOASES-3.2.1/include/
+  /home/whoenig/sw/qpOASES-3.2.1/include/
+#  /home/whoenig/sw/osqp/include/
 )
 
 link_directories(
-  /home/act/qpOASES-3.2.1/build/libs/
+  /home/whoenig/sw/qpOASES-3.2.1/bin/
+#  /home/whoenig/sw/osqp/build/out/
 )
 
 add_executable(main main.cpp)
@@ -43,4 +45,5 @@ target_link_libraries(
   stdc++fs
   ipopt
   qpOASES
+#  osqp
 )

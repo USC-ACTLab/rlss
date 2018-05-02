@@ -24,5 +24,7 @@ class trajectory {
       trajectory& operator-=(const trajectory& rhs);
       /*index of the curve and time on the curve for given time*/
       pair<int, double> curvedata(double t);
+
+      double duration() const;
 };
 #endif

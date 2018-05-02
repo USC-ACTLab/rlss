@@ -116,3 +116,12 @@ pair<int, double> trajectory::curvedata(double t) {
 
   return make_pair(i, t);
 }
+
+double trajectory::duration() const
+{
+  double result = 0.0;
+  for (const auto& curve : curves) {
+    result += curve.duration;
+  }
+  return result;
+}
