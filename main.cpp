@@ -288,6 +288,15 @@ int main(int argc, char** argv) {
       // Vector y(numVars);
       Matrix y(problem_dimension, 8 * curve_count);
 
+      // initialize y with previous solution
+      for(int j=0; j<trajectories[i].size(); j++) {
+        for(int k=0; k<ppc; k++) {
+          for(int p=0; p<problem_dimension; p++) {
+            y(p, j * ppc + k) = trajectories[i][j][k][p] + pos_diffs[i][p];
+          }
+        }
+      }
+
       // lower and upper bound for decision variables (i.e., workspace)
       const size_t numVars = problem_dimension * 8 * curve_count;
       Vector lb(numVars);
