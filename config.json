@@ -1,5 +1,5 @@
 {
-  "trajectories": "../test_data/trajectories/head_to_head_trajs_a_bit_difference/",
+  "trajectories": "../test_data/trajectories/head_to_head_trajs_3/",
   "obstacles": "../test_data/obstacles/noobs/",
   "replan_period": 0.3,
   "set_max_time_as_replan_period": true,
@@ -15,7 +15,7 @@
   ],
   "initial_point_constraints_upto_degree": 2,
   "initial_point_tolerances": [
-    0.00000000001, 0.000000001, 0.0000001
+    0.000001, 0.0001, 0.01
   ],
   "dynamic_constraint_degrees": [
 

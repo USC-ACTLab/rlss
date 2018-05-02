@@ -345,7 +345,7 @@ double optimization::edt_constraint(const vector<double>& x, vector<double>& gra
   }
 
 
-  double obsdt = 0.005;
+  double obsdt = 0.05;
 
   double constraint_result = 0;
 

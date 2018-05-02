@@ -22,8 +22,10 @@
 #include "edt.h"
 #include "edtv2.h"
 
-#include <coin/IpTNLP.hpp>
 #include <coin/IpIpoptApplication.hpp>
+#include "ipopt_optimize.h"
+
+#define USE_IPOPT 1
 
 
 #define PATHREPLAN_EPSILON 0.00001
@@ -36,6 +38,9 @@ typedef chrono::high_resolution_clock Time;
 typedef chrono::milliseconds ms;
 typedef chrono::duration<float> fsec;
 
+
+
+using namespace Ipopt;
 
 int main(int argc, char** argv) {
 
@@ -227,7 +232,9 @@ int main(int argc, char** argv) {
     }
   }
 
-  for(double ct = 0; ct <= total_t ; ct+=dt) {
+  double everyone_reached = false;
+
+  for(double ct = 0; /*ct <= total_t*/ !everyone_reached ; ct+=dt) {
 
     cout << ct << " / " << total_t << endl;
 
@@ -276,7 +283,6 @@ int main(int argc, char** argv) {
 
       alt_obj_data alt_data;
       alt_data.pdata = &data;
-      cout << min(ct+hor, total_times[i]) << endl;
       vectoreuc OBJPOS = original_trajectories[i].neval(min(ct+hor, total_times[i]), 0);
       vectoreuc OBJVEL = original_trajectories[i].neval(min(ct+hor, total_times[i]), 1);
       vectoreuc OBJACC = original_trajectories[i].neval(min(ct+hor, total_times[i]), 2);
@@ -381,7 +387,6 @@ int main(int argc, char** argv) {
       if(max_initial_point_degree >= 1) {
         point_data* vel_point_data = new point_data;
         vel_point_data->pdata = &data;
-        cout << velocities[i] << endl;
         vel_point_data->point = velocities[i];
         vel_point_data->time = 0;
         vel_point_data->degree = 1;
@@ -414,7 +419,7 @@ int main(int argc, char** argv) {
       problem.set_stopval(integral_stopval);
 
       /* if objective function changes relatively less than this value, stop.*/
-      //problem.set_ftol_rel(relative_integral_stopval);
+      problem.set_ftol_rel(relative_integral_stopval);
 
       if(set_max_time) {
         problem.set_maxtime(dt);
@@ -432,8 +437,73 @@ int main(int argc, char** argv) {
       }
 
 
-      double opt_f;
+
       int initidx = 0;
+
+#if USE_IPOPT
+
+      SmartPtr<IpOptProblem> mynlp = new IpOptProblem(
+      varcount,
+      lower_bounds,
+      upper_bounds,
+      vdpts,
+      contpts,
+      continuity_tols,
+      pointpts,
+      initial_point_tols,
+      initial_values,
+      &data,
+      &alt_data);
+
+      // Create a new instance of IpoptApplication
+      //  (use a SmartPtr, not raw)
+      // We are using the factory, since this allows us to compile this
+      // example with an Ipopt Windows DLL
+      SmartPtr<IpoptApplication> app = IpoptApplicationFactory();
+      app->RethrowNonIpoptException(true);
+
+      // Change some options
+      // Note: The following choices are only examples, they might not be
+      //       suitable for your optimization problem.
+      app->Options()->SetStringValue("hessian_approximation", "limited-memory");
+      app->Options()->SetNumericValue("tol", 1e-5);
+      // app->Options()->SetStringValue("mu_strategy", "adaptive");
+      // app->Options()->SetStringValue("output_file", "ipopt.out");
+
+      app->Options()->SetStringValue("derivative_test", "first-order");
+
+      app->Options()->SetIntegerValue("max_iter", 5000);
+      // app->Options()->SetStringValue("jacobian_approximation", "finite-difference-values");
+
+
+      // The following overwrites the default name (ipopt.opt) of the
+      // options file
+      // app->Options()->SetStringValue("option_file_name", "hs071.opt");
+
+      // Initialize the IpoptApplication and process the options
+      ApplicationReturnStatus status;
+      status = app->Initialize();
+      if (status != Solve_Succeeded) {
+        std::cout << std::endl << std::endl << "*** Error during initialization!" << std::endl;
+        return (int) status;
+      }
+
+      // Ask Ipopt to solve the problem
+      status = app->OptimizeTNLP(mynlp);
+
+      if (status == Solve_Succeeded) {
+        std::cout << std::endl << std::endl << "*** The problem solved!" << std::endl;
+      }
+      else {
+        std::cout << std::endl << std::endl << "*** The problem FAILED!" << std::endl;
+        //throw std::runtime_error("IpOpt failed!");
+      }
+
+      initial_values = mynlp->m_finalValues;
+
+#else
+
+      double opt_f;
       nlopt::result res;
 
 
@@ -448,7 +518,7 @@ int main(int argc, char** argv) {
 
       cout << "nlopt result: " << res << " objective value: " << opt_f << endl;
 
-
+#endif
 
       initidx = 0;
       for(int j=0; j<trajectories[i].size(); j++) {
@@ -459,7 +529,6 @@ int main(int argc, char** argv) {
         }
       }
 
-      cout << "vel obtained: " << trajectories[i].neval(0, 1) << endl;
 
 
 
@@ -468,7 +537,7 @@ int main(int argc, char** argv) {
 
       for (auto& vd : vdpts) {
         double val = optimization::voronoi_constraint(initial_values, dummyGradient, vd);
-        if (val > 1e-3) {
+        if (val > 0) {
           std::stringstream sstr;
           sstr << "Voronoi constraint violated: " << val;
           std::cout << sstr.str() << std::endl;
@@ -551,6 +620,15 @@ int main(int argc, char** argv) {
       velocities[i] = trajectories[i].neval(dt, 1);
       //cout << "vel wanted: " << velocities[i] << endl;
       accelerations[i] = trajectories[i].neval(dt, 2);
+    }
+
+    everyone_reached = true;
+    for(int i=0; i<trajectories.size(); i++) {
+      double diff = (original_trajectories[i].eval(total_times[i]) - positions[i]).L2norm();
+      if(diff > 0.01) {
+        everyone_reached = false;
+        break;
+      }
     }
 
   }
