@@ -97,11 +97,12 @@ public:
   // Expand[(Limit[D[f1[t], {t, 0}], t -> 1] - X)^2]
   // X^2 - 2 X y[7] + y[7]^2
   void endCloseTo(
+    size_t piece,
     double lambda,
     const Vector& value)
   {
     for (size_t d = 0; d < m_dimension; ++d) {
-      size_t idx = column(m_numPieces - 1, d) + 7;
+      size_t idx = column(piece, d) + 7;
       m_H(idx, idx) += 2 * lambda; // objective function is 1/2 x'Hx => multiply by 2 here
       m_g(idx) += -2 * value(d) * lambda;
     }

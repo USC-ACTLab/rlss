@@ -292,10 +292,13 @@ int main(int argc, char** argv) {
       // Create objective (min energy + reach goal)
       ObjectiveBuilder ob(problem_dimension, curve_count);
       ob.minDerivativeSquared(1, 0, 5e-3, 0);
-      vectoreuc OBJPOS = original_trajectories[i].neval(min(ct+hor, total_times[i]), 0);
-      Vector targetPosition(problem_dimension);
-      targetPosition << OBJPOS[0], OBJPOS[1];
-      ob.endCloseTo(100, targetPosition);
+
+      for (size_t j = 0; j < curve_count; ++j) {
+        vectoreuc OBJPOS = original_trajectories[i].neval(min(ct+hor * (j+1)/(double)curve_count, total_times[i]), 0);
+        Vector targetPosition(problem_dimension);
+        targetPosition << OBJPOS[0], OBJPOS[1];
+        ob.endCloseTo(j, 100 * (j+1), targetPosition);
+      }
 
       // y are our control points (decision variable)
       // Vector y(numVars);
