@@ -372,6 +372,11 @@ int main(int argc, char** argv) {
       // Problem settings
       OSQPSettings settings;
       osqp_set_default_settings(&settings);
+      // settings.polish = 1;
+      settings.eps_abs = 1.0e-4;
+      settings.eps_rel = 1.0e-4;
+      settings.max_iter = 20000;
+      settings.verbose = false;
 
       // Structures
       typedef Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor> MatrixCM;
@@ -410,16 +415,27 @@ int main(int argc, char** argv) {
       OSQPWorkspace* work = osqp_setup(&data, &settings);
 
       // Solve Problem
+      osqp_warm_start_x(work, y.data());
       osqp_solve(work);
 
-      // work->solution->x
-      for(int j=0; j<trajectories[i].size(); j++) {
-        for(int k=0; k<ppc; k++) {
-          for(int p=0; p<problem_dimension; p++) {
-            trajectories[i][j][k][p] = work->solution->x[p * numVars + j * ppc + k];
-          }
-        }
+      if (work->info->status_val != OSQP_SOLVED) {
+        std::stringstream sstr;
+        sstr << "Couldn't solve QP!";
+        throw std::runtime_error(sstr.str());
+        // std::cerr << "Couldn't solve QP!" << std::endl;
       }
+
+      // work->solution->x
+      for (size_t i = 0; i < numVars; ++i) {
+        y(i) = work->solution->x[i];
+      }
+      // for(int j=0; j<trajectories[i].size(); j++) {
+      //   for(int k=0; k<ppc; k++) {
+      //     for(int p=0; p<problem_dimension; p++) {
+      //       trajectories[i][j][k][p] = work->solution->x[p * numVars + j * ppc + k];
+      //     }
+      //   }
+      // }
 
       // Clean workspace
       osqp_cleanup(work);
@@ -466,7 +482,7 @@ int main(int argc, char** argv) {
       std::cout << "status: " << status << std::endl;
       std::cout << "objective: " << qp.getObjVal() << std::endl;
       // std::cout << "y: " << y << std::endl;
-
+#endif
       // Update trajectories with our solution
       for(int j=0; j<trajectories[i].size(); j++) {
         for(int k=0; k<ppc; k++) {
@@ -515,7 +531,7 @@ int main(int argc, char** argv) {
       }
 
 
-#endif
+
 
 
 #else
@@ -887,7 +903,7 @@ int main(int argc, char** argv) {
     everyone_reached = true;
     for(int i=0; i<trajectories.size(); i++) {
       double diff = (original_trajectories[i].eval(total_times[i]) - positions[i]).L2norm();
-      if(diff > 0.01) {
+      if(diff > 0.1) {
         everyone_reached = false;
         break;
       }
