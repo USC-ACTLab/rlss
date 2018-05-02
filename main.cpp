@@ -25,6 +25,9 @@
 
 #define USE_IPOPT 0
 #define USE_QP    1
+#define QP_SOLVER_QPOASES 0
+#define QP_SOLVER_OSQP    1
+#define QP_SOLVER QP_SOLVER_QPOASES
 
 #if USE_IPOPT
 #include <coin/IpIpoptApplication.hpp>
@@ -33,8 +36,14 @@ using namespace Ipopt;
 #endif
 
 #if USE_QP
-#include <qpOASES.hpp>
 #include "qp_optimize.h"
+
+  #if QP_SOLVER == QP_SOLVER_QPOASES
+  #include <qpOASES.hpp>
+  #endif
+  #if QP_SOLVER == QP_SOLVER_OSQP
+  #include "osqp.h"
+  #endif
 #endif
 
 #define PATHREPLAN_EPSILON 0.00001
@@ -360,8 +369,68 @@ int main(int argc, char** argv) {
         // }
       }
 
-      // const size_t numVars = cb.A().columns();
       const size_t numConstraints = cb.A().rows();
+
+#if QP_SOLVER == QP_SOLVER_OSQP
+      ////
+      // Problem settings
+      OSQPSettings settings;
+      osqp_set_default_settings(&settings);
+
+      // Structures
+      typedef Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor> MatrixCM;
+      MatrixCM H_CM = ob.H();
+      std::vector<c_int> rowIndicesH(numVars * numVars);
+      std::vector<c_int> columnIndicesH(numVars + 1);
+      for (size_t c = 0; c < numVars; ++c) {
+        for (size_t r = 0; r < numVars; ++r) {
+          rowIndicesH[c * numVars + r] = r;
+        }
+        columnIndicesH[c] = c * numVars;
+      }
+      columnIndicesH[numVars] = numVars * numVars;
+
+      MatrixCM A_CM = cb.A();
+      std::vector<c_int> rowIndicesA(numConstraints * numVars);
+      std::vector<c_int> columnIndicesA(numVars + 1);
+      for (size_t c = 0; c < numVars; ++c) {
+        for (size_t r = 0; r < numConstraints; ++r) {
+          rowIndicesA[c * numConstraints + r] = r;
+        }
+        columnIndicesA[c] = c * numConstraints;
+      }
+      columnIndicesA[numVars] = numConstraints * numVars;
+
+
+      OSQPData data;
+      data.n = numVars;
+      data.m = numConstraints;
+      data.P = csc_matrix(numVars, numVars, numVars * numVars, H_CM.data(), rowIndicesH.data(), columnIndicesH.data());
+      data.q = const_cast<double*>(ob.g().data());
+      data.A = csc_matrix(numConstraints, numVars, numConstraints * numVars, A_CM.data(), rowIndicesA.data(), columnIndicesA.data());
+      data.l = const_cast<double*>(cb.lbA().data());
+      data.u = const_cast<double*>(cb.ubA().data());
+
+      OSQPWorkspace* work = osqp_setup(&data, &settings);
+
+      // Solve Problem
+      osqp_solve(work);
+
+      // work->solution->x
+      for(int j=0; j<trajectories[i].size(); j++) {
+        for(int k=0; k<ppc; k++) {
+          for(int p=0; p<problem_dimension; p++) {
+            trajectories[i][j][k][p] = work->solution->x[p * numVars + j * ppc + k];
+          }
+        }
+      }
+
+      // Clean workspace
+      osqp_cleanup(work);
+#endif
+#if QP_SOLVER == QP_SOLVER_QPOASES
+      // const size_t numVars = cb.A().columns();
+
       qpOASES::QProblem qp(numVars, numConstraints, qpOASES::HST_SEMIDEF);
 
       qpOASES::Options options;
@@ -382,7 +451,6 @@ int main(int argc, char** argv) {
       std::cout << "objective: " << qp.getObjVal() << std::endl;
       std::cout << "y: " << y << std::endl;
 
-      // initidx = 0;
       for(int j=0; j<trajectories[i].size(); j++) {
         for(int k=0; k<ppc; k++) {
           for(int p=0; p<problem_dimension; p++) {
@@ -390,6 +458,8 @@ int main(int argc, char** argv) {
           }
         }
       }
+#endif
+
 
 #else
       //nlopt::opt problem(nlopt::AUGLAG, varcount);
