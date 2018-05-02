@@ -263,7 +263,7 @@ int main(int argc, char** argv) {
     cout << ct << " / " << total_t << endl;
 
     for(int i=0; i<original_trajectories.size(); i++ ) {
-      cout << "traj " << i << " start" << endl;
+      cout << "traj " << i << " start " << ct << " / " << total_times[i] << endl;
       auto t0 = Time::now();
 
       /*calculate voronoi hyperplanes for robot i*/
@@ -279,6 +279,10 @@ int main(int argc, char** argv) {
         output_json["voronois"][output_iter][i][j].push_back(ct);
         output_json["voronois"][output_iter][i][j].push_back(ct+dt);
       }
+
+      // if (ct >= total_times[i] - 3 * dt) {
+      //   continue;
+      // }
 
 
       unsigned varcount = curve_count * ppc * problem_dimension;
@@ -342,6 +346,15 @@ int main(int argc, char** argv) {
           cb.addContinuity(i, c);
         }
       }
+
+      // if time is nearly up, make sure we stop at the end
+      // if (ct + hor >= total_times[i]) {
+      //   Vector zeroVec(problem_dimension);
+      //   zeroVec.setZero();
+      //   for (size_t c = 1; c <= max_continuity; ++c) {
+      //     cb.addConstraintEnd(curve_count - 1, c, zeroVec);
+      //   }
+      // }
 
       // voronoi constraints (for the first curve only)
       for(int j=0; j<voronoi_hyperplanes.size(); j++) {
@@ -462,6 +475,46 @@ int main(int argc, char** argv) {
           }
         }
       }
+
+      // temporal scaling
+
+      // double desired_time_per_curve = hor / curve_count;
+      double remaining_time = std::max(total_times[i] - ct, 3 * dt * 1.5);
+
+      for (size_t j = 0; j < curve_count; ++j) {
+        trajectories[i][j].duration = /*std::max(*/std::min(hor, remaining_time) / curve_count;//, 1.5 * dt);
+      }
+      // For robot-robot safety make sure that the first piece (with voronoi constraints) lasts until the next planning cycle
+      // trajectories[i][0].duration = std::max(trajectories[i][0].duration, 1.5 * dt);
+
+      // scale until slow enough
+      while (true)
+      {
+        double max_velocity = -1;
+        double max_acceleration = -1;
+        for (double t = 0; t < trajectories[i].duration(); t+=dt/10.0) {
+          double velocity = trajectories[i].neval(t, 1).L2norm();
+          double acceleration = trajectories[i].neval(t, 2).L2norm();
+          max_velocity = std::max(max_velocity, velocity);
+          max_acceleration = std::max(max_acceleration, acceleration);
+        }
+        std::cout << "max_vel " << max_velocity << std::endl;
+        std::cout << "max_acc " << max_acceleration << std::endl;
+        if (   max_velocity > 4.0
+            || max_acceleration > 8.0) {
+          for (size_t j = 0; j < curve_count; ++j) {
+            trajectories[i][j].duration *= 2;
+          }
+        } else {
+          break;
+        }
+      }
+
+      for (size_t j = 0; j < curve_count; ++j) {
+        std::cout << "traj " << j << " " << trajectories[i][j].duration << std::endl;
+      }
+
+
 #endif
 
 
@@ -794,7 +847,7 @@ int main(int argc, char** argv) {
       cout << "optimization time: " << d.count() << "ms" << endl;
 
 
-      for(double t = 0; t<=hor; t+=printdt) {
+      for(double t = 0; t<=trajectories[i].duration(); t+=printdt) {
         vectoreuc ev = trajectories[i].eval(t);
         //cout << ev << endl;
         output_json["planned_trajs"][output_iter][i]["x"].push_back(ev[0]);
