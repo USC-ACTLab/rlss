@@ -66,8 +66,8 @@ double edtv2::cost(vector<double>& P, double dur, double ct, vector<double>& gra
 
 
 
-  int left_idx = (x + fabs(x_min)) / step_size + 0.5; // index of min x
-  int bottom_idx = (y + fabs(y_min)) / step_size + 0.5; // index of min y
+  int left_idx = (x - x_min) / step_size + 0.5; // index of min x
+  int bottom_idx = (y - y_min) / step_size + 0.5; // index of min y
 
   double x1 = x_min + left_idx * step_size;
   double y1 = y_min + bottom_idx * step_size;

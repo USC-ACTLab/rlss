@@ -22,6 +22,7 @@
 #include "utility.h"
 #include "edt.h"
 #include "edtv2.h"
+#include "occupancy_grid.h"
 
 #define USE_IPOPT 0
 #define USE_QP    1
@@ -193,7 +194,21 @@ int main(int argc, char** argv) {
   edtv2 distance_transformv2(0.01, -10, 10, -10, 10, -0.20);
   distance_transformv2.construct(&obstacles);
 
+  OG og(0.01, -10, 10, -10, 10, obstacles);
 
+/*
+  for(double x=-9; x<9; x+=0.01) {
+    for(double y = -9; y<9; y+=0.01) {
+      OG::index idx = og.get_index(x,y);
+      vector<OG::index> neighs = og.neighbors(idx);
+      if(neighs.size() != 4) {
+        cout << x << " , " << y << ": " << neighs.size() << endl;
+      }
+    }
+  }
+
+  int p; cin >> p;
+*/
 
   vector<double> total_times(original_trajectories.size());
   double total_t = 0;
@@ -254,8 +269,13 @@ int main(int argc, char** argv) {
     cout << ct << " / " << total_t << endl;
 
     for(int i=0; i<original_trajectories.size(); i++ ) {
+
+
       cout << "traj " << i << " start" << endl;
       auto t0 = Time::now();
+
+
+
 
       /*calculate voronoi hyperplanes for robot i*/
       vector<hyperplane> voronoi_hyperplanes;

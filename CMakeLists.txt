@@ -5,27 +5,23 @@ project (ACT_TRAJ_REPLANNING)
 
 find_package (Eigen3 REQUIRED)
 
-# For qpOASES
-add_definitions(
-  -D__USE_LONG_INTEGERS__
-)
 
 add_definitions(-DHAVE_CSTDDEF)
 
 include_directories(
   ${EIGEN3_INCLUDE_DIR}
-  /home/whoenig/sw/qpOASES-3.2.1/include/
+  /home/act/qpOASES-3.2.1/include/
 )
 
 link_directories(
-  /home/whoenig/sw/qpOASES-3.2.1/bin/
+  /home/act/qpOASES-3.2.1/build/libs/
 )
 
 add_executable(main main.cpp)
 target_include_directories(main PRIVATE lib)
 
 find_package(stdc++fs)
-add_library(geometry hyperplane.cpp vectoreuc.cpp edt.cpp edtv2.cpp)
+add_library(geometry hyperplane.cpp vectoreuc.cpp edt.cpp edtv2.cpp occupancy_grid.cpp)
 add_library(obstacle obstacle.cpp)
 add_library(traj curve.cpp trajectory.cpp bezier_2d_8pts.cpp)
 add_library(csv lib/csv/CSVparser.cpp)
@@ -36,7 +32,8 @@ add_library(optimization
   qp_optimize.cpp
 )
 
-target_link_libraries(main
+target_link_libraries(
+  main
   geometry
   obstacle
   optimization
