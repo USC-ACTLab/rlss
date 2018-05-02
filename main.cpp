@@ -17,16 +17,25 @@
 #include "cxxopts.hpp"
 #include "json.hpp"
 #include <chrono>
+#include <random>
 #include "svmoptimization.h"
 #include "utility.h"
 #include "edt.h"
 #include "edtv2.h"
 
+#define USE_IPOPT 0
+#define USE_QP    1
+
+#if USE_IPOPT
 #include <coin/IpIpoptApplication.hpp>
 #include "ipopt_optimize.h"
+using namespace Ipopt;
+#endif
 
-#define USE_IPOPT 1
-
+#if USE_QP
+#include <qpOASES.hpp>
+#include "qp_optimize.h"
+#endif
 
 #define PATHREPLAN_EPSILON 0.00001
 
@@ -40,7 +49,7 @@ typedef chrono::duration<float> fsec;
 
 
 
-using namespace Ipopt;
+
 
 int main(int argc, char** argv) {
 
@@ -232,9 +241,15 @@ int main(int argc, char** argv) {
     }
   }
 
+#if USE_QP
+  ObjectiveBuilder::Init();
+  std::default_random_engine generator;
+  std::normal_distribution<double> distribution(0.0,0.01);
+#endif
+
   double everyone_reached = false;
 
-  for(double ct = 0; /*ct <= total_t*/ !everyone_reached ; ct+=dt) {
+  for(double ct = 0; ct <= total_t /*!everyone_reached*/ ; ct+=dt) {
 
     cout << ct << " / " << total_t << endl;
 
@@ -258,6 +273,116 @@ int main(int argc, char** argv) {
 
 
       unsigned varcount = curve_count * ppc * problem_dimension;
+
+#if USE_QP
+
+      // Create objective (min energy + reach goal)
+      ObjectiveBuilder ob(problem_dimension, curve_count);
+      ob.minDerivativeSquared(1, 0, 5e-3, 0);
+      vectoreuc OBJPOS = original_trajectories[i].neval(min(ct+hor, total_times[i]), 0);
+      Vector targetPosition(problem_dimension);
+      targetPosition << OBJPOS[0], OBJPOS[1];
+      ob.endCloseTo(100, targetPosition);
+
+      // y are our control points (decision variable)
+      // Vector y(numVars);
+      Matrix y(problem_dimension, 8 * curve_count);
+
+      // lower and upper bound for decision variables (i.e., workspace)
+      const size_t numVars = problem_dimension * 8 * curve_count;
+      Vector lb(numVars);
+      lb.setConstant(-10);
+      Vector ub(numVars);
+      ub.setConstant(10);
+
+      // Vector zeroVec(problem_dimension);
+      // zeroVec.setZero();
+
+      // constraint matrix A
+      ConstraintBuilder cb(problem_dimension, curve_count);
+
+      // initial point constraints
+      if(max_initial_point_degree >= 0) {
+        Vector value(problem_dimension);
+        value << positions[i][0] + distribution(generator), positions[i][1] + distribution(generator);
+        cb.addConstraintBeginning(0, 0, value); // Position
+      }
+
+      if(max_initial_point_degree >= 1) {
+        Vector value(problem_dimension);
+        value << velocities[i][0], velocities[i][1];
+        cb.addConstraintBeginning(0, 1, value); // velocity
+      }
+
+      if(max_initial_point_degree >= 2) {
+        Vector value(problem_dimension);
+        value << accelerations[i][0], accelerations[i][1];
+        cb.addConstraintBeginning(0, 2, value); // acceleration
+      }
+
+      // continuity constraints
+      for (size_t i = 0; i < curve_count - 1; ++i) {
+        for (size_t c = 0; c <= max_continuity; ++c) {
+          cb.addContinuity(i, c);
+        }
+      }
+
+      // voronoi constraints
+      // TODO: DISCUSS WHAT THIS DOES
+      for(int j=0; j<voronoi_hyperplanes.size(); j++) {
+        hyperplane& plane = voronoi_hyperplanes[j];
+
+        // double current_time = 0;
+        // double end_time  = 2*dt;
+        // //double end_time  = ct+dt;
+
+        // int idx = 0;
+
+        // while(end_time > 0 && idx < trajectories[i].size()) {
+        //   double cend_time = min(end_time, trajectories[i][idx].duration);
+        //   double curvet = 0;
+
+          Vector normal(problem_dimension);
+          normal << plane.normal[0], plane.normal[1];
+          cb.addHyperplane(0, normal, plane.distance);
+
+        //   end_time -= cend_time;
+        //   idx++;
+        // }
+      }
+
+      // const size_t numVars = cb.A().columns();
+      const size_t numConstraints = cb.A().rows();
+      qpOASES::QProblem qp(numVars, numConstraints, qpOASES::HST_SEMIDEF);
+
+      qpOASES::Options options;
+      qp.setOptions(options);
+
+      // The  integer  argument nWSR specifies  the  maximum  number  of  working  set
+      // recalculations to be performed during the initial homotopy (on output it contains the number
+      // of  working  set  recalculations  actually  performed!)
+      qpOASES::int_t nWSR = 10000;
+
+      // auto t0 = Time::now();
+      qpOASES::returnValue status = qp.init(ob.H().data(), ob.g().data(), cb.A().data(), lb.data(), ub.data(), cb.lbA().data(), cb.ubA().data(), nWSR);
+      // auto t1 = Time::now();
+
+      qp.getPrimalSolution(y.data());
+
+      std::cout << "status: " << status << std::endl;
+      std::cout << "objective: " << qp.getObjVal() << std::endl;
+      std::cout << "y: " << y << std::endl;
+
+      // initidx = 0;
+      for(int j=0; j<trajectories[i].size(); j++) {
+        for(int k=0; k<ppc; k++) {
+          for(int p=0; p<problem_dimension; p++) {
+            trajectories[i][j][k][p] = y(p, j * ppc + k);//initial_values[initidx++];
+          }
+        }
+      }
+
+#else
       //nlopt::opt problem(nlopt::AUGLAG, varcount);
       //problem.set_local_optimizer(local_opt);
       nlopt::opt problem;
@@ -577,6 +702,7 @@ int main(int argc, char** argv) {
       for(int j=0; j<pointpts.size(); j++) {
         delete pointpts[j];
       }
+#endif
       auto t1 = Time::now();
       fsec fs = t1 - t0;
       ms d = chrono::duration_cast<ms>(fs);
