@@ -461,6 +461,8 @@ int main(int argc, char** argv) {
 
             for (const auto& corner : corners) {
               std::cout << "corner: " << corner.first << "," << corner.second << std::endl;
+              output_json["discrete_plan"][output_iter][i]["x"].push_back(corner.first);
+              output_json["discrete_plan"][output_iter][i]["y"].push_back(corner.second);
             }
 
             // TODO 1: find separating hyperplanes between those lines and all (nearby) obstacles
@@ -1031,7 +1033,7 @@ int main(int argc, char** argv) {
 
 
   cout << "average opt time: " << total_time_for_opt / total_count_for_opt << "ms" << endl;
-  out << output_json << endl;
+  out << std::setw(2) << output_json << endl;
 
   out.close();
   return 0;
