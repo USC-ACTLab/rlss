@@ -23,6 +23,7 @@
 #include "edt.h"
 #include "edtv2.h"
 #include "occupancy_grid.h"
+#include "svm_seperator.h"
 
 #define USE_IPOPT 0
 #define USE_QP    1
@@ -205,6 +206,9 @@ int main(int argc, char** argv) {
 
   OG og(0.01, -10, 10, -10, 10, obstacles);
 
+  SvmSeperator svm(&obstacles);
+
+
 /*
   for(double x=-9; x<9; x+=0.01) {
     for(double y = -9; y<9; y+=0.01) {
@@ -278,13 +282,7 @@ int main(int argc, char** argv) {
     cout << ct << " / " << total_t << endl;
 
     for(int i=0; i<original_trajectories.size(); i++ ) {
-<<<<<<< HEAD
-
-
-      cout << "traj " << i << " start" << endl;
-=======
       cout << "traj " << i << " start " << ct << " / " << total_times[i] << endl;
->>>>>>> 8446b01323a34efcbd3ffdbc8e175432e3c8e1cb
       auto t0 = Time::now();
 
 

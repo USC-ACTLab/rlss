@@ -1,0 +1,3 @@
+[submodule "lib/libsvm"]
+	path = lib/libsvm
+	url = https://github.com/cjlin1/libsvm
