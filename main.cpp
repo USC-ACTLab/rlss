@@ -322,9 +322,22 @@ int main(int argc, char** argv) {
       if (occupied) {
         // the trajectory is now on top of an obstacle => discrete re-planning!
 
-        vectoreuc goalPos = original_trajectories[i].neval(total_times[i], 0);
-        OG::index goalIdx = og.get_index(goalPos[0], goalPos[1]);
-        discreteSearch::State goal(goalIdx.i, goalIdx.j, OG::direction::NONE);
+        // the goal is the next point on the original trajectory that is not occupied
+        discreteSearch::State goal(-1, -1, OG::direction::NONE);
+        double arrivalTime = min(ct+hor, total_times[i]);
+        for (double t = arrivalTime; t < total_times[i]; t += 0.01) {
+          vectoreuc goalPos = original_trajectories[i].neval(t, 0);
+          if (!og.occupied(goalPos[0], goalPos[1])) {
+            OG::index goalIdx = og.get_index(goalPos[0], goalPos[1]);
+            goal.x = goalIdx.i;
+            goal.y = goalIdx.j;
+            break;
+          }
+        }
+
+        if (goal.x == -1) {
+          throw std::runtime_error("Couldn't find unoccupied space on original trajectory!");
+        }
 
         OG::index startIdx = og.get_index(positions[i][0], positions[i][1]);
         discreteSearch::State start(startIdx.i, startIdx.j, OG::direction::NONE);
