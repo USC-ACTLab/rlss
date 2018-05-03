@@ -38,6 +38,7 @@ voronois = []
 plans = []
 originals = []
 controlpoints = []
+discrete_plans = []
 
 for i in range(jsn["number_of_robots"]):
     orig = ax.plot(jsn["originals"][i]["x"], jsn["originals"][i]["y"], linestyle="dashed", lw=2, zorder = 10, color=colors[i], alpha = 0.8)[0]
@@ -70,6 +71,11 @@ for i in range(jsn["number_of_robots"]):
     circles.append(circle)
     to_animate.append(circle)
     ax.add_artist(circle)
+
+for i in range(jsn["number_of_robots"]):
+    discrete_plan = ax.plot([], [], linestyle=":", lw=2, zorder = 10, color=colors[i], alpha = 0.8)[0]
+    discrete_plans.append(discrete_plan)
+    to_animate.append(discrete_plan)
 
 def genvoroxy(voronoi):
     a = voronoi[0]
@@ -166,6 +172,13 @@ def animate(frame):
             while k < len(pts):
                 cpts[k].set_data([pts[k][0]], [pts[k][1]])
                 k+=1
+
+    if(frame < len(jsn["discrete_plan"]) and jsn["discrete_plan"][frame] != None):
+        for i in range(jsn["number_of_robots"]):
+            discrete_plans[i].set_data(jsn["discrete_plan"][frame][i]["x"], jsn["discrete_plan"][frame][i]["y"])
+    else:
+        for i in range(jsn["number_of_robots"]):
+            discrete_plans[i].set_data([], [])
 
     if save:
         if(frame > 300):
