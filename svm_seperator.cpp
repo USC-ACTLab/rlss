@@ -31,7 +31,7 @@ vector<hyperplane> SvmSeperator::seperate() {
 
     for(j = 0; j<pts.size(); j++) {
       struct svm_node* data = (struct svm_node*)malloc(sizeof(struct svm_node)*3);
-      cout << pts[j] << endl;
+      // cout << pts[j] << endl;
       data[0].index = 1;
       data[0].value = pts[j][0];
       data[1].index = 2;
@@ -44,7 +44,7 @@ vector<hyperplane> SvmSeperator::seperate() {
 
     for(int k=0; k<obs.ch.size()-1; k++) {
       struct svm_node* data = (struct svm_node*)malloc(sizeof(struct svm_node) * 3);
-      cout << obs.pts[obs.ch[k]] << endl;
+      // cout << obs.pts[obs.ch[k]] << endl;
       data[0].index = 1;
       data[0].value = obs.pts[obs.ch[k]][0];
       data[1].index = 2;
@@ -85,7 +85,7 @@ vector<hyperplane> SvmSeperator::seperate() {
     normal.zero();
 
     for(int i=0; i<totalsvcount; i++) {
-      cout << "SV " << i << ": " << all_vecs[idxs[i]-1] << endl;
+      // cout << "SV " << i << ": " << all_vecs[idxs[i]-1] << endl;
       normal[0] += coefs[i] * all_vecs[idxs[i]-1][0];
       normal[1] += coefs[i] * all_vecs[idxs[i]-1][1];
     }
@@ -110,9 +110,11 @@ vector<hyperplane> SvmSeperator::seperate() {
     hp.normal = hp.normal * -1;
     hp.distance = hp.distance * -1;
 
+    hp.distance -= 0.15;
+
 
     result.push_back(hp);
-
+    std::cout << "normal: " << hp.normal << " dist: " << hp.distance << std::endl;
   }
 
   return result;

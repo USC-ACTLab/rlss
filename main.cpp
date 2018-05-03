@@ -408,8 +408,6 @@ int main(int argc, char** argv) {
         cb.addHyperplane(0, normal, plane.distance);
       }
 
-      const size_t numConstraints = cb.A().rows();
-
       // check if those trajectories are collision-free w/ respect to the environment
       bool occupied = og.occupied(trajectories[i]);
 
@@ -481,6 +479,38 @@ int main(int argc, char** argv) {
             // TODO 1: find separating hyperplanes between those lines and all (nearby) obstacles
             //         the first line is given by points corners[0] and corners[1]; second line by corners[1] and corners[2] etc.
 
+            // TODO: fix me to copy constraints
+            while (curve_count > corners.size() - 1) {
+              corners.push_back(corners.back());
+            }
+
+            for (size_t j = 0; j < corners.size() - 1 && j < curve_count; ++j) {
+              svm.reset_pts();
+              vectoreuc pt(2);
+              pt[0] = corners[j].first;
+              pt[1] = corners[j].second;
+              svm.add_pt(pt);
+
+              pt[0] = corners[j+1].first;
+              pt[1] = corners[j+1].second;
+              svm.add_pt(pt);
+
+              vector<hyperplane> hyperplanes = svm.seperate();
+              std::cout << "hyperplanes: " << hyperplanes.size() << std::endl;
+
+              for (auto& plane : hyperplanes) {
+                Vector normal(problem_dimension);
+                normal << plane.normal[0], plane.normal[1];
+                cb.addHyperplane(j, normal, plane.distance);
+
+
+                output_json["voronois"][output_iter][i][voronoi_hyperplanes.size()+j].push_back(plane.normal[0]); //normal first
+                output_json["voronois"][output_iter][i][voronoi_hyperplanes.size()+j].push_back(plane.normal[1]);//normal seconds
+                output_json["voronois"][output_iter][i][voronoi_hyperplanes.size()+j].push_back(plane.distance); //distance
+
+              }
+            }
+
             // TODO 2: add hyperplane constraints; if there are less then 3 lines, repeat the constraint for the later curves
             //         (e.g., if there is only one discrete line; repeat the constraints for all three curves)
 
@@ -495,8 +525,34 @@ int main(int argc, char** argv) {
         // TODO 3: * Split last trajectory up to horizon into uniform pieces (curve_count pieces)
         //         * find separating hyperplanes between those trajectories and all obstacles
         //         * add hyperplanes as constraints (per piece)
+
+        for (size_t j = 0; j < curve_count; ++j) {
+          svm.reset_pts();
+
+          for(int k=0; k<ppc; k++) {
+            svm.add_pt(trajectories[i][j][k]);
+          }
+
+          vector<hyperplane> hyperplanes = svm.seperate();
+          std::cout << "hyperplanes2: " << hyperplanes.size() << std::endl;
+
+          for (auto& plane : hyperplanes) {
+            Vector normal(problem_dimension);
+            normal << plane.normal[0], plane.normal[1];
+            cb.addHyperplane(j, normal, plane.distance);
+
+
+            output_json["voronois"][output_iter][i][voronoi_hyperplanes.size()+j].push_back(plane.normal[0]); //normal first
+            output_json["voronois"][output_iter][i][voronoi_hyperplanes.size()+j].push_back(plane.normal[1]);//normal seconds
+            output_json["voronois"][output_iter][i][voronoi_hyperplanes.size()+j].push_back(plane.distance); //distance
+
+          }
+        }
+
+
       }
 
+      const size_t numConstraints = cb.A().rows();
 
 
 #if QP_SOLVER == QP_SOLVER_OSQP
