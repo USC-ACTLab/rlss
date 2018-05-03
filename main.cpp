@@ -273,9 +273,18 @@ int main(int argc, char** argv) {
   std::normal_distribution<double> distribution(0.0,0.001);
 #endif
 
+  ofstream outStats("stats.csv");
+  outStats << "t";
+  for (size_t i = 0; i < original_trajectories.size(); ++i) {
+    outStats << "," << i;
+  }
+  outStats << std::endl;
+
   double everyone_reached = false;
 
   for(double ct = 0; ct <= total_t /*!everyone_reached*/ ; ct+=dt) {
+
+    outStats << ct;
 
     cout << ct << " / " << total_t << endl;
 
@@ -980,6 +989,7 @@ int main(int argc, char** argv) {
       total_time_for_opt += d.count();
       total_count_for_opt++;
       cout << "optimization time: " << d.count() << "ms" << endl;
+      outStats << "," << d.count();
 
 
       for(double t = 0; t<=trajectories[i].duration(); t+=printdt) {
@@ -1027,6 +1037,8 @@ int main(int argc, char** argv) {
         break;
       }
     }
+
+    outStats << std::endl;
 
   }
 
