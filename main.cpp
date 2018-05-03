@@ -278,17 +278,8 @@ int main(int argc, char** argv) {
     cout << ct << " / " << total_t << endl;
 
     for(int i=0; i<original_trajectories.size(); i++ ) {
-<<<<<<< HEAD
-
-
-      cout << "traj " << i << " start" << endl;
-=======
       cout << "traj " << i << " start " << ct << " / " << total_times[i] << endl;
->>>>>>> 8446b01323a34efcbd3ffdbc8e175432e3c8e1cb
       auto t0 = Time::now();
-
-
-
 
       /*calculate voronoi hyperplanes for robot i*/
       vector<hyperplane> voronoi_hyperplanes;
