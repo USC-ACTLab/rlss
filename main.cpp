@@ -23,12 +23,14 @@
 #include "edt.h"
 #include "edtv2.h"
 #include "occupancy_grid.h"
+#include "discrete_search.hpp"
 
 #define USE_IPOPT 0
 #define USE_QP    1
 #define QP_SOLVER_QPOASES 0
 #define QP_SOLVER_OSQP    1
 #define QP_SOLVER QP_SOLVER_QPOASES
+// #define QP_SOLVER QP_SOLVER_OSQP
 
 #if USE_IPOPT
 #include <coin/IpIpoptApplication.hpp>
@@ -304,6 +306,88 @@ int main(int argc, char** argv) {
 
 #if USE_QP
 
+      // shift last trajectories
+      for(int p=0; p<problem_dimension; p++) {
+        // double whiteNoise = distribution(generator);
+        for(int j=0; j<trajectories[i].size(); j++) {
+          for(int k=0; k<ppc; k++) {
+            trajectories[i][j][k][p] += pos_diffs[i][p];// + whiteNoise;
+          }
+        }
+      }
+
+      // check if those trajectories are collision-free w/ respect to the environment
+      bool occupied = og.occupied(trajectories[i]);
+
+      if (occupied) {
+        // the trajectory is now on top of an obstacle => discrete re-planning!
+
+        vectoreuc goalPos = original_trajectories[i].neval(total_times[i], 0);
+        OG::index goalIdx = og.get_index(goalPos[0], goalPos[1]);
+        discreteSearch::State goal(goalIdx.i, goalIdx.j, OG::direction::NONE);
+
+        OG::index startIdx = og.get_index(positions[i][0], positions[i][1]);
+        discreteSearch::State start(startIdx.i, startIdx.j, OG::direction::NONE);
+
+        discreteSearch::Environment env(og, goal);
+
+        libSearch::AStar<discreteSearch::State, discreteSearch::Action, int, discreteSearch::Environment> astar(env);
+        libSearch::PlanResult<discreteSearch::State, discreteSearch::Action, int> solution;
+        bool success = astar.search(start, solution);
+
+        if (success) {
+            std::cout << "discrete planning successful! Total cost: " << solution.cost << std::endl;
+            // for (size_t i = 0; i < solution.actions.size(); ++i) {
+            //   std::cout << solution.states[i].second << ": " << solution.states[i].first << "->" << solution.actions[i].first << "(cost: " << solution.actions[i].second << ")" << std::endl;
+            // }
+            // std::cout << solution.states.back().second << ": " << solution.states.back().first << std::endl;
+
+            // for (const auto& s : solution.states) {
+            //   const discreteSearch::State& state = s.first;
+            //   OG::index idx(state.x, state.y);
+            //   pair<double, double> coord = og.get_coordinates(idx);
+            //   std::cout << coord.first << "," << coord.second << std::endl;
+            // }
+
+            // combine results to lines (stored in corners vector; contains at least 2 elements)
+            std::vector<pair<double, double>> corners;
+            const discreteSearch::State& state = solution.states.front().first;
+            OG::index idx1(state.x, state.y);
+            corners.emplace_back(og.get_coordinates(idx1));
+            for (size_t j = 0; j < solution.actions.size(); ++j) {
+              if (solution.actions[j].first != discreteSearch::Action::Forward) {
+                const discreteSearch::State& state2 = solution.states[j].first;
+                OG::index idx2(state2.x, state2.y);
+                corners.emplace_back(og.get_coordinates(idx2));
+              }
+            }
+            const discreteSearch::State& state3 = solution.states.back().first;
+            OG::index idx3(state3.x, state3.y);
+            corners.emplace_back(og.get_coordinates(idx3));
+
+            for (const auto& corner : corners) {
+              std::cout << "corner: " << corner.first << "," << corner.second << std::endl;
+            }
+
+            // TODO 1: find separating hyperplanes between those lines and all (nearby) obstacles
+            //         the first line is given by points corners[0] and corners[1]; second line by corners[1] and corners[2] etc.
+
+            // TODO 2: add hyperplane constraints; if there are less then 3 lines, repeat the constraint for the later curves
+            //         (e.g., if there is only one discrete line; repeat the constraints for all three curves)
+
+
+          } else {
+            std::cerr << "discrete planning NOT successful!" << std::endl;
+          }
+
+      } else {
+        // The old trajectories will not collide with a (static) obstacle
+
+        // TODO 3: * Split last trajectory up to horizon into uniform pieces (curve_count pieces)
+        //         * find separating hyperplanes between those trajectories and all obstacles
+        //         * add hyperplanes as constraints (per piece)
+      }
+
       // Create objective (min energy + reach goal)
       ObjectiveBuilder ob(problem_dimension, curve_count);
       ob.minDerivativeSquared(1, 0, 5e-3, 0);
@@ -323,7 +407,7 @@ int main(int argc, char** argv) {
       for(int j=0; j<trajectories[i].size(); j++) {
         for(int k=0; k<ppc; k++) {
           for(int p=0; p<problem_dimension; p++) {
-            y(p, j * ppc + k) = trajectories[i][j][k][p] + pos_diffs[i][p];
+            y(p, j * ppc + k) = trajectories[i][j][k][p];
           }
         }
       }
