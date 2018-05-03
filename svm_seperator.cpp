@@ -3,6 +3,7 @@
 #include <cstdlib>
 #include <iostream>
 #include <limits>
+#include <sstream>
 
 using namespace std;
 
@@ -66,7 +67,7 @@ vector<hyperplane> SvmSeperator::seperate() {
     parameter.kernel_type = LINEAR;
     parameter.cache_size = 64; // dont have any idea
     parameter.eps = 0.001;
-    parameter.C = 1; // dunno
+    parameter.C = 10000; // dunno
     //parameter.nu = 0.5;
     parameter.nr_weight = 0; // completely dunno
 
@@ -110,11 +111,21 @@ vector<hyperplane> SvmSeperator::seperate() {
     hp.normal = hp.normal * -1;
     hp.distance = hp.distance * -1;
 
-    hp.distance -= 0.15;
+    // hp.distance -= 0.05;
+
+    // safety check...
+    for (auto& pt : pts) {
+      if (pt.dot(hp.normal) > hp.distance) {
+        std::stringstream sstr;
+        sstr << "Couldn't find hyperplane normal " << hp.normal << " dist: " << hp.distance << " pt: " << pt << " dot product: " << pt.dot(hp.normal);
+        // throw runtime_error(sstr.str());
+        std::cerr << sstr.str() << std::endl;
+      }
+    }
 
 
     result.push_back(hp);
-    std::cout << "normal: " << hp.normal << " dist: " << hp.distance << std::endl;
+    // std::cout << "normal: " << hp.normal << " dist: " << hp.distance << std::endl;
   }
 
   return result;

@@ -6,7 +6,46 @@ import os
 import csv
 from shapely.geometry.polygon import LinearRing, Polygon
 from descartes import PolygonPatch
+from matplotlib.patches import Rectangle
 import numpy as np
+
+
+def frameGen():
+  global frameId
+  global numFrames
+  global args
+  frameId += args.frameinc
+  if frameId >= numFrames:
+    frameId = 0
+  yield frameId
+
+def onKey(event):
+  global anim_running
+  global anim
+  global step
+  global args
+  global frameId
+  # print('you pressed', event.key, event.xdata, event.ydata)
+  if event.key == ' ': # space => pause/continue
+    if anim_running:
+      anim.event_source.stop()
+      anim_running = False
+    else:
+      anim.event_source.start()
+      anim_running = True
+      step = False
+  if event.key == 'n':
+    step = True
+    anim.event_source.start()
+    anim_running = True
+  if event.key == 'p':
+    step = True
+    frameId -= 2 * args.frameinc
+    anim.event_source.start()
+    anim_running = True
+
+
+
 
 def genvoroxy(voronoi):
     a = voronoi[0]
@@ -15,7 +54,10 @@ def genvoroxy(voronoi):
     xc = np.arange(-5,5,0.01).tolist()
     yc = []
     for xx in xc:
+      if b != 0.0:
         yc.append((c-a*xx)/b)
+      else:
+        yc.append(0.0)
     return (xc,yc)
 
 def init():
@@ -62,8 +104,11 @@ def animate(frame):
     global to_animate
     global time_text
     global voronois
+    global hyperplanes
     global args
     global fig
+    global step
+
     for i, atraj in enumerate(trajectories):
         x[i].append(jsn["points"][frame][i][0])
         y[i].append(jsn["points"][frame][i][1])
@@ -96,14 +141,37 @@ def animate(frame):
 
     if "discrete_plan" in jsn and frame < len(jsn["discrete_plan"]) and jsn["discrete_plan"][frame] != None:
         for i in range(jsn["number_of_robots"]):
+          if i < len(jsn["discrete_plan"][frame]) and jsn["discrete_plan"][frame][i]:
             discrete_plans[i].set_data(jsn["discrete_plan"][frame][i]["x"], jsn["discrete_plan"][frame][i]["y"])
     else:
         for i in range(jsn["number_of_robots"]):
             discrete_plans[i].set_data([], [])
 
+
+    hpIdx = 0
+    if args.hyperplanes and "hyperplanes" in jsn and jsn["hyperplanes"][frame]:
+      for hp in jsn["hyperplanes"][frame][i]:
+        if hp:
+          (hpx,hpy) = genvoroxy(hp)
+          if hpIdx >= len(hyperplanes):
+            v = ax.plot(hpx, hpy, lw=2, zorder=7, color=colors[hp[3]])[0]
+            hyperplanes.append(v)
+            to_animate.append(v)
+            # print(frame, hpIdx)
+          else:
+            hyperplanes[hpIdx].set_data(hpx, hpy)
+          hpIdx += 1
+    for idx in range(hpIdx, len(hyperplanes)):
+      hyperplanes[idx].set_data([], [])
+
     if args.save:
         if(frame > 300):
             fig.savefig("images/"+str(frame)+".png")
+
+    if step:
+      anim.event_source.stop()
+      anim_running = False
+
     return to_animate
 
 if __name__ == "__main__":
@@ -128,6 +196,10 @@ if __name__ == "__main__":
   parser.add_argument('--no-blit', dest='blit', action='store_false')
   parser.set_defaults(blit=True)
 
+  parser.add_argument('--hyperplanes', dest='hyperplanes', action='store_true')
+  parser.add_argument('--no-hyperplanes', dest='hyperplanes', action='store_false')
+  parser.set_defaults(hyperplanes=True)
+
   args = parser.parse_args()
 
   jsn = json.load(open(args.file))
@@ -149,6 +221,15 @@ if __name__ == "__main__":
           ax.add_patch(polypatch)
           to_animate.append(polypatch)
 
+  if "occupied_cells" in jsn:
+    cell_size = jsn["cell_size"]
+    for x,y in zip(jsn["occupied_cells"]["x"], jsn["occupied_cells"]["y"]):
+      cell = ax.add_artist(Rectangle((x-cell_size/2.0, y-cell_size/2.0), cell_size, cell_size))
+      to_animate.append(cell)
+    # cells = ax.scatter(jsn["occupied_cells"]["x"], jsn["occupied_cells"]["y"], marker='s')
+    # to_animate.append(cells)
+
+
 
   circles = []
   voronois = []
@@ -156,6 +237,7 @@ if __name__ == "__main__":
   originals = []
   controlpoints = []
   discrete_plans = []
+  hyperplanes = []
 
   for i in range(jsn["number_of_robots"]):
       orig = ax.plot(jsn["originals"][i]["x"], jsn["originals"][i]["y"], linestyle="dashed", lw=2, zorder = 10, color=colors[i], alpha = 0.8)[0]
@@ -209,7 +291,13 @@ if __name__ == "__main__":
   x = []
   y = []
 
-  anim = animation.FuncAnimation(fig, animate, init_func=init,frames=range(0,len(jsn["points"]),args.frameinc),interval=jsn["dt"]*1000,blit=args.blit)
+  anim_running = True
+  step = False
+  frameId = 0
+  numFrames = len(jsn["points"])
+  # fig.canvas.mpl_connect('button_press_event', onClick)
+  fig.canvas.mpl_connect('key_press_event', onKey)
+  anim = animation.FuncAnimation(fig, animate, init_func=init,frames=frameGen,interval=jsn["dt"]*1000,blit=args.blit)
 
   plt.show()
 

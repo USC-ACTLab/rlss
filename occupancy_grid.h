@@ -46,6 +46,10 @@ class OG {
 
     /*checks whether given trajectory passes through an obstacle*/
     bool occupied(trajectory& traj);
+
+    size_t max_i() const;
+    size_t max_j() const;
+
   private:
     vector<vector<bool> > grid;
     double x_min;

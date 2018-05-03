@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <cassert>
 #include <cstdarg>
+#include <utility>
 #include "vectoreuc.h"
 #include <chrono>
 #include "trajectory.h"
@@ -206,9 +207,43 @@ int main(int argc, char** argv) {
   edtv2 distance_transformv2(0.01, -10, 10, -10, 10, -0.20);
   distance_transformv2.construct(&obstacles);
 
-  OG og(0.01, -10, 10, -10, 10, obstacles);
+  const double cell_size = 0.25;
+  OG og(cell_size, -10, 10, -10, 10, obstacles);
+  output_json["cell_size"] = cell_size;
 
-  SvmSeperator svm(&obstacles);
+  vector<obstacle2D> cell_based_obstacles;
+  for (size_t i = 0; i < og.max_i(); ++i) {
+    for (size_t j = 0; j < og.max_j(); ++j) {
+      OG::index idx(i, j);
+      if (og.idx_occupied(idx)) {
+        pair<double, double> coord = og.get_coordinates(idx);
+        // std::cout << "occ: " << coord.first << "," << coord.second << std::endl;
+        output_json["occupied_cells"]["x"].push_back(coord.first);
+        output_json["occupied_cells"]["y"].push_back(coord.second);
+
+        obstacle2D o;
+        vectoreuc pt(problem_dimension);
+        pt[0] = coord.first - cell_size / 2.0;
+        pt[1] = coord.second - cell_size / 2.0;
+        o.add_pt(pt);
+        pt[0] = coord.first - cell_size / 2.0;
+        pt[1] = coord.second + cell_size / 2.0;
+        o.add_pt(pt);
+        pt[0] = coord.first + cell_size / 2.0;
+        pt[1] = coord.second + cell_size / 2.0;
+        o.add_pt(pt);
+        pt[0] = coord.first + cell_size / 2.0;
+        pt[1] = coord.second - cell_size / 2.0;
+        o.add_pt(pt);
+        o.convex_hull();
+        o.ch_planes();
+        cell_based_obstacles.push_back(o);
+      }
+    }
+  }
+
+
+  SvmSeperator svm(&cell_based_obstacles);
 
 
 /*
@@ -320,14 +355,14 @@ int main(int argc, char** argv) {
 #if USE_QP
 
       // shift last trajectories
-      for(int p=0; p<problem_dimension; p++) {
-        // double whiteNoise = distribution(generator);
-        for(int j=0; j<trajectories[i].size(); j++) {
-          for(int k=0; k<ppc; k++) {
-            trajectories[i][j][k][p] += pos_diffs[i][p];// + whiteNoise;
-          }
-        }
-      }
+      // for(int p=0; p<problem_dimension; p++) {
+      //   double whiteNoise = distribution(generator);
+      //   for(int j=0; j<trajectories[i].size(); j++) {
+      //     for(int k=0; k<ppc; k++) {
+      //       trajectories[i][j][k][p] += pos_diffs[i][p] + whiteNoise;
+      //     }
+      //   }
+      // }
 
       // Create objective (min energy + reach goal)
       ObjectiveBuilder ob(problem_dimension, curve_count);
@@ -458,7 +493,10 @@ int main(int argc, char** argv) {
             std::vector<pair<double, double>> corners;
             const discreteSearch::State& state = solution.states.front().first;
             OG::index idx1(state.x, state.y);
-            corners.emplace_back(og.get_coordinates(idx1));
+            // corners.emplace_back(og.get_coordinates(idx1));
+            // double startx = positions[i][0];
+            // double starty = positions[i][1];
+            corners.emplace_back(std::make_pair(positions[i][0], positions[i][1]));
             for (size_t j = 0; j < solution.actions.size(); ++j) {
               if (solution.actions[j].first != discreteSearch::Action::Forward) {
                 const discreteSearch::State& state2 = solution.states[j].first;
@@ -484,6 +522,7 @@ int main(int argc, char** argv) {
               corners.push_back(corners.back());
             }
 
+            size_t hpidx = 0;
             for (size_t j = 0; j < corners.size() - 1 && j < curve_count; ++j) {
               svm.reset_pts();
               vectoreuc pt(2);
@@ -504,10 +543,11 @@ int main(int argc, char** argv) {
                 cb.addHyperplane(j, normal, plane.distance);
 
 
-                output_json["voronois"][output_iter][i][voronoi_hyperplanes.size()+j].push_back(plane.normal[0]); //normal first
-                output_json["voronois"][output_iter][i][voronoi_hyperplanes.size()+j].push_back(plane.normal[1]);//normal seconds
-                output_json["voronois"][output_iter][i][voronoi_hyperplanes.size()+j].push_back(plane.distance); //distance
-
+                output_json["hyperplanes"][output_iter][i][hpidx].push_back(plane.normal[0]); //normal first
+                output_json["hyperplanes"][output_iter][i][hpidx].push_back(plane.normal[1]);//normal seconds
+                output_json["hyperplanes"][output_iter][i][hpidx].push_back(plane.distance); //distance
+                output_json["hyperplanes"][output_iter][i][hpidx].push_back(j);
+                ++hpidx;
               }
             }
 
@@ -525,8 +565,9 @@ int main(int argc, char** argv) {
         // TODO 3: * Split last trajectory up to horizon into uniform pieces (curve_count pieces)
         //         * find separating hyperplanes between those trajectories and all obstacles
         //         * add hyperplanes as constraints (per piece)
-
-        for (size_t j = 0; j < curve_count; ++j) {
+#if 1
+        size_t hpidx = 0;
+        for (size_t j = 0; j < curve_count - 1; ++j) {
           svm.reset_pts();
 
           for(int k=0; k<ppc; k++) {
@@ -542,13 +583,14 @@ int main(int argc, char** argv) {
             cb.addHyperplane(j, normal, plane.distance);
 
 
-            output_json["voronois"][output_iter][i][voronoi_hyperplanes.size()+j].push_back(plane.normal[0]); //normal first
-            output_json["voronois"][output_iter][i][voronoi_hyperplanes.size()+j].push_back(plane.normal[1]);//normal seconds
-            output_json["voronois"][output_iter][i][voronoi_hyperplanes.size()+j].push_back(plane.distance); //distance
-
+            output_json["hyperplanes"][output_iter][i][hpidx].push_back(plane.normal[0]); //normal first
+            output_json["hyperplanes"][output_iter][i][hpidx].push_back(plane.normal[1]);//normal seconds
+            output_json["hyperplanes"][output_iter][i][hpidx].push_back(plane.distance); //distance
+            output_json["hyperplanes"][output_iter][i][hpidx].push_back(j);
+            ++hpidx;
           }
         }
-
+#endif
 
       }
 
@@ -608,9 +650,9 @@ int main(int argc, char** argv) {
 
       if (work->info->status_val != OSQP_SOLVED) {
         std::stringstream sstr;
-        sstr << "Couldn't solve QP!";
-        throw std::runtime_error(sstr.str());
-        // std::cerr << "Couldn't solve QP!" << std::endl;
+        sstr << "Couldn't solve QP! @ " << ct;
+        // throw std::runtime_error(sstr.str());
+        std::cerr << sstr.str() << std::endl;
       }
 
       // work->solution->x
@@ -661,8 +703,8 @@ int main(int argc, char** argv) {
       if (simpleStatus != 0) {
         std::stringstream sstr;
         sstr << "Couldn't solve QP!";
-        throw std::runtime_error(sstr.str());
-        // std::cerr << "Couldn't solve QP!" << std::endl;
+        // throw std::runtime_error(sstr.str());
+        std::cerr << "Couldn't solve QP! @ " << ct << std::endl;
       }
 
       qp.getPrimalSolution(y.data());

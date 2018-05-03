@@ -47,10 +47,11 @@ bool OG::idx_occupied(index& idx) {
     return true;
   }
 
-  return grid[idx.i][idx.j] || ((idx.i + 1 < r) && grid[idx.i+1][idx.j])
-      || ((idx.j + 1 < c) && grid[idx.i][idx.j+1]) || ((idx.i+1 < r && idx.j+1 < c) && grid[idx.i+1][idx.j+1])
-      || ((idx.i-1 > -1) && grid[idx.i-1][idx.j]) || ((idx.j-1 > -1) &&grid[idx.i][idx.j-1])
-      || ((idx.i-1 > -1 && idx.j-1 > -1) && grid[idx.i-1][idx.j-1]);
+   return grid[idx.i][idx.j];
+  // return grid[idx.i][idx.j] || ((idx.i + 1 < r) && grid[idx.i+1][idx.j])
+  //     || ((idx.j + 1 < c) && grid[idx.i][idx.j+1]) || ((idx.i+1 < r && idx.j+1 < c) && grid[idx.i+1][idx.j+1])
+  //     || ((idx.i-1 > -1) && grid[idx.i-1][idx.j]) || ((idx.j-1 > -1) &&grid[idx.i][idx.j-1])
+  //     || ((idx.i-1 > -1 && idx.j-1 > -1) && grid[idx.i-1][idx.j-1]);
 }
 
 bool OG::occupied(double x, double y) {
@@ -103,4 +104,14 @@ bool OG::occupied(trajectory& traj) {
     }
   }
   return false;
+}
+
+size_t OG::max_i() const
+{
+  return grid.size();
+}
+
+size_t OG::max_j() const
+{
+  return grid[0].size();
 }
