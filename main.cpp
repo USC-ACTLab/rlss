@@ -316,6 +316,87 @@ int main(int argc, char** argv) {
         }
       }
 
+      // Create objective (min energy + reach goal)
+      ObjectiveBuilder ob(problem_dimension, curve_count);
+      ob.minDerivativeSquared(1, 0, 5e-3, 0);
+
+      for (size_t j = 0; j < curve_count; ++j) {
+        vectoreuc OBJPOS = original_trajectories[i].neval(min(ct+hor * (j+1)/(double)curve_count, total_times[i]), 0);
+        Vector targetPosition(problem_dimension);
+        targetPosition << OBJPOS[0], OBJPOS[1];
+        ob.endCloseTo(j, 100 * (j+1), targetPosition);
+      }
+
+      // y are our control points (decision variable)
+      // Vector y(numVars);
+      Matrix y(problem_dimension, 8 * curve_count);
+
+      // initialize y with previous solution
+      for(int j=0; j<trajectories[i].size(); j++) {
+        for(int k=0; k<ppc; k++) {
+          for(int p=0; p<problem_dimension; p++) {
+            y(p, j * ppc + k) = trajectories[i][j][k][p];
+          }
+        }
+      }
+
+      // lower and upper bound for decision variables (i.e., workspace)
+      const size_t numVars = problem_dimension * 8 * curve_count;
+      Vector lb(numVars);
+      lb.setConstant(-10);
+      Vector ub(numVars);
+      ub.setConstant(10);
+
+      // Vector zeroVec(problem_dimension);
+      // zeroVec.setZero();
+
+      // constraint matrix A
+      ConstraintBuilder cb(problem_dimension, curve_count);
+
+      // initial point constraints
+
+        // position (with added noise)
+      if(max_initial_point_degree >= 0) {
+        Vector value(problem_dimension);
+        value << positions[i][0] + distribution(generator), positions[i][1] + distribution(generator);
+        cb.addConstraintBeginning(0, 0, value); // Position
+      }
+
+        // higher order constraints
+      for (size_t d = 1; d <= max_initial_point_degree; ++d) {
+        vectoreuc val = trajectories[i].neval(dt, d);
+        Vector value(problem_dimension);
+        value << val[0], val[1];
+        cb.addConstraintBeginning(0, d, value);
+      }
+
+      // continuity constraints
+      for (size_t i = 0; i < curve_count - 1; ++i) {
+        for (size_t c = 0; c <= max_continuity; ++c) {
+          cb.addContinuity(i, c);
+        }
+      }
+
+      // if time is nearly up, make sure we stop at the end
+      // if (ct + hor >= total_times[i]) {
+      //   Vector zeroVec(problem_dimension);
+      //   zeroVec.setZero();
+      //   for (size_t c = 1; c <= max_continuity; ++c) {
+      //     cb.addConstraintEnd(curve_count - 1, c, zeroVec);
+      //   }
+      // }
+
+      // voronoi constraints (for the first curve only)
+      for(int j=0; j<voronoi_hyperplanes.size(); j++) {
+        hyperplane& plane = voronoi_hyperplanes[j];
+
+        Vector normal(problem_dimension);
+        normal << plane.normal[0], plane.normal[1];
+        cb.addHyperplane(0, normal, plane.distance);
+      }
+
+      const size_t numConstraints = cb.A().rows();
+
       // check if those trajectories are collision-free w/ respect to the environment
       bool occupied = og.occupied(trajectories[i]);
 
@@ -401,86 +482,7 @@ int main(int argc, char** argv) {
         //         * add hyperplanes as constraints (per piece)
       }
 
-      // Create objective (min energy + reach goal)
-      ObjectiveBuilder ob(problem_dimension, curve_count);
-      ob.minDerivativeSquared(1, 0, 5e-3, 0);
 
-      for (size_t j = 0; j < curve_count; ++j) {
-        vectoreuc OBJPOS = original_trajectories[i].neval(min(ct+hor * (j+1)/(double)curve_count, total_times[i]), 0);
-        Vector targetPosition(problem_dimension);
-        targetPosition << OBJPOS[0], OBJPOS[1];
-        ob.endCloseTo(j, 100 * (j+1), targetPosition);
-      }
-
-      // y are our control points (decision variable)
-      // Vector y(numVars);
-      Matrix y(problem_dimension, 8 * curve_count);
-
-      // initialize y with previous solution
-      for(int j=0; j<trajectories[i].size(); j++) {
-        for(int k=0; k<ppc; k++) {
-          for(int p=0; p<problem_dimension; p++) {
-            y(p, j * ppc + k) = trajectories[i][j][k][p];
-          }
-        }
-      }
-
-      // lower and upper bound for decision variables (i.e., workspace)
-      const size_t numVars = problem_dimension * 8 * curve_count;
-      Vector lb(numVars);
-      lb.setConstant(-10);
-      Vector ub(numVars);
-      ub.setConstant(10);
-
-      // Vector zeroVec(problem_dimension);
-      // zeroVec.setZero();
-
-      // constraint matrix A
-      ConstraintBuilder cb(problem_dimension, curve_count);
-
-      // initial point constraints
-
-        // position (with added noise)
-      if(max_initial_point_degree >= 0) {
-        Vector value(problem_dimension);
-        value << positions[i][0] + distribution(generator), positions[i][1] + distribution(generator);
-        cb.addConstraintBeginning(0, 0, value); // Position
-      }
-
-        // higher order constraints
-      for (size_t d = 1; d <= max_initial_point_degree; ++d) {
-        vectoreuc val = trajectories[i].neval(dt, d);
-        Vector value(problem_dimension);
-        value << val[0], val[1];
-        cb.addConstraintBeginning(0, d, value);
-      }
-
-      // continuity constraints
-      for (size_t i = 0; i < curve_count - 1; ++i) {
-        for (size_t c = 0; c <= max_continuity; ++c) {
-          cb.addContinuity(i, c);
-        }
-      }
-
-      // if time is nearly up, make sure we stop at the end
-      // if (ct + hor >= total_times[i]) {
-      //   Vector zeroVec(problem_dimension);
-      //   zeroVec.setZero();
-      //   for (size_t c = 1; c <= max_continuity; ++c) {
-      //     cb.addConstraintEnd(curve_count - 1, c, zeroVec);
-      //   }
-      // }
-
-      // voronoi constraints (for the first curve only)
-      for(int j=0; j<voronoi_hyperplanes.size(); j++) {
-        hyperplane& plane = voronoi_hyperplanes[j];
-
-        Vector normal(problem_dimension);
-        normal << plane.normal[0], plane.normal[1];
-        cb.addHyperplane(0, normal, plane.distance);
-      }
-
-      const size_t numConstraints = cb.A().rows();
 
 #if QP_SOLVER == QP_SOLVER_OSQP
       ////
