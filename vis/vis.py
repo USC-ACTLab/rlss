@@ -1,5 +1,5 @@
 import json
-import sys
+import argparse
 from matplotlib import pyplot as plt
 from matplotlib import animation
 import os
@@ -7,75 +7,6 @@ import csv
 from shapely.geometry.polygon import LinearRing, Polygon
 from descartes import PolygonPatch
 import numpy as np
-
-jsn = json.load(open(sys.argv[1]))
-
-save = None
-if (len(sys.argv) > 2 and sys.argv[2] == "save"):
-    save = True
-else:
-    save = False
-colors = ['b', 'g', 'r', 'c', 'm', 'k']
-
-fig = plt.figure()
-ax = plt.axes(xlim=(-10,10), ylim=(-10,10))
-ax.set_aspect('equal')
-time_text = ax.text(0.02, 0.95, '', transform=ax.transAxes)
-trajectories = []
-to_animate = []
-
-polygon_patches = []
-if("obstacles" in jsn):
-    for obs in jsn["obstacles"]:
-        poly = Polygon(obs)
-        polypatch = PolygonPatch(poly, color='yellow', zorder = 5)
-        ax.add_patch(polypatch)
-        to_animate.append(polypatch)
-
-
-circles = []
-voronois = []
-plans = []
-originals = []
-controlpoints = []
-discrete_plans = []
-
-for i in range(jsn["number_of_robots"]):
-    orig = ax.plot(jsn["originals"][i]["x"], jsn["originals"][i]["y"], linestyle="dashed", lw=2, zorder = 10, color=colors[i], alpha = 0.8)[0]
-    originals.append(orig)
-    to_animate.append(orig)
-
-for i in range(jsn["number_of_robots"]):
-    x = jsn["planned_trajs"][0][i]["x"]
-    y = jsn["planned_trajs"][0][i]["y"]
-    tr = ax.plot(x, y, lw=2, zorder = 10, color=colors[i], alpha=0.4)[0]
-    plans.append(tr)
-    to_animate.append(tr)
-
-for i in range(jsn["number_of_robots"]):
-    pts = jsn["controlpoints"][0][i]
-    cpts = []
-    print(len(pts))
-    for pt in pts:
-        ptd = ax.plot([pt[0]], [pt[1]], zorder = 20, color=colors[i], alpha = 0.8, marker='o')[0]
-        cpts.append(ptd)
-        to_animate.append(ptd)
-    controlpoints.append(cpts)
-
-for i in range(jsn["number_of_robots"]):
-    atraj = ax.plot([], [], lw=2, zorder=0, color = colors[i])[0]
-    trajectories.append(atraj)
-    to_animate.append(atraj)
-
-    circle = plt.Circle((jsn["points"][0][i][0],jsn["points"][0][i][1]), radius=0.15, fc=colors[i], lw=0, alpha=0.2)
-    circles.append(circle)
-    to_animate.append(circle)
-    ax.add_artist(circle)
-
-for i in range(jsn["number_of_robots"]):
-    discrete_plan = ax.plot([], [], linestyle=":", lw=2, zorder = 10, color=colors[i], alpha = 0.8)[0]
-    discrete_plans.append(discrete_plan)
-    to_animate.append(discrete_plan)
 
 def genvoroxy(voronoi):
     a = voronoi[0]
@@ -86,18 +17,6 @@ def genvoroxy(voronoi):
     for xx in xc:
         yc.append((c-a*xx)/b)
     return (xc,yc)
-if "voronois" in jsn:
-    for i in range(jsn["number_of_robots"]):
-        voronois.append([])
-        for v in jsn["voronois"][0][i]:
-            (x,y) = genvoroxy(v)
-            v = ax.plot(x, y, lw=2, zorder=7, color=colors[i])[0]
-            voronois[i].append(v)
-            to_animate.append(v)
-
-to_animate.append(time_text)
-x = []
-y = []
 
 def init():
     global trajectories
@@ -114,7 +33,7 @@ def init():
         x.append([])
         y.append([])
     time_text.set_text('')
-    if "voronois" in jsn:
+    if args.voronoi and "voronois" in jsn:
         for i in range(jsn["number_of_robots"]):
             j = 0
             for v in jsn["voronois"][0][i]:
@@ -124,14 +43,16 @@ def init():
     for i in range(jsn["number_of_robots"]):
         plans[i].set_data(jsn["planned_trajs"][0][i]["x"], jsn["planned_trajs"][0][i]["y"])
         originals[i].set_data(jsn["originals"][i]["x"], jsn["originals"][i]["y"])
-    for i in range(jsn["number_of_robots"]):
-        cpts = controlpoints[i]
-        pts = jsn["controlpoints"][0][i]
-        k = 0
-        print(len(pts))
-        while k < len(pts):
-            cpts[k].set_data([pts[k][0]], [pts[k][1]])
-            k+=1
+    if args.controlpoints:
+      for i in range(jsn["number_of_robots"]):
+          cpts = controlpoints[i]
+          pts = jsn["controlpoints"][0][i]
+          k = 0
+          # print(len(pts))
+          while k < len(pts):
+              cpts[k].set_data([pts[k][0]], [pts[k][1]])
+              k+=1
+
     return to_animate
 
 
@@ -141,7 +62,7 @@ def animate(frame):
     global to_animate
     global time_text
     global voronois
-    global save
+    global args
     global fig
     for i, atraj in enumerate(trajectories):
         x[i].append(jsn["points"][frame][i][0])
@@ -149,7 +70,7 @@ def animate(frame):
         atraj.set_data(x[i],y[i])
         circles[i].center = (jsn["points"][frame][i][0], jsn["points"][frame][i][1])
 
-    if("voronois" in jsn and frame < len(jsn["voronois"]) and jsn["voronois"][frame] != None):
+    if args.voronoi and "voronois" in jsn and frame < len(jsn["voronois"]) and jsn["voronois"][frame] != None:
         for j in range(jsn["number_of_robots"]):
             for i,v in enumerate(jsn["voronois"][frame][j]):
                 (xx,yy) = genvoroxy(v)
@@ -163,28 +84,135 @@ def animate(frame):
         originals[i].set_data(jsn["originals"][i]["x"][frame:], jsn["originals"][i]["y"][frame:])
     time_text.set_text('time = %.1f' % (jsn["dt"]*frame))
 
-    if(frame < len(jsn["controlpoints"]) and jsn["controlpoints"][frame] != None):
+    if args.controlpoints and frame < len(jsn["controlpoints"]) and jsn["controlpoints"][frame] != None:
         for i in range(jsn["number_of_robots"]):
             cpts = controlpoints[i]
             pts = jsn["controlpoints"][frame][i]
             k = 0
-            print(len(pts))
+            # print(len(pts))
             while k < len(pts):
                 cpts[k].set_data([pts[k][0]], [pts[k][1]])
                 k+=1
 
-    if(frame < len(jsn["discrete_plan"]) and jsn["discrete_plan"][frame] != None):
+    if "discrete_plan" in jsn and frame < len(jsn["discrete_plan"]) and jsn["discrete_plan"][frame] != None:
         for i in range(jsn["number_of_robots"]):
             discrete_plans[i].set_data(jsn["discrete_plan"][frame][i]["x"], jsn["discrete_plan"][frame][i]["y"])
     else:
         for i in range(jsn["number_of_robots"]):
             discrete_plans[i].set_data([], [])
 
-    if save:
+    if args.save:
         if(frame > 300):
             fig.savefig("images/"+str(frame)+".png")
     return to_animate
 
-anim = animation.FuncAnimation(fig, animate, init_func=init,frames=len(jsn["points"]),interval=jsn["dt"]*1000,blit=True)
+if __name__ == "__main__":
+  parser = argparse.ArgumentParser()
+  parser.add_argument("file", help="input file containing data (*.json)")
 
-plt.show()
+  parser.add_argument('--save', dest='save', action='store_true')
+  parser.add_argument('--no-save', dest='save', action='store_false')
+  parser.set_defaults(save=False)
+
+  parser.add_argument('--voronoi', dest='voronoi', action='store_true')
+  parser.add_argument('--no-voronoi', dest='voronoi', action='store_false')
+  parser.set_defaults(voronoi=True)
+
+  parser.add_argument('--controlpoints', dest='controlpoints', action='store_true')
+  parser.add_argument('--no-controlpoints', dest='controlpoints', action='store_false')
+  parser.set_defaults(controlpoints=True)
+
+  parser.add_argument('--frameinc', default=1, type=int, help="visualize every frameinc frame")
+
+  parser.add_argument('--blit', dest='blit', action='store_true')
+  parser.add_argument('--no-blit', dest='blit', action='store_false')
+  parser.set_defaults(blit=True)
+
+  args = parser.parse_args()
+
+  jsn = json.load(open(args.file))
+
+  colors = ['b', 'g', 'r', 'c', 'm', 'k']
+
+  fig = plt.figure()
+  ax = plt.axes(xlim=(-10,10), ylim=(-10,10))
+  ax.set_aspect('equal')
+  time_text = ax.text(0.02, 0.95, '', transform=ax.transAxes)
+  trajectories = []
+  to_animate = []
+
+  polygon_patches = []
+  if("obstacles" in jsn):
+      for obs in jsn["obstacles"]:
+          poly = Polygon(obs)
+          polypatch = PolygonPatch(poly, color='yellow', zorder = 5)
+          ax.add_patch(polypatch)
+          to_animate.append(polypatch)
+
+
+  circles = []
+  voronois = []
+  plans = []
+  originals = []
+  controlpoints = []
+  discrete_plans = []
+
+  for i in range(jsn["number_of_robots"]):
+      orig = ax.plot(jsn["originals"][i]["x"], jsn["originals"][i]["y"], linestyle="dashed", lw=2, zorder = 10, color=colors[i], alpha = 0.8)[0]
+      originals.append(orig)
+      to_animate.append(orig)
+
+  for i in range(jsn["number_of_robots"]):
+      x = jsn["planned_trajs"][0][i]["x"]
+      y = jsn["planned_trajs"][0][i]["y"]
+      tr = ax.plot(x, y, lw=2, zorder = 10, color=colors[i], alpha=0.4)[0]
+      plans.append(tr)
+      to_animate.append(tr)
+
+  if args.controlpoints:
+    for i in range(jsn["number_of_robots"]):
+        pts = jsn["controlpoints"][0][i]
+        cpts = []
+        # print(len(pts))
+        for pt in pts:
+            ptd = ax.plot([pt[0]], [pt[1]], zorder = 20, color=colors[i], alpha = 0.8, marker='o')[0]
+            cpts.append(ptd)
+            to_animate.append(ptd)
+        controlpoints.append(cpts)
+
+  for i in range(jsn["number_of_robots"]):
+      atraj = ax.plot([], [], lw=2, zorder=0, color = colors[i])[0]
+      trajectories.append(atraj)
+      to_animate.append(atraj)
+
+      circle = plt.Circle((jsn["points"][0][i][0],jsn["points"][0][i][1]), radius=0.15, fc=colors[i], lw=0, alpha=0.2)
+      circles.append(circle)
+      to_animate.append(circle)
+      ax.add_artist(circle)
+
+  for i in range(jsn["number_of_robots"]):
+      discrete_plan = ax.plot([], [], linestyle=":", lw=2, zorder = 10, color=colors[i], alpha = 0.8)[0]
+      discrete_plans.append(discrete_plan)
+      to_animate.append(discrete_plan)
+
+
+  if args.voronoi and "voronois" in jsn:
+      for i in range(jsn["number_of_robots"]):
+          voronois.append([])
+          for v in jsn["voronois"][0][i]:
+              (x,y) = genvoroxy(v)
+              v = ax.plot(x, y, lw=2, zorder=7, color=colors[i])[0]
+              voronois[i].append(v)
+              to_animate.append(v)
+
+  to_animate.append(time_text)
+  x = []
+  y = []
+
+  anim = animation.FuncAnimation(fig, animate, init_func=init,frames=range(0,len(jsn["points"]),args.frameinc),interval=jsn["dt"]*1000,blit=args.blit)
+
+  plt.show()
+
+
+
+
