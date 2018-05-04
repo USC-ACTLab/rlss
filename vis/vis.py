@@ -157,8 +157,9 @@ def animate(frame):
 
 
     hpIdx = 0
-    if args.hyperplanes and "hyperplanes" in jsn and jsn["hyperplanes"][frame]:
-      for hp in jsn["hyperplanes"][frame][0]:
+    robot = 0
+    if args.hyperplanes and "hyperplanes" in jsn and frame < len(jsn["hyperplanes"]) and jsn["hyperplanes"][frame] and robot < len(jsn["hyperplanes"][frame]) and jsn["hyperplanes"][frame][robot]:
+      for hp in jsn["hyperplanes"][frame][robot]:
         if hp:
           (hpx,hpy) = genvoroxy(hp)
           if hpIdx >= len(hyperplanes):
@@ -172,14 +173,14 @@ def animate(frame):
     for idx in range(hpIdx, len(hyperplanes)):
       hyperplanes[idx].set_data([], [])
 
-    if "occupied_cells" in jsn:
-      cell_size = jsn["cell_size"]
-      ocIdx = 0
-      for xx,yy in zip(jsn["occupied_cells"][frame]["x"], jsn["occupied_cells"][frame]["y"]):
-        # cell = ax.add_artist(Rectangle((xx-cell_size/2.0, yy-cell_size/2.0), cell_size, cell_size))
-        occupied_cells[ocIdx].set_x(xx-cell_size/2.0)
-        occupied_cells[ocIdx].set_y(yy-cell_size/2.0)
-        ocIdx += 1
+    # if "occupied_cells" in jsn:
+    #   cell_size = jsn["cell_size"]
+    #   ocIdx = 0
+    #   for xx,yy in zip(jsn["occupied_cells"][frame]["x"], jsn["occupied_cells"][frame]["y"]):
+    #     # cell = ax.add_artist(Rectangle((xx-cell_size/2.0, yy-cell_size/2.0), cell_size, cell_size))
+    #     occupied_cells[ocIdx].set_x(xx-cell_size/2.0)
+    #     occupied_cells[ocIdx].set_y(yy-cell_size/2.0)
+    #     ocIdx += 1
 
     if args.save:
         if(frame > 300):
@@ -242,7 +243,7 @@ if __name__ == "__main__":
 
   if "occupied_cells" in jsn:
     cell_size = jsn["cell_size"]
-    for x,y in zip(jsn["occupied_cells"][0]["x"], jsn["occupied_cells"][0]["y"]):
+    for x,y in zip(jsn["occupied_cells"]["x"], jsn["occupied_cells"]["y"]):
       cell = ax.add_artist(Rectangle((x-cell_size/2.0, y-cell_size/2.0), cell_size, cell_size, alpha=0.5))
       occupied_cells.append(cell)
       to_animate.append(cell)
