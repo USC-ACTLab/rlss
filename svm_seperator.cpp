@@ -7,8 +7,10 @@
 
 using namespace std;
 
-SvmSeperator::SvmSeperator(vector<obstacle2D>* obs): obstacles(obs) {
+void print_null(const char* s) {}
 
+SvmSeperator::SvmSeperator(vector<obstacle2D>* obs): obstacles(obs) {
+  svm_set_print_string_function(&print_null);
 }
 
 
@@ -23,6 +25,7 @@ void SvmSeperator::add_pt(const vectoreuc& pt) {
 vector<hyperplane> SvmSeperator::seperate() {
   vector<hyperplane> result;
   for(int i=0; i<obstacles->size(); i++) {
+    cout << "st" << endl;
     obstacle2D& obs = (*obstacles)[i];
     int l = obs.ch.size()-1 + pts.size();
     double* y = (double*) malloc(sizeof(double) * l);
@@ -103,8 +106,22 @@ vector<hyperplane> SvmSeperator::seperate() {
 
     double closest_obs_sv = -1*numeric_limits<double>::infinity();
     for(int i=0; i<obs.ch.size()-1; i++) {
+      double dst = hp.dist(obs.pts[obs.ch[i]]);
+
       closest_obs_sv = max(closest_obs_sv, hp.dist(obs.pts[obs.ch[i]]));
 
+    }
+    if(closest_obs_sv > 0) {
+      for(int i=0; i<pts.size();i++) {
+        cout << pts[i] <<  " ";
+      }
+      cout << endl;
+      for(int i=0; i<obs.ch.size()-1; i++) {
+        cout << obs.pts[obs.ch[i]] << " ";
+      }
+
+      cout << endl;
+      int a; cin >> a;
     }
     hp.distance += closest_obs_sv;
 
@@ -126,6 +143,7 @@ vector<hyperplane> SvmSeperator::seperate() {
 
     result.push_back(hp);
     // std::cout << "normal: " << hp.normal << " dist: " << hp.distance << std::endl;
+    cout << "end" << endl;
   }
 
   return result;
