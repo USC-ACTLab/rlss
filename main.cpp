@@ -650,7 +650,7 @@ int main(int argc, char** argv) {
               svm.add_pt(pt);
 
               // gives us one hyperplane per obstacle
-              vector<hyperplane> hyperplanes = svm.seperate();
+              vector<hyperplane> hyperplanes = svm._2_4_seperate();
               std::cout << "hyperplanes: " << hyperplanes.size() << std::endl;
 
               do {
@@ -737,7 +737,7 @@ int main(int argc, char** argv) {
             svm.add_pt(trajectories[i][j][k]);
           }
 
-          vector<hyperplane> hyperplanes = svm.seperate();
+          vector<hyperplane> hyperplanes = svm._8_4_seperate();
           std::cout << "hyperplanes2: " << hyperplanes.size() << std::endl;
 
           for (auto& plane : hyperplanes) {

@@ -26,6 +26,9 @@ add_executable(main main.cpp)
 target_include_directories(main PRIVATE lib)
 
 find_package(stdc++fs)
+add_library(svm2pt4obs cvxgen/2pt4obspt/cvxgen/solver.cpp cvxgen/2pt4obspt/cvxgen/ldl.cpp cvxgen/2pt4obspt/cvxgen/matrix_support.cpp cvxgen/2pt4obspt/cvxgen/util.cpp svmcvxwrapper_2pt_4obs.cpp)
+add_library(svm8pt4obs cvxgen/8pt4obspt/cvxgen/solver.cpp cvxgen/8pt4obspt/cvxgen/ldl.cpp cvxgen/8pt4obspt/cvxgen/matrix_support.cpp cvxgen/8pt4obspt/cvxgen/util.cpp svmcvxwrapper_8pt_4obs.cpp)
+
 add_library(geometry hyperplane.cpp vectoreuc.cpp edt.cpp edtv2.cpp occupancy_grid.cpp)
 add_library(svm svm_seperator.cpp lib/libsvm/svm.cpp)
 target_include_directories(svm PRIVATE lib)
@@ -51,5 +54,7 @@ target_link_libraries(
   stdc++fs
   ipopt
   qpOASES
+  svm2pt4obs
+  svm8pt4obs
 #  osqp
 )

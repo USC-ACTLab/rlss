@@ -21,6 +21,8 @@ class SvmSeperator {
     void reset_pts();
     void add_pt(const vectoreuc& vec);
     vector<hyperplane> seperate();
+    vector<hyperplane> _2_4_seperate();
+    vector<hyperplane> _8_4_seperate();
 };
 
 #endif

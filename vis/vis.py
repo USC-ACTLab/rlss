@@ -321,7 +321,3 @@ if __name__ == "__main__":
   anim = animation.FuncAnimation(fig, animate, init_func=init,frames=frameGen,interval=jsn["dt"]*1000,blit=args.blit,repeat=True)
 
   plt.show()
-
-
-
-
