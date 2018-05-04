@@ -17,7 +17,6 @@ def frameGen():
   frameId += args.frameinc
   if frameId >= numFrames:
     frameId = 0
-    init()
   yield frameId
 
 def onKey(event):
@@ -69,7 +68,10 @@ def init():
     global y
     global voronois
     global controlpoints
-    # print("init")
+
+    if frameId != 0:
+      return to_animate
+
     x = []
     y = []
     for atraj in trajectories:
@@ -315,8 +317,7 @@ if __name__ == "__main__":
   numFrames = len(jsn["points"])
   # fig.canvas.mpl_connect('button_press_event', onClick)
   fig.canvas.mpl_connect('key_press_event', onKey)
-  init()
-  anim = animation.FuncAnimation(fig, animate,frames=frameGen,interval=jsn["dt"]*1000,blit=args.blit,repeat=True)
+  anim = animation.FuncAnimation(fig, animate, init_func=init,frames=frameGen,interval=jsn["dt"]*1000,blit=args.blit,repeat=True)
 
   plt.show()
 
