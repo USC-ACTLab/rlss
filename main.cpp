@@ -284,9 +284,11 @@ int main(int argc, char** argv) {
   ofstream outStats("stats.csv");
   outStats << "t";
   for (size_t i = 0; i < original_trajectories.size(); ++i) {
-    outStats << "," << i;
+    outStats << ",total" << i << ",astar" << i << ",svm" << i << ",qp" << i;
   }
   outStats << std::endl;
+
+  std::chrono::time_point<std::chrono::high_resolution_clock> t_start, t_start_a_star, t_end_a_star, t_start_svm, t_end_svm, t_start_qp, t_end_qp;
 
   double everyone_reached = false;
 
@@ -298,7 +300,7 @@ int main(int argc, char** argv) {
 
     for(int i=0; i<original_trajectories.size(); i++ ) {
       cout << "traj " << i << " start " << ct << " / " << total_times[i] << endl;
-      auto t0 = Time::now();
+      t_start = Time::now();
 
       for (int j = 0; j < original_trajectories.size(); ++j) {
         if (i != j) {
@@ -484,7 +486,10 @@ int main(int argc, char** argv) {
 
         libSearch::AStar<discreteSearch::State, discreteSearch::Action, int, discreteSearch::Environment> astar(env);
         libSearch::PlanResult<discreteSearch::State, discreteSearch::Action, int> solution;
+
+        t_start_a_star = Time::now();
         bool success = astar.search(start, solution);
+        t_end_a_star = Time::now();
 
         if (success) {
             std::cout << "discrete planning successful! Total cost: " << solution.cost << std::endl;
@@ -538,7 +543,7 @@ int main(int argc, char** argv) {
             // while (curve_count > corners.size() - 1) {
             //   corners.push_back(corners[corners.size() - 2]);
             // }
-
+            t_start_svm = Time::now();
             size_t hpidx = 0;
             for (size_t j = 0; j < discrete_curve_count && j < curve_count; ++j) {
               svm.reset_pts();
@@ -574,6 +579,7 @@ int main(int argc, char** argv) {
                 }
               } while (j >= discrete_curve_count && j < curve_count);
             }
+            t_end_svm = Time::now();
 
             // uniformily distribute the control points on the line segments as initial guess
 
@@ -616,6 +622,9 @@ int main(int argc, char** argv) {
         //         * find separating hyperplanes between those trajectories and all obstacles
         //         * add hyperplanes as constraints (per piece)
 #if 1
+        t_start_a_star = t_end_a_star = Time::now();
+
+        t_start_svm = Time::now();
         size_t hpidx = 0;
         for (size_t j = 0; j < curve_count ; ++j) {
           svm.reset_pts();
@@ -640,13 +649,14 @@ int main(int argc, char** argv) {
             ++hpidx;
           }
         }
+        t_end_svm = Time::now();
 #endif
 
       }
 
       const size_t numConstraints = cb.A().rows();
 
-
+      t_start_qp = Time::now();
 #if QP_SOLVER == QP_SOLVER_OSQP
       ////
       // Problem settings
@@ -763,6 +773,7 @@ int main(int argc, char** argv) {
       std::cout << "objective: " << qp.getObjVal() << std::endl;
       // std::cout << "y: " << y << std::endl;
 #endif
+      t_end_qp = Time::now();
       // Update trajectories with our solution
       for(int j=0; j<trajectories[i].size(); j++) {
         for(int k=0; k<ppc; k++) {
@@ -1136,13 +1147,15 @@ int main(int argc, char** argv) {
       }
 #endif
       auto t1 = Time::now();
-      fsec fs = t1 - t0;
+      fsec fs = t1 - t_start;
       ms d = chrono::duration_cast<ms>(fs);
       total_time_for_opt += d.count();
       total_count_for_opt++;
       cout << "optimization time: " << d.count() << "ms" << endl;
-      outStats << "," << d.count();
-
+      outStats << "," << d.count()
+               << "," << chrono::duration_cast<ms>(t_end_a_star - t_start_a_star).count()
+               << "," << chrono::duration_cast<ms>(t_end_svm - t_start_svm).count()
+               << "," << chrono::duration_cast<ms>(t_end_qp - t_start_qp).count();
 
       for(double t = 0; t<=trajectories[i].duration(); t+=printdt) {
         vectoreuc ev = trajectories[i].eval(t);
