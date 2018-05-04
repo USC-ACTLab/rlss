@@ -97,7 +97,7 @@ vector<OG::index> OG::neighbors(index& cur) {
 
 bool OG::occupied(trajectory& traj) {
   double dt = 0.01;
-  for(double t = 0; t<=traj.total_duration; t+=dt) {
+  for(double t = 0; t<=traj.duration(); t+=dt) {
     vectoreuc pos = traj.eval(t);
     if(occupied(pos[0], pos[1])) {
       return true;
@@ -114,4 +114,16 @@ size_t OG::max_i() const
 size_t OG::max_j() const
 {
   return grid[0].size();
+}
+
+void OG::set_occupied(double x, double y)
+{
+  index idx = get_index(x, y);
+  grid[idx.i][idx.j] = true;
+}
+
+void OG::set_free(double x, double y)
+{
+  index idx = get_index(x, y);
+  grid[idx.i][idx.j] = false;
 }

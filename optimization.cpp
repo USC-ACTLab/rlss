@@ -113,7 +113,7 @@ double optimization::energy_objective(const vector<double>& x, vector<double>& g
 
 
   double start_time = 0;
-  double end_time = curtraj.total_duration;
+  double end_time = curtraj.duration();
 
   int startcurveidx = 0;
   int endcurveidx = curtraj.size() - 1;

@@ -1,7 +1,9 @@
 {
-  "trajectories": "../test_data/trajectories/straight_to_right/",
-  "obstacles": "../test_data/obstacles/obsdiamond/",
-  "replan_period": 0.3,
+  "trajectories": "../test_data/trajectories/swap4",
+  "obstacles": "../test_data/obstacles/3obstacles/",
+  "robot_radius": 0.15,
+  "cell_size": 0.25,
+  "replan_period": 0.1,
   "set_max_time_as_replan_period": true,
   "planning_horizon": 3,
   "plan_for_curves": 3,
@@ -9,7 +11,7 @@
   "objective_relative_stop_value": 0.0001,
   "problem_dimension": 2,
   "points_per_curve": 8,
-  "continuity_upto_degree": 1,
+  "continuity_upto_degree": 4,
   "continuity_tolerances": [
     0.00001, 0.0001, 0.001, 0.1, 1, 10
   ],
