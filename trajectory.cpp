@@ -4,13 +4,12 @@
 
 using namespace std;
 
-trajectory::trajectory(): total_duration(0) {
+trajectory::trajectory() {
 
 }
 
 void trajectory::add_curve(curve& crv) {
   curves.push_back(crv);
-  total_duration += crv.duration;
 }
 
 curve& trajectory::operator[](int idx) {

@@ -132,12 +132,14 @@ def animate(frame):
     if args.controlpoints and frame < len(jsn["controlpoints"]) and jsn["controlpoints"][frame] != None:
         for i in range(jsn["number_of_robots"]):
             cpts = controlpoints[i]
-            pts = jsn["controlpoints"][frame][i]
-            k = 0
-            # print(len(pts))
-            while k < len(pts):
-                cpts[k].set_data([pts[k][0]], [pts[k][1]])
-                k+=1
+            if i < len(jsn["controlpoints"][frame]):
+              pts = jsn["controlpoints"][frame][i]
+              if pts:
+                k = 0
+                # print(len(pts))
+                while k < len(pts):
+                    cpts[k].set_data([pts[k][0]], [pts[k][1]])
+                    k+=1
 
     if "discrete_plan" in jsn and frame < len(jsn["discrete_plan"]) and jsn["discrete_plan"][frame] != None:
         for i in range(jsn["number_of_robots"]):
@@ -150,11 +152,11 @@ def animate(frame):
 
     hpIdx = 0
     if args.hyperplanes and "hyperplanes" in jsn and jsn["hyperplanes"][frame]:
-      for hp in jsn["hyperplanes"][frame][i]:
+      for hp in jsn["hyperplanes"][frame][0]:
         if hp:
           (hpx,hpy) = genvoroxy(hp)
           if hpIdx >= len(hyperplanes):
-            v = ax.plot(hpx, hpy, lw=2, zorder=7, color=colors[hp[3]])[0]
+            v = ax.plot(hpx, hpy, lw=2, zorder=7, color=colors[hp[3]])[0] # color=colors[0])[0]
             hyperplanes.append(v)
             to_animate.append(v)
             # print(frame, hpIdx)
@@ -163,6 +165,15 @@ def animate(frame):
           hpIdx += 1
     for idx in range(hpIdx, len(hyperplanes)):
       hyperplanes[idx].set_data([], [])
+
+    if "occupied_cells" in jsn:
+      cell_size = jsn["cell_size"]
+      ocIdx = 0
+      for xx,yy in zip(jsn["occupied_cells"][frame]["x"], jsn["occupied_cells"][frame]["y"]):
+        # cell = ax.add_artist(Rectangle((xx-cell_size/2.0, yy-cell_size/2.0), cell_size, cell_size))
+        occupied_cells[ocIdx].set_x(xx-cell_size/2.0)
+        occupied_cells[ocIdx].set_y(yy-cell_size/2.0)
+        ocIdx += 1
 
     if args.save:
         if(frame > 300):
@@ -221,10 +232,13 @@ if __name__ == "__main__":
           ax.add_patch(polypatch)
           to_animate.append(polypatch)
 
+  occupied_cells = []
+
   if "occupied_cells" in jsn:
     cell_size = jsn["cell_size"]
-    for x,y in zip(jsn["occupied_cells"]["x"], jsn["occupied_cells"]["y"]):
-      cell = ax.add_artist(Rectangle((x-cell_size/2.0, y-cell_size/2.0), cell_size, cell_size))
+    for x,y in zip(jsn["occupied_cells"][0]["x"], jsn["occupied_cells"][0]["y"]):
+      cell = ax.add_artist(Rectangle((x-cell_size/2.0, y-cell_size/2.0), cell_size, cell_size, alpha=0.5))
+      occupied_cells.append(cell)
       to_animate.append(cell)
     # cells = ax.scatter(jsn["occupied_cells"]["x"], jsn["occupied_cells"]["y"], marker='s')
     # to_animate.append(cells)

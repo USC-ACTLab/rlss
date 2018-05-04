@@ -47,6 +47,9 @@ class OG {
     /*checks whether given trajectory passes through an obstacle*/
     bool occupied(trajectory& traj);
 
+    void set_occupied(double x, double y);
+    void set_free(double x, double y);
+
     size_t max_i() const;
     size_t max_j() const;
 
