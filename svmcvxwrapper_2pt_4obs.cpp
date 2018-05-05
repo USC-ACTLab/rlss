@@ -1,6 +1,6 @@
 #include "svmcvxwrapper_2pt_4obs.h"
 #include "cvxgen/2pt4obspt/cvxgen/solver.h"
-
+#include <iostream>
 namespace solver_24 {
 solver_24::Vars vars;
 solver_24::Params params;
@@ -44,9 +44,12 @@ hyperplane _2pt4obspt_svm(const vectoreuc& pt1, const vectoreuc& pt2,
 
     int num_iters = solver_24::solve();
 
+
+    std::cout << "2-4 converged: " << solver_24::work.converged << std::endl;
+
     double nx = solver_24::vars.w[0];
     double ny = solver_24::vars.w[1];
-    double d = solver_24::vars.w[2] + 1;
+    double d = solver_24::vars.w[2] + solver_24::work.converged;
 
     vectoreuc normal(2);
     normal[0] = nx;

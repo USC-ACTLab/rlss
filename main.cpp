@@ -392,19 +392,14 @@ int main(int argc, char** argv) {
       // }
 
       // Create objective (min energy + reach goal)
-      ObjectiveBuilder ob(problem_dimension, curve_count);
+      std::vector<double> pieceDurations(curve_count, hor / curve_count);
+
+      do {
+      ObjectiveBuilder ob(problem_dimension, pieceDurations);
 
       double remaining_time = std::max(total_times[i] - ct, 3 * dt * 1.5);
       double factor = 1.0f / remaining_time;
       ob.minDerivativeSquared(1 * factor, 0 * factor, 5e-3 * factor, 0 * factor);
-
-      factor = 10.0f / curve_count;
-      for (size_t j = 1; j < curve_count; ++j) {
-        vectoreuc OBJPOS = original_trajectories[i].neval(min(ct+hor * (j+1)/(double)curve_count, total_times[i]), 0);
-        Vector targetPosition(problem_dimension);
-        targetPosition << OBJPOS[0], OBJPOS[1];
-        ob.endCloseTo(j, factor * (j+1), targetPosition);
-      }
 
       // y are our control points (decision variable)
       // Vector y(numVars);
@@ -430,7 +425,7 @@ int main(int argc, char** argv) {
       // zeroVec.setZero();
 
       // constraint matrix A
-      ConstraintBuilder cb(problem_dimension, curve_count);
+      ConstraintBuilder cb(problem_dimension, pieceDurations);
 
       // initial point constraints
 
@@ -442,12 +437,24 @@ int main(int argc, char** argv) {
       }
 
         // higher order constraints
-      for (size_t d = 1; d <= max_initial_point_degree; ++d) {
-        vectoreuc val = trajectories[i].neval(dt, d);
+      if(max_initial_point_degree >= 1) {
         Vector value(problem_dimension);
-        value << val[0], val[1];
-        cb.addConstraintBeginning(0, d, value);
+        value << velocities[i][0], velocities[i][1];
+        cb.addConstraintBeginning(0, 1, value); // Velocity
       }
+
+      if(max_initial_point_degree >= 2) {
+        Vector value(problem_dimension);
+        value << accelerations[i][0], accelerations[i][1];
+        cb.addConstraintBeginning(0, 2, value); // Acceleration
+      }
+
+      // for (size_t d = 1; d <= max_initial_point_degree; ++d) {
+      //   vectoreuc val = trajectories[i].neval(dt, d);
+      //   Vector value(problem_dimension);
+      //   value << val[0], val[1];
+      //   cb.addConstraintBeginning(0, d, value);
+      // }
 
       // continuity constraints
       for (size_t i = 0; i < curve_count - 1; ++i) {
@@ -695,15 +702,14 @@ int main(int argc, char** argv) {
                   y(1, j * ppc + k) = linearInterpolation(corners[cornersIdx].second, corners[cornersIdx+1].second, k + idx * ppc, ppc * last_discrete_curve_occupancy);
                 }
               }
-
-              for(int k=0; k<ppc; k++) {
-                std::vector<double> crds;
-                crds.push_back(y(0, j * ppc + k));
-                crds.push_back(y(1, j * ppc + k));
-                output_json["controlpoints"][output_iter][i].push_back(crds);
-              }
             }
 
+            // force end of trajectory to be at discrete end point
+            // TODO: factor?
+            Vector endPosition(2);
+            endPosition << y(0, 8 * curve_count - 1) , y(1, 8 * curve_count - 1);
+            ob.endCloseTo(curve_count - 1, 100, endPosition);
+            // cb.addConstraintEnd(curve_count - 1, 0, endPosition);
 
             for (int j = 0; j < original_trajectories.size(); ++j) {
               if (i != j) {
@@ -745,7 +751,7 @@ int main(int argc, char** argv) {
             normal << plane.normal[0], plane.normal[1];
             cb.addHyperplane(j, normal, plane.distance);
 
-
+            output_json["hyperplanes"][output_iter][i][hpidx].clear();
             output_json["hyperplanes"][output_iter][i][hpidx].push_back(plane.normal[0]); //normal first
             output_json["hyperplanes"][output_iter][i][hpidx].push_back(plane.normal[1]);//normal seconds
             output_json["hyperplanes"][output_iter][i][hpidx].push_back(plane.distance); //distance
@@ -756,9 +762,27 @@ int main(int argc, char** argv) {
         t_end_svm = Time::now();
 #endif
 
+        factor = 1.0f / curve_count;
+        for (size_t j = 1; j < curve_count; ++j) {
+          vectoreuc OBJPOS = original_trajectories[i].neval(min(ct+hor * (j+1)/(double)curve_count, total_times[i]), 0);
+          Vector targetPosition(problem_dimension);
+          targetPosition << OBJPOS[0], OBJPOS[1];
+          ob.endCloseTo(j, factor * (j+1), targetPosition);
+        }
+
       }
 
       const size_t numConstraints = cb.A().rows();
+
+      output_json["controlpoints_guessed"][output_iter][i].clear();
+      for (size_t j = 0; j < curve_count; ++j) {
+        for(int k=0; k<ppc; k++) {
+          std::vector<double> crds;
+          crds.push_back(y(0, j * ppc + k));
+          crds.push_back(y(1, j * ppc + k));
+          output_json["controlpoints_guessed"][output_iter][i].push_back(crds);
+        }
+      }
 
       t_start_qp = Time::now();
 #if QP_SOLVER == QP_SOLVER_OSQP
@@ -814,7 +838,7 @@ int main(int argc, char** argv) {
 
       if (work->info->status_val != OSQP_SOLVED) {
         std::stringstream sstr;
-        sstr << "Couldn't solve QP! @ " << ct;
+        sstr << "Couldn't solve QP! @ " << ct << " robot " << i;
         // throw std::runtime_error(sstr.str());
         std::cerr << sstr.str() << std::endl;
       }
@@ -850,6 +874,9 @@ int main(int argc, char** argv) {
       // of  working  set  recalculations  actually  performed!)
       qpOASES::int_t nWSR = 10000;
 
+      std::cout << "H: " << ob.H() << std::endl;
+      std::cout << "A: " << cb.A() << std::endl;
+
       // auto t0 = Time::now();
       qpOASES::returnValue status = qp.init(
         ob.H().data(),
@@ -866,9 +893,9 @@ int main(int argc, char** argv) {
       qpOASES::int_t simpleStatus = qpOASES::getSimpleStatus(status);
       if (simpleStatus != 0) {
         std::stringstream sstr;
-        sstr << "Couldn't solve QP!";
+        sstr << "Couldn't solve QP! @ " << ct << " robot " << i;
         // throw std::runtime_error(sstr.str());
-        std::cerr << "Couldn't solve QP! @ " << ct << std::endl;
+        std::cerr << sstr.str() << std::endl;
       }
 
       qp.getPrimalSolution(y.data());
@@ -889,42 +916,48 @@ int main(int argc, char** argv) {
 
       // temporal scaling
 
-      // double desired_time_per_curve = hor / curve_count;
-      remaining_time = std::max(total_times[i] - ct, 3 * dt * 1.5);
+      // // double desired_time_per_curve = hor / curve_count;
+      // remaining_time = std::max(total_times[i] - ct, 3 * dt * 1.5);
 
-      for (size_t j = 0; j < curve_count; ++j) {
-        trajectories[i][j].duration = /*std::max(*/std::min(hor, remaining_time) / curve_count;//, 1.5 * dt);
-      }
+      // for (size_t j = 0; j < curve_count; ++j) {
+      //   trajectories[i][j].duration = /*std::max(*/std::min(hor, remaining_time) / curve_count;//, 1.5 * dt);
+      // }
       // For robot-robot safety make sure that the first piece (with voronoi constraints) lasts until the next planning cycle
       // trajectories[i][0].duration = std::max(trajectories[i][0].duration, 1.5 * dt);
 
       // scale until slow enough
-      while (true)
-      {
-        double max_velocity = -1;
-        double max_acceleration = -1;
-        for (double t = 0; t < trajectories[i].duration(); t+=dt/10.0) {
-          double velocity = trajectories[i].neval(t, 1).L2norm();
-          double acceleration = trajectories[i].neval(t, 2).L2norm();
-          max_velocity = std::max(max_velocity, velocity);
-          max_acceleration = std::max(max_acceleration, acceleration);
+
+      double max_velocity = -1;
+      double max_acceleration = -1;
+      for (double t = 0; t < trajectories[i].duration(); t+=dt/10.0) {
+        double velocity = trajectories[i].neval(t, 1).L2norm();
+        double acceleration = trajectories[i].neval(t, 2).L2norm();
+        max_velocity = std::max(max_velocity, velocity);
+        max_acceleration = std::max(max_acceleration, acceleration);
+      }
+      std::cout << "max_vel " << max_velocity << std::endl;
+      std::cout << "max_acc " << max_acceleration << std::endl;
+      if (   max_velocity > 4.0
+          || max_acceleration > 8.0) {
+        for (auto& pd : pieceDurations) {
+          pd *= 2;
         }
-        std::cout << "max_vel " << max_velocity << std::endl;
-        std::cout << "max_acc " << max_acceleration << std::endl;
-        if (   max_velocity > 4.0
-            || max_acceleration > 8.0) {
-          for (size_t j = 0; j < curve_count; ++j) {
-            trajectories[i][j].duration *= 2;
-          }
-        } else {
+        std::cerr << "SCALING " << pieceDurations[0] << " " << accelerations[i] << std::endl;
+      } else {
           break;
-        }
       }
 
+      // for (size_t j = 0; j < curve_count; ++j) {
+      //   std::cout << "traj " << j << " " << trajectories[i][j].duration << std::endl;
+      // }
+
       for (size_t j = 0; j < curve_count; ++j) {
+        trajectories[i][j].duration = pieceDurations[j];
         std::cout << "traj " << j << " " << trajectories[i][j].duration << std::endl;
       }
 
+
+      } while (true); // TODO
 
 
 
@@ -1268,12 +1301,12 @@ int main(int argc, char** argv) {
         output_json["planned_trajs"][output_iter][i]["y"].push_back(ev[1]);
       }
 
-      // for(int j=0; j<curve_count; j++) {
-      //   for(int p=0; p<ppc; p++) {
-      //     output_json["controlpoints"][output_iter][i].push_back(trajectories[i][j][p].crds);
-      //     //cout << trajectories[i][j][p] << endl;
-      //   }
-      // }
+      for(int j=0; j<curve_count; j++) {
+        for(int p=0; p<ppc; p++) {
+          output_json["controlpoints"][output_iter][i].push_back(trajectories[i][j][p].crds);
+          //cout << trajectories[i][j][p] << endl;
+        }
+      }
 #if 0
       for (int j = 0; j < original_trajectories.size(); ++j) {
         if (i != j) {

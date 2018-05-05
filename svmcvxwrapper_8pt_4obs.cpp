@@ -1,5 +1,6 @@
 #include "svmcvxwrapper_8pt_4obs.h"
 #include "cvxgen/8pt4obspt/cvxgen/solver.h"
+#include <iostream>
 
 namespace solver_84 {
 
@@ -67,9 +68,11 @@ hyperplane _8pt4obspt_svm(const vectoreuc& pt1, const vectoreuc& pt2,
 
   int num_iters = solver_84::solve();
 
+  std::cout << "8-4 converged: " << solver_84::work.converged << std::endl;
+
   double nx = solver_84::vars.w[0];
   double ny = solver_84::vars.w[1];
-  double d = solver_84::vars.w[2] + 1;
+  double d = solver_84::vars.w[2] + solver_84::work.converged;
 
   vectoreuc normal(2);
   normal[0] = nx;

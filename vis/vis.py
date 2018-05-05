@@ -43,8 +43,21 @@ def onKey(event):
     frameId -= 2 * args.frameinc
     anim.event_source.start()
     anim_running = True
+  if event.key == 'h':
+    args.hyperplanes = not args.hyperplanes
+    if not anim_running:
+      step = True
+      frameId -= args.frameinc
+      anim.event_source.start()
+      anim_running = True
 
-
+  if event.key == 'v':
+    args.voronoi = not args.voronoi
+    if not anim_running:
+      step = True
+      frameId -= args.frameinc
+      anim.event_source.start()
+      anim_running = True
 
 
 def genvoroxy(voronoi):
@@ -147,6 +160,18 @@ def animate(frame):
                     cpts[k].set_data([pts[k][0]], [pts[k][1]])
                     k+=1
 
+    if args.controlpoints_guessed and frame < len(jsn["controlpoints_guessed"]) and jsn["controlpoints_guessed"][frame] != None:
+        for i in range(jsn["number_of_robots"]):
+            cpts = controlpoints_guessed[i]
+            if i < len(jsn["controlpoints_guessed"][frame]):
+              pts = jsn["controlpoints_guessed"][frame][i]
+              if pts:
+                k = 0
+                # print(len(pts))
+                while k < len(pts):
+                    cpts[k].set_data([pts[k][0]], [pts[k][1]])
+                    k+=1
+
     if "discrete_plan" in jsn and frame < len(jsn["discrete_plan"]) and jsn["discrete_plan"][frame] != None:
         for i in range(jsn["number_of_robots"]):
           if i < len(jsn["discrete_plan"][frame]) and jsn["discrete_plan"][frame][i]:
@@ -208,6 +233,10 @@ if __name__ == "__main__":
   parser.add_argument('--no-controlpoints', dest='controlpoints', action='store_false')
   parser.set_defaults(controlpoints=True)
 
+  parser.add_argument('--controlpoints-guessed', dest='controlpoints_guessed', action='store_true')
+  parser.add_argument('--no-controlpoints-guessed', dest='controlpoints_guessed', action='store_false')
+  parser.set_defaults(controlpoints_guessed=True)
+
   parser.add_argument('--frameinc', default=1, type=int, help="visualize every frameinc frame")
 
   parser.add_argument('--blit', dest='blit', action='store_true')
@@ -257,6 +286,7 @@ if __name__ == "__main__":
   plans = []
   originals = []
   controlpoints = []
+  controlpoints_guessed = []
   discrete_plans = []
   hyperplanes = []
 
@@ -282,6 +312,17 @@ if __name__ == "__main__":
             cpts.append(ptd)
             to_animate.append(ptd)
         controlpoints.append(cpts)
+
+  if args.controlpoints_guessed:
+    for i in range(jsn["number_of_robots"]):
+        pts = jsn["controlpoints_guessed"][0][i]
+        cpts = []
+        # print(len(pts))
+        for idx, pt in enumerate(pts):
+            ptd = ax.plot([pt[0]], [pt[1]], zorder = 20, color=colors[int(idx/8.0)], alpha = 0.8, marker='o')[0]
+            cpts.append(ptd)
+            to_animate.append(ptd)
+        controlpoints_guessed.append(cpts)
 
   for i in range(jsn["number_of_robots"]):
       atraj = ax.plot([], [], lw=2, zorder=0, color = colors[i])[0]

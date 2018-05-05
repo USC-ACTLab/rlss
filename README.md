@@ -85,12 +85,21 @@ https://www.jstage.jst.go.jp/article/jrsj/32/6/32_32_536/_pdf
 ### Standard cases
 
 * Obstacle appears for one (or multiple) robots
-* One robot breaks down (suddenly stobs on its trajectory)
+* One robot breaks down (suddenly stops on its trajectory)
 * One robot gets moved externally (e.g., temporary control issue, wind gust etc.)
 * Obstacle no longer present
+* U-shape obstacle example
 
 ### Hard cases
 
 * Moving obstacle
 * New robot participates that was unaware of other robots (e.g, head-to-head collision)
 
+## TODO
+
+* adjust time piece length in discrete case according to segment length
+* output velocity/acc and plot in vis_static
+
+* debug single robot (hyperplane etc)
+* debug issues with more than 3 curves
+* automatic test/movie generation?

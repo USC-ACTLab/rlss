@@ -4,6 +4,8 @@
 #include <Eigen/Core>
 #include <Eigen/Dense>
 
+#include <iostream>
+
 // qpOASES assumes row-major!
 typedef Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> Matrix;
 typedef Eigen::VectorXd Vector;
@@ -13,10 +15,11 @@ class ObjectiveBuilder
 public:
   ObjectiveBuilder(
     size_t dimension,
-    size_t numPieces)
+    const std::vector<double>& pieceDurations)
     : m_dimension(dimension)
-    , m_numPieces(numPieces)
-    , m_numVars(dimension * 8 * numPieces)
+    , m_pieceDurations(pieceDurations)
+    , m_numPieces(pieceDurations.size())
+    , m_numVars(dimension * 8 * m_numPieces)
     , m_H(m_numVars, m_numVars)
     , m_g(m_numVars)
   {
@@ -26,68 +29,30 @@ public:
 
   static void Init()
   {
-    Qvel.resize(8,8);
-    Qvel <<   0, 0, 0, 0, 0, 0, 0, 0,
-              0, 1, 1, 1, 1, 1, 1, 1,
-              0, 1, 4/3., 3/2., 8/5., 5/3., 12/7., 7/4.,
-              0, 1, 3/2., 9/5., 2, 15/7., 9/4., 7/3.,
-              0, 1, 8/5., 2, 16/7., 5/2., 8/3., 14/5.,
-              0, 1, 5/3., 15/7., 5/2., 25/9., 3, 35/11.,
-              0, 1, 12/7., 9/4., 8/3., 3, 36/11., 7/2.,
-              0, 1, 7/4., 7/3., 14/5., 35/11., 7/2., 49/13.;
-
-    Qacc.resize(8,8);
-    Qacc <<   0, 0, 0, 0, 0, 0, 0, 0,
-              0, 0, 0, 0, 0, 0, 0, 0,
-              0, 0, 4, 6, 8, 10, 12, 14,
-              0, 0, 6, 12, 18, 24, 30, 36,
-              0, 0, 8, 18, (144/5.), 40, (360/7.), 63,
-              0, 0, 10, 24, 40, (400/7.), 75, (280/3.),
-              0, 0, 12, 30, (360/7.), 75, 100, 126,
-              0, 0, 14, 36, 63, (280/3.), 126, (1764/11.);
-
-    Qjerk.resize(8,8);
-    Qjerk <<  0, 0, 0, 0, 0, 0, 0, 0,
-              0, 0, 0, 0, 0, 0, 0, 0,
-              0, 0, 0, 0, 0, 0, 0, 0,
-              0, 0, 0, 36, 72, 120, 180, 252,
-              0, 0, 0, 72, 192, 360, 576, 840,
-              0, 0, 0, 120, 360, 720, 1200, 1800,
-              0, 0, 0, 180, 576, 1200, 14400/7., 3150,
-              0, 0, 0, 252, 840, 1800, 3150, 4900;
-
-    Qsnap.resize(8,8);
-    Qsnap <<    0,    0,    0,    0,    0,     0,     0,      0,
-                0,    0,    0,    0,    0,     0,     0,      0,
-                0,    0,    0,    0,    0,     0,     0,      0,
-                0,    0,    0,    0,    0,     0,     0,      0,
-                0,    0,    0,    0,  576,  1440,  2880,   5040,
-                0,    0,    0,    0, 1440,  4800, 10800,  20160,
-                0,    0,    0,    0, 2880, 10800, 25920,  50400,
-                0,    0,    0,    0, 5040, 20160, 50400, 100800;
-
-    B.resize(8,8);
-    B <<   1,    0,    0,    0,    0,   0,  0, 0,
-          -7,    7,    0,    0,    0,   0,  0, 0,
-          21,  -42,   21,    0,    0,   0,  0, 0,
-         -35,  105, -105,   35,    0,   0,  0, 0,
-          35, -140,  210, -140,   35,   0,  0, 0,
-         -21,  105, -210,  210, -105,  21,  0, 0,
-           7,  -42,  105, -140,  105, -42,  7, 0,
-          -1,    7,  -21,   35,  -35,  21, -7, 1;
+    // B.resize(8,8);
+    // B <<   1,    0,    0,    0,    0,   0,  0, 0,
+    //       -7,    7,    0,    0,    0,   0,  0, 0,
+    //       21,  -42,   21,    0,    0,   0,  0, 0,
+    //      -35,  105, -105,   35,    0,   0,  0, 0,
+    //       35, -140,  210, -140,   35,   0,  0, 0,
+    //      -21,  105, -210,  210, -105,  21,  0, 0,
+    //        7,  -42,  105, -140,  105, -42,  7, 0,
+    //       -1,    7,  -21,   35,  -35,  21, -7, 1;
   }
 
   void minDerivativeSquared(
     double lambda_vel, double lambda_acc, double lambda_jerk, double lambda_snap)
   {
-    Matrix Q = lambda_vel * Qvel;// + lambda_acc * Qacc + lambda_jerk * Qjerk + lambda_snap * Qsnap;
-
-    Matrix H_1d_curve = B.transpose() * Q * B;
-
     // std::cout << H_1d_curve << std::endl;
 
     // H is just blockdiagonal of H_1d_curve
     for (size_t i = 0; i < m_numVars; i+=8) {
+      double T = m_pieceDurations[(i % (8 * m_numPieces)) /8];
+      std::cout << "T " << T << std::endl;
+      Matrix Q = lambda_vel * Qvel(T) + lambda_acc * Qacc(T) + lambda_jerk * Qjerk(T) + lambda_snap * Qsnap(T);
+      Matrix Bmatrix = B(T);
+      Matrix H_1d_curve = Bmatrix.transpose() * Q * Bmatrix;
+
       m_H.block(i, i, 8, 8) += H_1d_curve;
     }
 
@@ -124,34 +89,88 @@ private:
     return dimension * 8 * m_numPieces + piece * 8;
   }
 
+  Matrix Qvel(double T)
+  {
+    Matrix Qvel(8,8);
+    Qvel <<
+    0,0,0,0,0,0,0,0,
+    0,T,pow(T,2),pow(T,3),pow(T,4),pow(T,5),pow(T,6),pow(T,7),
+    0,pow(T,2),(4*pow(T,3))/3.,(3*pow(T,4))/2.,(8*pow(T,5))/5.,(5*pow(T,6))/3.,(12*pow(T,7))/7.,(7*pow(T,8))/4.,
+    0,pow(T,3),(3*pow(T,4))/2.,(9*pow(T,5))/5.,2*pow(T,6),(15*pow(T,7))/7.,(9*pow(T,8))/4.,(7*pow(T,9))/3.,
+    0,pow(T,4),(8*pow(T,5))/5.,2*pow(T,6),(16*pow(T,7))/7.,(5*pow(T,8))/2.,(8*pow(T,9))/3.,(14*pow(T,10))/5.,
+    0,pow(T,5),(5*pow(T,6))/3.,(15*pow(T,7))/7.,(5*pow(T,8))/2.,(25*pow(T,9))/9.,3*pow(T,10),(35*pow(T,11))/11.,
+    0,pow(T,6),(12*pow(T,7))/7.,(9*pow(T,8))/4.,(8*pow(T,9))/3.,3*pow(T,10),(36*pow(T,11))/11.,(7*pow(T,12))/2.,
+    0,pow(T,7),(7*pow(T,8))/4.,(7*pow(T,9))/3.,(14*pow(T,10))/5.,(35*pow(T,11))/11.,(7*pow(T,12))/2.,(49*pow(T,13))/13.;
+    return Qvel;
+  }
+
+  Matrix Qacc(double T)
+  {
+    Matrix Qacc(8,8);
+    Qacc <<
+    0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,
+    0,0,4*T,6*pow(T,2),8*pow(T,3),10*pow(T,4),12*pow(T,5),14*pow(T,6),
+    0,0,6*pow(T,2),12*pow(T,3),18*pow(T,4),24*pow(T,5),30*pow(T,6),36*pow(T,7),
+    0,0,8*pow(T,3),18*pow(T,4),(144*pow(T,5))/5.,40*pow(T,6),(360*pow(T,7))/7.,63*pow(T,8),
+    0,0,10*pow(T,4),24*pow(T,5),40*pow(T,6),(400*pow(T,7))/7.,75*pow(T,8),(280*pow(T,9))/3.,
+    0,0,12*pow(T,5),30*pow(T,6),(360*pow(T,7))/7.,75*pow(T,8),100*pow(T,9),126*pow(T,10),
+    0,0,14*pow(T,6),36*pow(T,7),63*pow(T,8),(280*pow(T,9))/3.,126*pow(T,10),(1764*pow(T,11))/11.;
+    return Qacc;
+  }
+
+  Matrix Qjerk(double T)
+  {
+    Matrix Qjerk(8,8);
+    Qjerk <<
+    0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,
+    0,0,0,36*T,72*pow(T,2),120*pow(T,3),180*pow(T,4),252*pow(T,5),
+    0,0,0,72*pow(T,2),192*pow(T,3),360*pow(T,4),576*pow(T,5),840*pow(T,6),
+    0,0,0,120*pow(T,3),360*pow(T,4),720*pow(T,5),1200*pow(T,6),1800*pow(T,7),
+    0,0,0,180*pow(T,4),576*pow(T,5),1200*pow(T,6),(14400*pow(T,7))/7.,3150*pow(T,8),
+    0,0,0,252*pow(T,5),840*pow(T,6),1800*pow(T,7),3150*pow(T,8),4900*pow(T,9);
+
+    return Qjerk;
+  }
+
+  Matrix Qsnap(double T)
+  {
+    Matrix Qsnap(8,8);
+    Qsnap <<
+    0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,
+    0,0,0,0,576*T,1440*pow(T,2),2880*pow(T,3),5040*pow(T,4),
+    0,0,0,0,1440*pow(T,2),4800*pow(T,3),10800*pow(T,4),20160*pow(T,5),
+    0,0,0,0,2880*pow(T,3),10800*pow(T,4),25920*pow(T,5),50400*pow(T,6),
+    0,0,0,0,5040*pow(T,4),20160*pow(T,5),50400*pow(T,6),100800*pow(T,7);
+    return Qsnap;
+  }
+
+  Matrix B(double T)
+  {
+    Matrix B(8,8);
+    B <<
+       1,    0,    0,    0,    0,   0,  0, 0,
+      -7 / T,    7 / T,    0,    0,    0,   0,  0, 0,
+      21 / pow(T,2),  -42/ pow(T,2),   21/ pow(T,2),    0,    0,   0,  0, 0,
+     -35/ pow(T,3),  105/ pow(T,3), -105/ pow(T,3),   35/ pow(T,3),    0,   0,  0, 0,
+      35/ pow(T,4), -140/ pow(T,4),  210/ pow(T,4), -140/ pow(T,4),   35/ pow(T,4),   0,  0, 0,
+     -21/ pow(T,5),  105/ pow(T,5), -210/ pow(T,5),  210/ pow(T,5), -105/ pow(T,5),  21/ pow(T,5),  0, 0,
+       7/ pow(T,6),  -42/ pow(T,6),  105/ pow(T,6), -140/ pow(T,6),  105/ pow(T,6), -42/ pow(T,6),  7/ pow(T,6), 0,
+      -1/ pow(T,7),    7/ pow(T,7),  -21/ pow(T,7),   35/ pow(T,7),  -35/ pow(T,7),  21/ pow(T,7), -7/ pow(T,7), 1/ pow(T,7);
+    return B;
+  }
+
 private:
-  // static Matrix Qvel = (Matrix(8, 8) <<
-  //   0, 0, 0, 0, 0, 0, 0, 0,
-  //   0, 1, 1, 1, 1, 1, 1, 1,
-  //   0, 1, 4/3, 3/2, 8/5, 5/3, 12/7, 7/4,
-  //   0, 1, 3/2, 9/5, 2, 15/7, 9/4, 7/3,
-  //   0, 1, 8/5, 2, 16/7, 5/2, 8/3, 14/5,
-  //   0, 1, 5/3, 15/7, 5/2, 25/9, 3, 35/11,
-  //   0, 1, 12/7, 9/4, 8/3, 3, 36/11, 7/2,
-  //   0, 1, 7/4, 7/3, 14/5, 35/11, 7/2, 49/13
-  // ).finished();
-
-  // static Matrix Qvel = [] {
-  //   Matrix tmp(8, 8);
-  //   tmp << 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16;
-  //   return tmp;
-  // }();
-
-
-  static Matrix Qvel;
-  static Matrix Qacc;
-  static Matrix Qjerk;
-  static Matrix Qsnap;
-  static Matrix B;
 
 
 private:
   size_t m_dimension;
+  std::vector<double> m_pieceDurations;
   size_t m_numPieces;
   const size_t m_numVars;
 
@@ -164,10 +183,11 @@ class ConstraintBuilder
 public:
   ConstraintBuilder(
     size_t dimension,
-    size_t numPieces)
+    const std::vector<double>& pieceDurations)
     : m_dimension(dimension)
-    , m_numPieces(numPieces)
-    , m_numVars(dimension * 8 * numPieces)
+    , m_pieceDurations(pieceDurations)
+    , m_numPieces(pieceDurations.size())
+    , m_numVars(dimension * 8 * m_numPieces)
   {
   }
 
@@ -182,9 +202,11 @@ public:
     assert(derivative < 8);
     size_t idx = addConstraints(m_dimension);
 
+    double T = m_pieceDurations[piece];
+
     for (size_t d = 0; d < m_dimension; ++d) {
       for (size_t i = 0; i < 8; ++i) {
-        m_A(idx + d, column(piece, d) + i) = derivativeBeginning[derivative][i];
+        m_A(idx + d, column(piece, d) + i) = derivativeBeginning[derivative][i] / pow(T, derivative);
       }
       m_lbA(idx + d) = value(d);
       m_ubA(idx + d) = value(d);
@@ -202,9 +224,11 @@ public:
     assert(derivative < 8);
     size_t idx = addConstraints(m_dimension);
 
+    double T = m_pieceDurations[piece];
+
     for (size_t d = 0; d < m_dimension; ++d) {
       for (size_t i = 0; i < 8; ++i) {
-        m_A(idx + d, column(piece, d) + i) = derivativeEnd[derivative][i];
+        m_A(idx + d, column(piece, d) + i) = derivativeEnd[derivative][i] / pow(T, derivative);
       }
       m_lbA(idx + d) = value(d);
       m_ubA(idx + d) = value(d);
@@ -220,14 +244,17 @@ public:
     assert(firstPiece < m_numPieces - 1);
     size_t idx = addConstraints(m_dimension);
 
+    double Tfirst = m_pieceDurations[firstPiece];
+    double Tsecond = m_pieceDurations[firstPiece+1];
+
     for (size_t d = 0; d < m_dimension; ++d) {
       // derivative of end of first piece
       for (size_t i = 0; i < 8; ++i) {
-        m_A(idx + d, column(firstPiece, d) + i) = derivativeEnd[derivative][i];
+        m_A(idx + d, column(firstPiece, d) + i) = derivativeEnd[derivative][i] / pow(Tfirst, derivative);
       }
       // negative derivative of beginning of next piece
       for (size_t i = 0; i < 8; ++i) {
-        m_A(idx + d, column(firstPiece+1, d) + i) = -derivativeBeginning[derivative][i];
+        m_A(idx + d, column(firstPiece+1, d) + i) = -derivativeBeginning[derivative][i] / pow(Tsecond, derivative);
       }
 
       m_lbA(idx + d) = 0;
@@ -329,6 +356,7 @@ private:
 
 private:
   size_t m_dimension;
+  std::vector<double> m_pieceDurations;
   size_t m_numPieces;
   const size_t m_numVars;
 

@@ -32,14 +32,27 @@ vector<hyperplane> SvmSeperator::_2_4_seperate() {
   vectoreuc& pt2 = pts[1];
   for(int i=0; i<obstacles->size(); i++) {
     obstacle2D& obs = (*obstacles)[i];
-    assert(obs.ch.size() == 5);
-    vectoreuc& obs1 = obs.pts[obs.ch[0]];
-    vectoreuc& obs2 = obs.pts[obs.ch[1]];
-    vectoreuc& obs3 = obs.pts[obs.ch[2]];
-    vectoreuc& obs4 = obs.pts[obs.ch[3]];
+    assert(obs.pts.size() == 4);
+    vectoreuc& obs1 = obs.pts[0];
+    vectoreuc& obs2 = obs.pts[1];
+    vectoreuc& obs3 = obs.pts[2];
+    vectoreuc& obs4 = obs.pts[3];
 
     result.push_back(_2pt4obspt_svm(pt1, pt2, obs1, obs2, obs3, obs4));
+
+    auto& hp = result.back();
+    for (auto& pt : obs.pts) {
+      if (pt.dot(hp.normal) < hp.distance - 1e-3) {
+        std::stringstream sstr;
+        sstr << "Couldn't find hyperplane normal " << hp.normal << " dist: " << hp.distance << " pt: " << pt << " dot product: " << pt.dot(hp.normal);
+        // throw runtime_error(sstr.str());
+        std::cerr << sstr.str() << std::endl;
+      }
+    }
+
   }
+
+
 
   return result;
 }
@@ -57,13 +70,24 @@ vector<hyperplane> SvmSeperator::_8_4_seperate() {
   vectoreuc& pt8 = pts[7];
   for(int i=0; i<obstacles->size(); i++) {
     obstacle2D& obs = (*obstacles)[i];
-    assert(obs.ch.size() == 5);
-    vectoreuc& obs1 = obs.pts[obs.ch[0]];
-    vectoreuc& obs2 = obs.pts[obs.ch[1]];
-    vectoreuc& obs3 = obs.pts[obs.ch[2]];
-    vectoreuc& obs4 = obs.pts[obs.ch[3]];
+    assert(obs.pts.size() == 4);
+    vectoreuc& obs1 = obs.pts[0];
+    vectoreuc& obs2 = obs.pts[1];
+    vectoreuc& obs3 = obs.pts[2];
+    vectoreuc& obs4 = obs.pts[3];
 
     result.push_back(_8pt4obspt_svm(pt1, pt2, pt3, pt4, pt5, pt6, pt7, pt8, obs1, obs2, obs3, obs4));
+
+    auto& hp = result.back();
+    for (auto& pt : obs.pts) {
+      if (pt.dot(hp.normal) < hp.distance - 1e-3) {
+        std::stringstream sstr;
+        sstr << "Couldn't find hyperplane normal " << hp.normal << " dist: " << hp.distance << " pt: " << pt << " dot product: " << pt.dot(hp.normal);
+        // throw runtime_error(sstr.str());
+        std::cerr << sstr.str() << std::endl;
+      }
+    }
+
   }
 
   return result;
@@ -115,7 +139,7 @@ vector<hyperplane> SvmSeperator::seperate() {
     parameter.svm_type = C_SVC;
     parameter.kernel_type = LINEAR;
     parameter.cache_size = 64; // dont have any idea
-    parameter.eps = 0.001;
+    parameter.eps = 0.01;
     parameter.C = 10000; // dunno
     //parameter.nu = 0.5;
     parameter.nr_weight = 0; // completely dunno
@@ -167,7 +191,7 @@ vector<hyperplane> SvmSeperator::seperate() {
 
     // safety check...
     for (auto& pt : pts) {
-      if (pt.dot(hp.normal) > hp.distance) {
+      if (pt.dot(hp.normal) - 1e-4 > hp.distance) {
         std::stringstream sstr;
         sstr << "Couldn't find hyperplane normal " << hp.normal << " dist: " << hp.distance << " pt: " << pt << " dot product: " << pt.dot(hp.normal);
         // throw runtime_error(sstr.str());
