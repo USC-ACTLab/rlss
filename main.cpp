@@ -1,5 +1,4 @@
 #include <iostream>
-#include <nlopt.hpp>
 #include <fstream>
 #include <experimental/filesystem>
 #include <vector>
@@ -14,41 +13,28 @@
 #include "curve.h"
 #include "hyperplane.h"
 #include "obstacle.h"
-#include "optimization.h"
 #include "cxxopts.hpp"
 #include "json.hpp"
 #include <chrono>
 #include <random>
 #include "svmoptimization.h"
 #include "utility.h"
-#include "edt.h"
-#include "edtv2.h"
 #include "occupancy_grid.h"
 #include "svm_seperator.h"
 #include "discrete_search.hpp"
 
-#define USE_IPOPT 0
-#define USE_QP    1
 #define QP_SOLVER_QPOASES 0
 #define QP_SOLVER_OSQP    1
 #define QP_SOLVER QP_SOLVER_QPOASES
 // #define QP_SOLVER QP_SOLVER_OSQP
 
-#if USE_IPOPT
-#include <coin/IpIpoptApplication.hpp>
-#include "ipopt_optimize.h"
-using namespace Ipopt;
-#endif
-
-#if USE_QP
 #include "qp_optimize.h"
 
-  #if QP_SOLVER == QP_SOLVER_QPOASES
+#if QP_SOLVER == QP_SOLVER_QPOASES
   #include <qpOASES.hpp>
-  #endif
-  #if QP_SOLVER == QP_SOLVER_OSQP
+#endif
+#if QP_SOLVER == QP_SOLVER_OSQP
   #include "osqp.h"
-  #endif
 #endif
 
 #define PATHREPLAN_EPSILON 0.00001
@@ -203,12 +189,6 @@ int main(int argc, char** argv) {
     obs_idx++;
   }
 
-  edt distance_transform(0.01, -10, 10, -10, 10);
-  distance_transform.construct(&obstacles);
-
-  edtv2 distance_transformv2(0.01, -10, 10, -10, 10, -0.20);
-  distance_transformv2.construct(&obstacles);
-
   OG og(cell_size, -10, 10, -10, 10, obstacles);
   output_json["cell_size"] = cell_size;
 
@@ -304,11 +284,9 @@ int main(int argc, char** argv) {
     }
   }
 
-#if USE_QP
   ObjectiveBuilder::Init();
   std::default_random_engine generator;
   std::normal_distribution<double> distribution(0.0,0.00);
-#endif
 
   ofstream outStats("stats.csv");
   outStats << "t";
@@ -382,8 +360,6 @@ int main(int argc, char** argv) {
 
 
       unsigned varcount = curve_count * ppc * problem_dimension;
-
-#if USE_QP
 
       // shift last trajectories
       // for(int p=0; p<problem_dimension; p++) {
@@ -1035,329 +1011,6 @@ int main(int argc, char** argv) {
       } while (true); // temporal scaling
 
 
-
-
-#else
-      //nlopt::opt problem(nlopt::AUGLAG, varcount);
-      //problem.set_local_optimizer(local_opt);
-      nlopt::opt problem;
-      if(alg == "MMA") {
-        problem = nlopt::opt(nlopt::LD_MMA, varcount);
-      } else if(alg == "SLSQP") {
-        problem = nlopt::opt(nlopt::LD_SLSQP, varcount);
-      } else {
-        throw "no such algorithm";
-      }
-
-      problem_data data;
-      data.current_t = ct;
-      data.time_horizon = hor;
-      data.original_trajectory = &(original_trajectories[i]);
-      data.current_trajectory = &(trajectories[i]);
-      data.problem_dimension = problem_dimension;
-      data.ppc = ppc;
-      data.tt = total_times[i];
-      data.curve_count = curve_count;
-      data.time_per_curve = time_per_curve;
-
-
-      alt_obj_data alt_data;
-      alt_data.pdata = &data;
-      vectoreuc OBJPOS = original_trajectories[i].neval(min(ct+hor, total_times[i]), 0);
-      vectoreuc OBJVEL = original_trajectories[i].neval(min(ct+hor, total_times[i]), 1);
-      vectoreuc OBJACC = original_trajectories[i].neval(min(ct+hor, total_times[i]), 2);
-      alt_data.pos = &OBJPOS;
-      alt_data.vel = &OBJVEL;
-      alt_data.acc = &OBJACC;
-
-    //  problem.set_min_objective(optimization::alt_objective, (void*)&alt_data);
-
-      problem.set_min_objective(optimization::pos_energy_combine_objective, (void*)&alt_data);
-
-
-      edt_data edata;
-      edata.pdata = &data;
-      edata.distance_transform = &distance_transform;
-
-      //problem.add_inequality_constraint(optimization::edt_constraint, (void*)&edata, 0.0000001);
-
-
-      edt_collision_data edatacol;
-      edatacol.pdata = &data;
-      edatacol.distance_transform = &distance_transformv2;
-
-
-      alt_edt_combination_data aecombdata;
-
-      aecombdata.edt = &edatacol;
-      aecombdata.alt = &alt_data;
-
-      //problem.set_min_objective(optimization::pos_energy_edt_combine_objective, (void*)&aecombdata);
-
-      vector<double> lower_bounds(varcount);
-      vector<double> upper_bounds(varcount);
-      for(int j=0; j<varcount; j+=2) {
-        lower_bounds[j] = lower_bounds[j+1] = -10;
-        upper_bounds[j] = upper_bounds[j+1] = 10;
-      }
-      problem.set_lower_bounds(lower_bounds);
-      problem.set_upper_bounds(upper_bounds);
-
-      // just to delete them from heap later.
-      vector<voronoi_data*> vdpts;
-
-
-      for(int j=0; j<voronoi_hyperplanes.size(); j++) {
-        hyperplane& plane = voronoi_hyperplanes[j];
-
-
-        double current_time = 0;
-        double end_time  = 2*dt;
-        //double end_time  = ct+dt;
-
-        int idx = 0;
-
-        while(end_time > 0 && idx < trajectories[i].size()) {
-          double cend_time = min(end_time, trajectories[i][idx].duration);
-          double curvet = 0;
-          for(int p=0; p<ppc; p++) {
-            voronoi_data* vd = new voronoi_data;
-            vd->pdata = &data;
-            vd->plane = plane;
-            vd->curve_idx = idx;
-            vd->point_idx = p;
-            problem.add_inequality_constraint(optimization::voronoi_constraint, (void*)vd, 0);
-            vdpts.push_back(vd);
-          }
-          end_time -= cend_time;
-          idx++;
-        }
-
-      }
-
-
-      vector<continuity_data*> contpts;
-
-      for(int j=0; j < curve_count-1; j++) {
-        for(int n=0; n<=max_continuity; n++) {
-          continuity_data* cd = new continuity_data;
-          cd->pdata = &data;
-          cd->n = n;
-          cd->c = j;
-          problem.add_inequality_constraint(optimization::continuity_constraint, (void*)cd, continuity_tols[n]);
-          contpts.push_back(cd);
-        }
-      }
-
-      vector<point_data*> pointpts;
-
-
-      if(max_initial_point_degree >= 0) {
-        point_data* pos_point_data = new point_data;
-        pos_point_data->pdata = &data;
-        pos_point_data->point = positions[i];
-        pos_point_data->time = 0;
-        pos_point_data->degree = 0;
-        problem.add_inequality_constraint(optimization::point_constraint, (void*)pos_point_data, initial_point_tols[0]);
-        pointpts.push_back(pos_point_data);
-      }
-
-
-
-      if(max_initial_point_degree >= 1) {
-        point_data* vel_point_data = new point_data;
-        vel_point_data->pdata = &data;
-        vel_point_data->point = velocities[i];
-        vel_point_data->time = 0;
-        vel_point_data->degree = 1;
-
-        problem.add_inequality_constraint(optimization::point_constraint, (void*)vel_point_data, initial_point_tols[1]);
-        pointpts.push_back(vel_point_data);
-      }
-
-      if(max_initial_point_degree >= 2) {
-        point_data* acc_point_data = new point_data;
-        acc_point_data->pdata = &data;
-        acc_point_data->point = accelerations[i];
-        acc_point_data->time = 0;
-        acc_point_data->degree = 2;
-
-        problem.add_inequality_constraint(optimization::point_constraint, (void*)acc_point_data, initial_point_tols[2]);
-        pointpts.push_back(acc_point_data);
-      }
-
-
-
-
-
-
-
-
-
-      /* if integral is less than this value, stop.*/
-      cout << integral_stopval << endl;
-      problem.set_stopval(integral_stopval);
-
-      /* if objective function changes relatively less than this value, stop.*/
-      problem.set_ftol_rel(relative_integral_stopval);
-
-      if(set_max_time) {
-        problem.set_maxtime(dt);
-      }
-
-
-      vector<double> initial_values;
-      //trajectories[i][0][0] = positions[i];
-      for(int j=0; j<curve_count; j++) {
-        for(int k=0; k<ppc; k++) {
-          for(int p=0; p<problem_dimension; p++) {
-            initial_values.push_back(trajectories[i][j][j][p] /*+ fRand(-0.004, 0.004)*/ + pos_diffs[i][p]);
-          }
-        }
-      }
-
-
-
-      int initidx = 0;
-
-#if USE_IPOPT
-
-      SmartPtr<IpOptProblem> mynlp = new IpOptProblem(
-      varcount,
-      lower_bounds,
-      upper_bounds,
-      vdpts,
-      contpts,
-      continuity_tols,
-      pointpts,
-      initial_point_tols,
-      initial_values,
-      &data,
-      &alt_data);
-
-      // Create a new instance of IpoptApplication
-      //  (use a SmartPtr, not raw)
-      // We are using the factory, since this allows us to compile this
-      // example with an Ipopt Windows DLL
-      SmartPtr<IpoptApplication> app = IpoptApplicationFactory();
-      app->RethrowNonIpoptException(true);
-
-      // Change some options
-      // Note: The following choices are only examples, they might not be
-      //       suitable for your optimization problem.
-      app->Options()->SetStringValue("hessian_approximation", "limited-memory");
-      app->Options()->SetNumericValue("tol", 1e-5);
-      // app->Options()->SetStringValue("mu_strategy", "adaptive");
-      // app->Options()->SetStringValue("output_file", "ipopt.out");
-
-      app->Options()->SetStringValue("derivative_test", "first-order");
-
-      app->Options()->SetIntegerValue("max_iter", 5000);
-      // app->Options()->SetStringValue("jacobian_approximation", "finite-difference-values");
-
-
-      // The following overwrites the default name (ipopt.opt) of the
-      // options file
-      // app->Options()->SetStringValue("option_file_name", "hs071.opt");
-
-      // Initialize the IpoptApplication and process the options
-      ApplicationReturnStatus status;
-      status = app->Initialize();
-      if (status != Solve_Succeeded) {
-        std::cout << std::endl << std::endl << "*** Error during initialization!" << std::endl;
-        return (int) status;
-      }
-
-      // Ask Ipopt to solve the problem
-      status = app->OptimizeTNLP(mynlp);
-
-      if (status == Solve_Succeeded) {
-        std::cout << std::endl << std::endl << "*** The problem solved!" << std::endl;
-      }
-      else {
-        std::cout << std::endl << std::endl << "*** The problem FAILED!" << std::endl;
-        //throw std::runtime_error("IpOpt failed!");
-      }
-
-      initial_values = mynlp->m_finalValues;
-
-#else
-
-      double opt_f;
-      nlopt::result res;
-
-
-      try {
-        res = problem.optimize(initial_values, opt_f);
-      } catch(nlopt::roundoff_limited& e) {
-        cout << "roundoff_limited" << endl;
-      } catch(std::runtime_error& e) {
-        cout << "runtime error " << i << endl;
-        cout << e.what()<< endl;
-      }
-
-      cout << "nlopt result: " << res << " objective value: " << opt_f << endl;
-
-#endif
-
-      initidx = 0;
-      for(int j=0; j<trajectories[i].size(); j++) {
-        for(int k=0; k<ppc; k++) {
-          for(int p=0; p<problem_dimension; p++) {
-            trajectories[i][j][k][p] = initial_values[initidx++];
-          }
-        }
-      }
-
-
-
-
-      // Sanity check of constraints:
-      vector<double> dummyGradient(initial_values.size());
-
-      for (auto& vd : vdpts) {
-        double val = optimization::voronoi_constraint(initial_values, dummyGradient, vd);
-        if (val > 0) {
-          std::stringstream sstr;
-          sstr << "Voronoi constraint violated: " << val;
-          std::cout << sstr.str() << std::endl;
-          // throw std::runtime_error(sstr.str());
-        }
-      }
-
-      for (auto& cd : contpts) {
-        double val = optimization::continuity_constraint(initial_values, dummyGradient, cd);
-        if (val > continuity_tols[cd->n]) {
-          std::stringstream sstr;
-          sstr << "continuity constraint violated: " << val << " (max: " << continuity_tols[cd->n] << ", degree: " << cd->n << ")";
-          std::cout << sstr.str() << std::endl;
-          // throw std::runtime_error(sstr.str());
-        }
-      }
-
-      int a = 0;
-      for (auto& pd : pointpts) {
-        double val = optimization::point_constraint(initial_values, dummyGradient, pd);
-        if (val > initial_point_tols[a]) {
-          std::stringstream sstr;
-          sstr << "point constraint violated: " << val << " (max: " << initial_point_tols[a] << ", degree: " << a << ")";
-          std::cout << sstr.str() << std::endl;
-          // throw std::runtime_error(sstr.str());
-        }
-        a++;
-      }
-
-
-      for(int j=0; j<vdpts.size(); j++) {
-        delete vdpts[j];
-      }
-      for(int j=0; j<contpts.size(); j++) {
-        delete contpts[j];
-      }
-      for(int j=0; j<pointpts.size(); j++) {
-        delete pointpts[j];
-      }
-#endif
       auto t1 = Time::now();
       fsec fs = t1 - t_start;
       ms d = chrono::duration_cast<ms>(fs);

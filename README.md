@@ -98,7 +98,5 @@ https://www.jstage.jst.go.jp/article/jrsj/32/6/32_32_536/_pdf
 ## TODO
 
 * output velocity/acc and plot in vis_static [cleanup]
-
-
-* debug single robot (hyperplane etc)
+* use usenko data structure for obstacles
 * automatic test/movie generation?
