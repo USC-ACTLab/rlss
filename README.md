@@ -97,9 +97,8 @@ https://www.jstage.jst.go.jp/article/jrsj/32/6/32_32_536/_pdf
 
 ## TODO
 
-* adjust time piece length in discrete case according to segment length
-* output velocity/acc and plot in vis_static
+* output velocity/acc and plot in vis_static [cleanup]
+
 
 * debug single robot (hyperplane etc)
-* debug issues with more than 3 curves
 * automatic test/movie generation?

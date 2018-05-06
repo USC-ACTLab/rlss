@@ -181,6 +181,8 @@ private:
 class ConstraintBuilder
 {
 public:
+  static constexpr double EPS = 0.0;//1e-3;
+
   ConstraintBuilder(
     size_t dimension,
     const std::vector<double>& pieceDurations)
@@ -208,8 +210,9 @@ public:
       for (size_t i = 0; i < 8; ++i) {
         m_A(idx + d, column(piece, d) + i) = derivativeBeginning[derivative][i] / pow(T, derivative);
       }
-      m_lbA(idx + d) = value(d);
-      m_ubA(idx + d) = value(d);
+      std::cout << "addConstraint: " << idx +d << " (constraintBeginning " << piece << "," << derivative << ")" << std::endl;
+      m_lbA(idx + d) = value(d) - EPS / 2.0;
+      m_ubA(idx + d) = value(d) + EPS / 2.0;
     }
   }
 
@@ -230,8 +233,9 @@ public:
       for (size_t i = 0; i < 8; ++i) {
         m_A(idx + d, column(piece, d) + i) = derivativeEnd[derivative][i] / pow(T, derivative);
       }
-      m_lbA(idx + d) = value(d);
-      m_ubA(idx + d) = value(d);
+      std::cout << "addConstraint: " << idx +d << " (constraintEnd " << piece << "," << derivative << ")" << std::endl;
+      m_lbA(idx + d) = value(d) - EPS / 2.0;
+      m_ubA(idx + d) = value(d) + EPS / 2.0;
     }
   }
 
@@ -256,9 +260,9 @@ public:
       for (size_t i = 0; i < 8; ++i) {
         m_A(idx + d, column(firstPiece+1, d) + i) = -derivativeBeginning[derivative][i] / pow(Tsecond, derivative);
       }
-
-      m_lbA(idx + d) = 0;
-      m_ubA(idx + d) = 0;
+      std::cout << "addConstraint: " << idx +d << " (continuity " << firstPiece << "," << derivative << ")" << std::endl;
+      m_lbA(idx + d) = -EPS / 2.0;//-0.00001;
+      m_ubA(idx + d) = EPS / 2.0;//0.00001;
     }
   }
 
@@ -277,8 +281,9 @@ public:
       for (size_t d = 0; d < m_dimension; ++d) {
         m_A(idx + cp, column(piece, d) + cp) = normal(d);
       }
+      std::cout << "addConstraint: " << idx+cp << " (hyperplane " << piece << ")" << std::endl;
       m_lbA(idx + cp) = std::numeric_limits<double>::lowest();
-      m_ubA(idx + cp) = dist;
+      m_ubA(idx + cp) = dist + EPS;
     }
   }
 

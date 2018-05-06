@@ -331,6 +331,10 @@ int main(int argc, char** argv) {
       cout << "traj " << i << " start " << ct << " / " << total_times[i] << endl;
       t_start = Time::now();
 
+      // if (ct > 7 && i == 0) {
+      //   continue;
+      // }
+
 #if 0
       // update cellBasedObstacles with robot positions, such that svmSeparator take other robots into account
       for (int j = 0; j < original_trajectories.size(); ++j) {
@@ -646,7 +650,7 @@ int main(int argc, char** argv) {
                 }
                 double curve_length = sqrt(pow(corners[j].first - corners[j+1].first, 2) +
                                            pow(corners[j].second - corners[j+1].second, 2));
-                pieceDurations[j] = curve_length / total_discrete_path_length * discrete_horizon;
+                pieceDurations[j] = std::max(curve_length / total_discrete_path_length * discrete_horizon, 1.5 * dt);
               } else {
                 // double occupation
                 int cornersIdx = discrete_curve_count - 1;
@@ -657,7 +661,7 @@ int main(int argc, char** argv) {
                 }
                 double curve_length = sqrt(pow(corners[cornersIdx].first - corners[cornersIdx+1].first, 2) +
                                            pow(corners[cornersIdx].second - corners[cornersIdx+1].second, 2)) / last_discrete_curve_occupancy;
-                pieceDurations[j] = curve_length / total_discrete_path_length * discrete_horizon;
+                pieceDurations[j] = std::max(curve_length / total_discrete_path_length * discrete_horizon, 1.5 * dt);
               }
             }
 
@@ -844,10 +848,10 @@ int main(int argc, char** argv) {
       OSQPSettings settings;
       osqp_set_default_settings(&settings);
       // settings.polish = 1;
-      settings.eps_abs = 1.0e-4;
-      settings.eps_rel = 1.0e-4;
-      settings.max_iter = 20000;
-      settings.verbose = false;
+      // settings.eps_abs = 1.0e-4;
+      // settings.eps_rel = 1.0e-4;
+      // settings.max_iter = 20000;
+      // settings.verbose = false;
 
       // Structures
       typedef Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor> MatrixCM;
@@ -919,7 +923,9 @@ int main(int argc, char** argv) {
       qpOASES::Options options;
       options.setToMPC(); // maximum speed; others: setToDefault() and setToReliable()
       // options.setToDefault();
+      // options.setToReliable();
       options.printLevel = qpOASES::PL_LOW; // only show errors
+      // options.boundTolerance =  1e5;//1e-6;
       qp.setOptions(options);
 
       // The  integer  argument nWSR specifies  the  maximum  number  of  working  set
@@ -947,8 +953,22 @@ int main(int argc, char** argv) {
       if (simpleStatus != 0) {
         std::stringstream sstr;
         sstr << "Couldn't solve QP! @ " << ct << " robot " << i;
+
+        Eigen::Map<Matrix> yVec(y.data(), numVars, 1);
+
+        auto constraints = cb.A() * yVec;
+        // std::cout << "constraints: " << constraints << std::endl;
+        for (size_t c = 0; c < numConstraints; ++c) {
+          if (cb.lbA()(c) > constraints(c) || constraints(c) > cb.ubA()(c)) {
+            std::cout << "Constraint " << c << " violated!" << std::endl;
+          }
+        }
         // throw std::runtime_error(sstr.str());
         std::cerr << sstr.str() << std::endl;
+
+        y.setZero();
+
+        continue;
       }
 
       qp.getPrimalSolution(y.data());
@@ -995,10 +1015,10 @@ int main(int argc, char** argv) {
       }
       std::cout << "max_vel " << max_velocity << std::endl;
       std::cout << "max_acc " << max_acceleration << std::endl;
-      if (   max_velocity > 4.0
-          || max_acceleration > 8.0) {
+      if (   max_velocity > 2.0
+          || max_acceleration > 4.0) {
         for (auto& pd : pieceDurations) {
-          pd *= 2;
+          pd *= 1.2;
         }
         std::cerr << "SCALING " << pieceDurations[0] << " " << accelerations[i] << std::endl;
       } else {
@@ -1377,6 +1397,12 @@ int main(int argc, char** argv) {
         vec = trajectories[i].neval(v*printdt, 0);
         //cout << vec << endl;
         output_json["points"][output_iter].push_back(vec.crds);
+
+        vec = trajectories[i].neval(v*printdt, 1);
+        output_json["velocities"][output_iter].push_back(vec.crds);
+
+        vec = trajectories[i].neval(v*printdt, 2);
+        output_json["accelerations"][output_iter].push_back(vec.crds);
       }
       output_iter++;
     }

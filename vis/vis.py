@@ -182,7 +182,7 @@ def animate(frame):
 
 
     hpIdx = 0
-    robot = 0
+    robot = 1
     if args.hyperplanes and "hyperplanes" in jsn and frame < len(jsn["hyperplanes"]) and jsn["hyperplanes"][frame] and robot < len(jsn["hyperplanes"][frame]) and jsn["hyperplanes"][frame][robot]:
       for hp in jsn["hyperplanes"][frame][robot]:
         if hp:
@@ -307,8 +307,8 @@ if __name__ == "__main__":
         pts = jsn["controlpoints"][0][i]
         cpts = []
         # print(len(pts))
-        for pt in pts:
-            ptd = ax.plot([pt[0]], [pt[1]], zorder = 20, color=colors[i], alpha = 0.8, marker='o')[0]
+        for idx, pt in enumerate(pts):
+            ptd = ax.plot([pt[0]], [pt[1]], zorder = 20, color=colors[int(idx/8.0)], alpha = 0.8, marker='o')[0]
             cpts.append(ptd)
             to_animate.append(ptd)
         controlpoints.append(cpts)

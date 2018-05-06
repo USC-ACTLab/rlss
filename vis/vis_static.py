@@ -15,11 +15,25 @@ if __name__ == "__main__":
   args = parser.parse_args()
 
   jsn = json.load(open(args.file))
+  numFrames = len(jsn["points"])
+  dt = jsn["dt"]
+  t = np.arange(0, numFrames * dt, dt)
 
   colors = ['b', 'g', 'r', 'c', 'm', 'k']
 
   fig = plt.figure()
   ax = plt.axes()
+
+  # for i in range(jsn["number_of_robots"]):
+  #   x = []
+  #   y = []
+  #   for frame in range(len(jsn["points"])):
+  #     x.append(jsn["accelerations"][frame][i][0])
+  #     y.append(jsn["accelerations"][frame][i][1])
+
+  #   ax.plot(t, y, lw=2, zorder=0, color = colors[i], marker='o')
+
+
   ax.set_aspect('equal')
 
   polygon_patches = []
