@@ -325,7 +325,7 @@ int main(int argc, char** argv) {
 
     outStats << ct;
 
-    cout << ct << " / " << total_t << endl;
+    cerr << ct << " / " << total_t << endl;
 
     for(int i=0; i<original_trajectories.size(); i++ ) {
       cout << "traj " << i << " start " << ct << " / " << total_times[i] << endl;
@@ -394,13 +394,6 @@ int main(int argc, char** argv) {
       // Create objective (min energy + reach goal)
       std::vector<double> pieceDurations(curve_count, hor / curve_count);
 
-      do {
-      ObjectiveBuilder ob(problem_dimension, pieceDurations);
-
-      double remaining_time = std::max(total_times[i] - ct, 3 * dt * 1.5);
-      double factor = 1.0f / remaining_time;
-      ob.minDerivativeSquared(1 * factor, 0 * factor, 5e-3 * factor, 0 * factor);
-
       // y are our control points (decision variable)
       // Vector y(numVars);
       Matrix y(problem_dimension, 8 * curve_count);
@@ -414,6 +407,357 @@ int main(int argc, char** argv) {
         }
       }
 
+      struct endCloseToData
+      {
+        size_t piece;
+        double lambda;
+        Vector value;
+      };
+      std::vector<endCloseToData> endCloseToObjectives;
+
+      struct hyperplaneData
+      {
+        size_t piece;
+        Vector normal;
+        double dist;
+      };
+      std::vector<hyperplaneData> hyperplaneConstraints;
+
+
+      // check if those trajectories are collision-free w/ respect to the environment
+      bool planned_traj_occupied = og.occupied(trajectories[i]);
+      vectoreuc goalPos = original_trajectories[i].neval(min(ct+hor, total_times[i]), 0);
+
+      // only considers static obstacles, not other robots (intentionally)
+      bool goal_occupied = og.occupied(goalPos[0], goalPos[1]);
+
+      // check if the first curve will violate voronoi constraints
+      bool voronoi_violated = false;
+      for(int j=0; j<voronoi_hyperplanes.size() && !voronoi_violated; j++) {
+        hyperplane& plane = voronoi_hyperplanes[j];
+
+        Vector normal(problem_dimension);
+        normal << plane.normal[0], plane.normal[1];
+
+        for(int k=0; k<ppc; k++) {
+          vectoreuc pt(2);
+          pt[0] = y(0, k);
+          pt[1] = y(1, k);
+          if (pt.dot(plane.normal) > plane.distance) {
+            voronoi_violated = true;
+            break;
+          }
+        }
+      }
+
+      bool discretePath = false;
+      if (planned_traj_occupied || goal_occupied || voronoi_violated) {
+        // the trajectory is now on top of an obstacle => discrete re-planning!
+
+
+        std::vector< std::pair<double, double> > otherRobots;
+        for (int j = 0; j < original_trajectories.size(); ++j) {
+          if (i != j) {
+            otherRobots.emplace_back(std::make_pair(positions[j][0], positions[j][1]));
+          }
+        }
+
+        // the goal is the next point on the original trajectory that is not occupied
+        discreteSearch::State goal(-1, -1, OG::direction::NONE);
+        double arrivalTime = min(ct+hor, total_times[i]);
+        vectoreuc goalPos;
+        double discrete_horizon = 0;
+        for (double t = arrivalTime; t <= total_times[i]; t += 0.01) {
+          goalPos = original_trajectories[i].neval(t, 0);
+          OG::index goalIdx = og.get_index(goalPos[0], goalPos[1]);
+          if (!og.idx_occupied(goalIdx)) {
+
+            // check of occupied by another robot
+            bool occupiedByOtherRobot = false;
+            std::pair<double, double> coord = og.get_coordinates(goalIdx);
+            for (const auto& otherRobot : otherRobots) {
+              double distSq = pow(otherRobot.first - coord.first, 2) + pow(otherRobot.second - coord.second, 2);
+              if (distSq < pow(2 * robot_radius, 2)) {
+                occupiedByOtherRobot = true;
+                break;
+              }
+            }
+
+            if (!occupiedByOtherRobot) {
+              goal.x = goalIdx.i;
+              goal.y = goalIdx.j;
+              discrete_horizon = t - ct;
+              break;
+            }
+          }
+        }
+
+        if (goal.x == -1) {
+          std::cerr << "Couldn't find unoccupied space on original trajectory!" << ct << std::endl;
+          // throw std::runtime_error("Couldn't find unoccupied space on original trajectory!");
+        }
+        std::cout << "discrete horizon: " << discrete_horizon << std::endl;
+
+        OG::index startIdx = og.get_index(positions[i][0], positions[i][1]);
+        discreteSearch::State start(startIdx.i, startIdx.j, OG::direction::NONE);
+
+        discreteSearch::Environment env(og, otherRobots, robot_radius, goal);
+
+        libSearch::AStar<discreteSearch::State, discreteSearch::Action, int, discreteSearch::Environment> astar(env);
+        libSearch::PlanResult<discreteSearch::State, discreteSearch::Action, int> solution;
+
+        t_start_a_star = Time::now();
+        bool success = astar.search(start, solution);
+        t_end_a_star = Time::now();
+
+        if (success) {
+            std::cout << "discrete planning successful! Total cost: " << solution.cost << std::endl;
+            // for (size_t i = 0; i < solution.actions.size(); ++i) {
+            //   std::cout << solution.states[i].second << ": " << solution.states[i].first << "->" << solution.actions[i].first << "(cost: " << solution.actions[i].second << ")" << std::endl;
+            // }
+            // std::cout << solution.states.back().second << ": " << solution.states.back().first << std::endl;
+
+            // for (const auto& s : solution.states) {
+            //   const discreteSearch::State& state = s.first;
+            //   OG::index idx(state.x, state.y);
+            //   pair<double, double> coord = og.get_coordinates(idx);
+            //   std::cout << coord.first << "," << coord.second << std::endl;
+            // }
+
+            // combine results to lines (stored in corners vector; contains at least 2 elements)
+            std::vector<pair<double, double>> corners;
+            const discreteSearch::State& state = solution.states.front().first;
+            OG::index idx1(state.x, state.y);
+            // corners.emplace_back(og.get_coordinates(idx1));
+            // double startx = positions[i][0];
+            // double starty = positions[i][1];
+            corners.emplace_back(std::make_pair(positions[i][0], positions[i][1]));
+
+            corners.emplace_back(og.get_coordinates(idx1));
+
+
+            for (size_t j = 0; j < solution.actions.size(); ++j) {
+              if (solution.actions[j].first != discreteSearch::Action::Forward) {
+                const discreteSearch::State& state2 = solution.states[j].first;
+                OG::index idx2(state2.x, state2.y);
+                corners.emplace_back(og.get_coordinates(idx2));
+              }
+            }
+            const discreteSearch::State& state3 = solution.states.back().first;
+            OG::index idx3(state3.x, state3.y);
+            corners.emplace_back(og.get_coordinates(idx3));
+            corners.emplace_back(std::make_pair(goalPos[0], goalPos[1]));
+
+            for (const auto& corner : corners) {
+              std::cout << "corner: " << corner.first << "," << corner.second << std::endl;
+              output_json["discrete_plan"][output_iter][i]["x"].push_back(corner.first);
+              output_json["discrete_plan"][output_iter][i]["y"].push_back(corner.second);
+            }
+
+            double total_discrete_path_length = 0.0;
+            for (size_t j = 0; j < corners.size() - 1; ++j) {
+              total_discrete_path_length += sqrt(pow(corners[j].first - corners[j+1].first, 2) +
+                                                 pow(corners[j].second - corners[j+1].second, 2));
+            }
+
+            // update cellBasedObstacles with robot positions, such that svmSeparator take other robots into account
+            for (int j = 0; j < original_trajectories.size(); ++j) {
+              if (i != j) {
+                // og.set_occupied(positions[j][0], positions[j][1]);
+
+                obstacle2D o;
+                vectoreuc pt(problem_dimension);
+                pt[0] = positions[j][0] - robot_radius;
+                pt[1] = positions[j][1] - robot_radius;
+                o.add_pt(pt);
+                pt[0] = positions[j][0] - robot_radius;
+                pt[1] = positions[j][1] + robot_radius;
+                o.add_pt(pt);
+                pt[0] = positions[j][0] + robot_radius;
+                pt[1] = positions[j][1] + robot_radius;
+                o.add_pt(pt);
+                pt[0] = positions[j][0] + robot_radius;
+                pt[1] = positions[j][1] - robot_radius;
+                o.add_pt(pt);
+                o.convex_hull();
+                o.ch_planes();
+                cell_based_obstacles.push_back(o);
+              }
+            }
+
+            // find separating hyperplanes between those lines and all (nearby) obstacles
+            // the first line is given by points corners[0] and corners[1]; second line by corners[1] and corners[2] etc.
+
+            // if there are not enough corners for the curves, repeat the last corners multiple times
+            // i.e., the constraints are the same for the last curves
+            int discrete_curve_count = corners.size() - 1;
+            // while (curve_count > corners.size() - 1) {
+            //   corners.push_back(corners[corners.size() - 2]);
+            // }
+            t_start_svm = Time::now();
+            size_t hpidx = 0;
+            for (size_t j = 0; j < discrete_curve_count && j < curve_count; ++j) {
+              svm.reset_pts();
+              vectoreuc pt(2);
+              pt[0] = corners[j].first;
+              pt[1] = corners[j].second;
+              svm.add_pt(pt);
+
+              pt[0] = corners[j+1].first;
+              pt[1] = corners[j+1].second;
+              svm.add_pt(pt);
+
+              // gives us one hyperplane per obstacle
+              vector<hyperplane> hyperplanes = svm._2_4_seperate();
+              std::cout << "hyperplanes: " << hyperplanes.size() << std::endl;
+
+              do {
+                // add hyperplane constraints
+                for (auto& plane : hyperplanes) {
+                  Vector normal(problem_dimension);
+                  normal << plane.normal[0], plane.normal[1];
+                  // cb.addHyperplane(j, normal, plane.distance);
+                  hyperplaneConstraints.push_back({j, normal, plane.distance});
+
+                  output_json["hyperplanes"][output_iter][i][hpidx].push_back(plane.normal[0]); //normal first
+                  output_json["hyperplanes"][output_iter][i][hpidx].push_back(plane.normal[1]);//normal seconds
+                  output_json["hyperplanes"][output_iter][i][hpidx].push_back(plane.distance); //distance
+                  output_json["hyperplanes"][output_iter][i][hpidx].push_back(j);
+                  ++hpidx;
+                }
+                if (j >= discrete_curve_count - 1) {
+                  ++j;
+                }
+              } while (j >= discrete_curve_count && j < curve_count);
+            }
+            t_end_svm = Time::now();
+
+            // uniformily distribute the control points on the line segments as initial guess
+
+            // e.g., if curve_count = 3 and discrete_curve_count = 1, then last_discrete_curve_occupancy = 3,
+            //       because the discrete curve is shared between 3 continuous curves
+            int last_discrete_curve_occupancy = curve_count - std::min(discrete_curve_count, curve_count) + 1;
+            for (size_t j = 0; j < curve_count; ++j) {
+              if (j < discrete_curve_count - 1) {
+                // single occupation
+                for(int k=0; k<ppc; k++) {
+                  y(0, j * ppc + k) = linearInterpolation(corners[j].first, corners[j+1].first, k, ppc);
+                  y(1, j * ppc + k) = linearInterpolation(corners[j].second, corners[j+1].second, k, ppc);
+                }
+                double curve_length = sqrt(pow(corners[j].first - corners[j+1].first, 2) +
+                                           pow(corners[j].second - corners[j+1].second, 2));
+                pieceDurations[j] = curve_length / total_discrete_path_length * discrete_horizon;
+              } else {
+                // double occupation
+                int cornersIdx = discrete_curve_count - 1;
+                int idx = j - discrete_curve_count + 1;
+                for(int k=0; k<ppc; k++) {
+                  y(0, j * ppc + k) = linearInterpolation(corners[cornersIdx].first, corners[cornersIdx+1].first, k + idx * ppc, ppc * last_discrete_curve_occupancy);
+                  y(1, j * ppc + k) = linearInterpolation(corners[cornersIdx].second, corners[cornersIdx+1].second, k + idx * ppc, ppc * last_discrete_curve_occupancy);
+                }
+                double curve_length = sqrt(pow(corners[cornersIdx].first - corners[cornersIdx+1].first, 2) +
+                                           pow(corners[cornersIdx].second - corners[cornersIdx+1].second, 2)) / last_discrete_curve_occupancy;
+                pieceDurations[j] = curve_length / total_discrete_path_length * discrete_horizon;
+              }
+            }
+
+            // force end of trajectory to be at discrete end point
+            // TODO: factor?
+            Vector endPosition(2);
+            endPosition << y(0, 8 * curve_count - 1) , y(1, 8 * curve_count - 1);
+
+            endCloseToObjectives.push_back({(size_t)curve_count - 1, 100, endPosition});
+            // ob.endCloseTo(curve_count - 1, 100, endPosition);
+            // cb.addConstraintEnd(curve_count - 1, 0, endPosition);
+
+            for (int j = 0; j < original_trajectories.size(); ++j) {
+              if (i != j) {
+                cell_based_obstacles.pop_back();
+              }
+            }
+
+            discretePath = true;
+
+          } else {
+            std::cerr << "discrete planning NOT successful!" << ct << std::endl;
+          }
+
+      }
+
+      if (!discretePath) {
+        // The old trajectories will not collide with a (static) obstacle
+
+        // TODO 3: * Split last trajectory up to horizon into uniform pieces (curve_count pieces)
+        //         * find separating hyperplanes between those trajectories and all obstacles
+        //         * add hyperplanes as constraints (per piece)
+#if 1
+        t_start_a_star = t_end_a_star = Time::now();
+
+        t_start_svm = Time::now();
+        size_t hpidx = 0;
+        for (size_t j = 0; j < curve_count ; ++j) {
+          svm.reset_pts();
+
+          for(int k=0; k<ppc; k++) {
+            svm.add_pt(trajectories[i][j][k]);
+          }
+
+          vector<hyperplane> hyperplanes = svm._8_4_seperate();
+          std::cout << "hyperplanes2: " << hyperplanes.size() << std::endl;
+
+          for (auto& plane : hyperplanes) {
+            Vector normal(problem_dimension);
+            normal << plane.normal[0], plane.normal[1];
+            hyperplaneConstraints.push_back({j, normal, plane.distance});
+            // cb.addHyperplane(j, normal, plane.distance);
+
+            output_json["hyperplanes"][output_iter][i][hpidx].clear();
+            output_json["hyperplanes"][output_iter][i][hpidx].push_back(plane.normal[0]); //normal first
+            output_json["hyperplanes"][output_iter][i][hpidx].push_back(plane.normal[1]);//normal seconds
+            output_json["hyperplanes"][output_iter][i][hpidx].push_back(plane.distance); //distance
+            output_json["hyperplanes"][output_iter][i][hpidx].push_back(j);
+            ++hpidx;
+          }
+        }
+        t_end_svm = Time::now();
+#endif
+
+        double factor = 1.0f / curve_count;
+        for (size_t j = 1; j < curve_count; ++j) {
+          vectoreuc OBJPOS = original_trajectories[i].neval(min(ct+hor * (j+1)/(double)curve_count, total_times[i]), 0);
+          Vector targetPosition(problem_dimension);
+          targetPosition << OBJPOS[0], OBJPOS[1];
+          // ob.endCloseTo(j, factor * (j+1), targetPosition);
+          endCloseToObjectives.push_back({j, factor * (j+1), targetPosition});
+        }
+
+      }
+
+      output_json["controlpoints_guessed"][output_iter][i].clear();
+      for (size_t j = 0; j < curve_count; ++j) {
+        for(int k=0; k<ppc; k++) {
+          std::vector<double> crds;
+          crds.push_back(y(0, j * ppc + k));
+          crds.push_back(y(1, j * ppc + k));
+          output_json["controlpoints_guessed"][output_iter][i].push_back(crds);
+        }
+      }
+
+      t_start_qp = Time::now();
+
+      do { // loop for temporal scaling
+
+      // construct QP matrices
+      ObjectiveBuilder ob(problem_dimension, pieceDurations);
+
+      double remaining_time = std::max(total_times[i] - ct, 3 * dt * 1.5);
+      double factor = 1.0f / remaining_time;
+      ob.minDerivativeSquared(1 * factor, 0 * factor, 5e-3 * factor, 0 * factor);
+
+      for (const auto& o : endCloseToObjectives) {
+        ob.endCloseTo(o.piece, o.lambda, o.value);
+      }
+
       // lower and upper bound for decision variables (i.e., workspace)
       const size_t numVars = problem_dimension * 8 * curve_count;
       Vector lb(numVars);
@@ -421,8 +765,6 @@ int main(int argc, char** argv) {
       Vector ub(numVars);
       ub.setConstant(10);
 
-      // Vector zeroVec(problem_dimension);
-      // zeroVec.setZero();
 
       // constraint matrix A
       ConstraintBuilder cb(problem_dimension, pieceDurations);
@@ -481,310 +823,21 @@ int main(int argc, char** argv) {
         cb.addHyperplane(0, normal, plane.distance);
       }
 
-      // check if those trajectories are collision-free w/ respect to the environment
-      bool planned_traj_occupied = og.occupied(trajectories[i]);
-      vectoreuc goalPos = original_trajectories[i].neval(min(ct+hor, total_times[i]), 0);
+      // hyperplane constraints
 
-      // only considers static obstacles, not other robots (intentionally)
-      bool goal_occupied = og.occupied(goalPos[0], goalPos[1]);
-
-      // check if the first curve will violate voronoi constraints
-      bool voronoi_violated = false;
-      for(int j=0; j<voronoi_hyperplanes.size() && !voronoi_violated; j++) {
-        hyperplane& plane = voronoi_hyperplanes[j];
-
-        Vector normal(problem_dimension);
-        normal << plane.normal[0], plane.normal[1];
-
-        for(int k=0; k<ppc; k++) {
-          vectoreuc pt(2);
-          pt[0] = y(0, k);
-          pt[1] = y(1, k);
-          if (pt.dot(plane.normal) > plane.distance) {
-            voronoi_violated = true;
-            break;
-          }
-        }
-      }
-
-      bool discretePath = false;
-      if (planned_traj_occupied || goal_occupied || voronoi_violated) {
-        // the trajectory is now on top of an obstacle => discrete re-planning!
-
-
-        std::vector< std::pair<double, double> > otherRobots;
-        for (int j = 0; j < original_trajectories.size(); ++j) {
-          if (i != j) {
-            otherRobots.emplace_back(std::make_pair(positions[j][0], positions[j][1]));
-          }
-        }
-
-        // the goal is the next point on the original trajectory that is not occupied
-        discreteSearch::State goal(-1, -1, OG::direction::NONE);
-        double arrivalTime = min(ct+hor, total_times[i]);
-        vectoreuc goalPos;
-        for (double t = arrivalTime; t <= total_times[i]; t += 0.01) {
-          goalPos = original_trajectories[i].neval(t, 0);
-          OG::index goalIdx = og.get_index(goalPos[0], goalPos[1]);
-          if (!og.idx_occupied(goalIdx)) {
-
-            // check of occupied by another robot
-            bool occupiedByOtherRobot = false;
-            std::pair<double, double> coord = og.get_coordinates(goalIdx);
-            for (const auto& otherRobot : otherRobots) {
-              double distSq = pow(otherRobot.first - coord.first, 2) + pow(otherRobot.second - coord.second, 2);
-              if (distSq < pow(2 * robot_radius, 2)) {
-                occupiedByOtherRobot = true;
-                break;
-              }
-            }
-
-            if (!occupiedByOtherRobot) {
-              goal.x = goalIdx.i;
-              goal.y = goalIdx.j;
-              break;
-            }
-          }
-        }
-
-        if (goal.x == -1) {
-          std::cerr << "Couldn't find unoccupied space on original trajectory!" << ct << std::endl;
-          // throw std::runtime_error("Couldn't find unoccupied space on original trajectory!");
-        }
-
-        OG::index startIdx = og.get_index(positions[i][0], positions[i][1]);
-        discreteSearch::State start(startIdx.i, startIdx.j, OG::direction::NONE);
-
-        discreteSearch::Environment env(og, otherRobots, robot_radius, goal);
-
-        libSearch::AStar<discreteSearch::State, discreteSearch::Action, int, discreteSearch::Environment> astar(env);
-        libSearch::PlanResult<discreteSearch::State, discreteSearch::Action, int> solution;
-
-        t_start_a_star = Time::now();
-        bool success = astar.search(start, solution);
-        t_end_a_star = Time::now();
-
-        if (success) {
-            std::cout << "discrete planning successful! Total cost: " << solution.cost << std::endl;
-            // for (size_t i = 0; i < solution.actions.size(); ++i) {
-            //   std::cout << solution.states[i].second << ": " << solution.states[i].first << "->" << solution.actions[i].first << "(cost: " << solution.actions[i].second << ")" << std::endl;
-            // }
-            // std::cout << solution.states.back().second << ": " << solution.states.back().first << std::endl;
-
-            // for (const auto& s : solution.states) {
-            //   const discreteSearch::State& state = s.first;
-            //   OG::index idx(state.x, state.y);
-            //   pair<double, double> coord = og.get_coordinates(idx);
-            //   std::cout << coord.first << "," << coord.second << std::endl;
-            // }
-
-            // combine results to lines (stored in corners vector; contains at least 2 elements)
-            std::vector<pair<double, double>> corners;
-            const discreteSearch::State& state = solution.states.front().first;
-            OG::index idx1(state.x, state.y);
-            // corners.emplace_back(og.get_coordinates(idx1));
-            // double startx = positions[i][0];
-            // double starty = positions[i][1];
-            corners.emplace_back(std::make_pair(positions[i][0], positions[i][1]));
-
-            corners.emplace_back(og.get_coordinates(idx1));
-
-
-            for (size_t j = 0; j < solution.actions.size(); ++j) {
-              if (solution.actions[j].first != discreteSearch::Action::Forward) {
-                const discreteSearch::State& state2 = solution.states[j].first;
-                OG::index idx2(state2.x, state2.y);
-                corners.emplace_back(og.get_coordinates(idx2));
-              }
-            }
-            const discreteSearch::State& state3 = solution.states.back().first;
-            OG::index idx3(state3.x, state3.y);
-            corners.emplace_back(og.get_coordinates(idx3));
-            corners.emplace_back(std::make_pair(goalPos[0], goalPos[1]));
-
-            for (const auto& corner : corners) {
-              std::cout << "corner: " << corner.first << "," << corner.second << std::endl;
-              output_json["discrete_plan"][output_iter][i]["x"].push_back(corner.first);
-              output_json["discrete_plan"][output_iter][i]["y"].push_back(corner.second);
-            }
-
-
-            // update cellBasedObstacles with robot positions, such that svmSeparator take other robots into account
-            for (int j = 0; j < original_trajectories.size(); ++j) {
-              if (i != j) {
-                // og.set_occupied(positions[j][0], positions[j][1]);
-
-                obstacle2D o;
-                vectoreuc pt(problem_dimension);
-                pt[0] = positions[j][0] - robot_radius;
-                pt[1] = positions[j][1] - robot_radius;
-                o.add_pt(pt);
-                pt[0] = positions[j][0] - robot_radius;
-                pt[1] = positions[j][1] + robot_radius;
-                o.add_pt(pt);
-                pt[0] = positions[j][0] + robot_radius;
-                pt[1] = positions[j][1] + robot_radius;
-                o.add_pt(pt);
-                pt[0] = positions[j][0] + robot_radius;
-                pt[1] = positions[j][1] - robot_radius;
-                o.add_pt(pt);
-                o.convex_hull();
-                o.ch_planes();
-                cell_based_obstacles.push_back(o);
-              }
-            }
-
-            // find separating hyperplanes between those lines and all (nearby) obstacles
-            // the first line is given by points corners[0] and corners[1]; second line by corners[1] and corners[2] etc.
-
-            // if there are not enough corners for the curves, repeat the last corners multiple times
-            // i.e., the constraints are the same for the last curves
-            int discrete_curve_count = corners.size() - 1;
-            // while (curve_count > corners.size() - 1) {
-            //   corners.push_back(corners[corners.size() - 2]);
-            // }
-            t_start_svm = Time::now();
-            size_t hpidx = 0;
-            for (size_t j = 0; j < discrete_curve_count && j < curve_count; ++j) {
-              svm.reset_pts();
-              vectoreuc pt(2);
-              pt[0] = corners[j].first;
-              pt[1] = corners[j].second;
-              svm.add_pt(pt);
-
-              pt[0] = corners[j+1].first;
-              pt[1] = corners[j+1].second;
-              svm.add_pt(pt);
-
-              // gives us one hyperplane per obstacle
-              vector<hyperplane> hyperplanes = svm._2_4_seperate();
-              std::cout << "hyperplanes: " << hyperplanes.size() << std::endl;
-
-              do {
-                // add hyperplane constraints
-                for (auto& plane : hyperplanes) {
-                  Vector normal(problem_dimension);
-                  normal << plane.normal[0], plane.normal[1];
-                  cb.addHyperplane(j, normal, plane.distance);
-
-
-                  output_json["hyperplanes"][output_iter][i][hpidx].push_back(plane.normal[0]); //normal first
-                  output_json["hyperplanes"][output_iter][i][hpidx].push_back(plane.normal[1]);//normal seconds
-                  output_json["hyperplanes"][output_iter][i][hpidx].push_back(plane.distance); //distance
-                  output_json["hyperplanes"][output_iter][i][hpidx].push_back(j);
-                  ++hpidx;
-                }
-                if (j >= discrete_curve_count - 1) {
-                  ++j;
-                }
-              } while (j >= discrete_curve_count && j < curve_count);
-            }
-            t_end_svm = Time::now();
-
-            // uniformily distribute the control points on the line segments as initial guess
-
-            // e.g., if curve_count = 3 and discrete_curve_count = 1, then last_discrete_curve_occupancy = 3,
-            //       because the discrete curve is shared between 3 continuous curves
-            int last_discrete_curve_occupancy = curve_count - std::min(discrete_curve_count, curve_count) + 1;
-            for (size_t j = 0; j < curve_count; ++j) {
-              if (j < discrete_curve_count - 1) {
-                // single occupation
-                for(int k=0; k<ppc; k++) {
-                  y(0, j * ppc + k) = linearInterpolation(corners[j].first, corners[j+1].first, k, ppc);
-                  y(1, j * ppc + k) = linearInterpolation(corners[j].second, corners[j+1].second, k, ppc);
-                }
-              } else {
-                // double occupation
-                int cornersIdx = discrete_curve_count - 1;
-                int idx = j - discrete_curve_count + 1;
-                for(int k=0; k<ppc; k++) {
-                  y(0, j * ppc + k) = linearInterpolation(corners[cornersIdx].first, corners[cornersIdx+1].first, k + idx * ppc, ppc * last_discrete_curve_occupancy);
-                  y(1, j * ppc + k) = linearInterpolation(corners[cornersIdx].second, corners[cornersIdx+1].second, k + idx * ppc, ppc * last_discrete_curve_occupancy);
-                }
-              }
-            }
-
-            // force end of trajectory to be at discrete end point
-            // TODO: factor?
-            Vector endPosition(2);
-            endPosition << y(0, 8 * curve_count - 1) , y(1, 8 * curve_count - 1);
-            ob.endCloseTo(curve_count - 1, 100, endPosition);
-            // cb.addConstraintEnd(curve_count - 1, 0, endPosition);
-
-            for (int j = 0; j < original_trajectories.size(); ++j) {
-              if (i != j) {
-                cell_based_obstacles.pop_back();
-              }
-            }
-
-            discretePath = true;
-
-          } else {
-            std::cerr << "discrete planning NOT successful!" << ct << std::endl;
-          }
-
-      }
-
-      if (!discretePath) {
-        // The old trajectories will not collide with a (static) obstacle
-
-        // TODO 3: * Split last trajectory up to horizon into uniform pieces (curve_count pieces)
-        //         * find separating hyperplanes between those trajectories and all obstacles
-        //         * add hyperplanes as constraints (per piece)
-#if 1
-        t_start_a_star = t_end_a_star = Time::now();
-
-        t_start_svm = Time::now();
-        size_t hpidx = 0;
-        for (size_t j = 0; j < curve_count ; ++j) {
-          svm.reset_pts();
-
-          for(int k=0; k<ppc; k++) {
-            svm.add_pt(trajectories[i][j][k]);
-          }
-
-          vector<hyperplane> hyperplanes = svm._8_4_seperate();
-          std::cout << "hyperplanes2: " << hyperplanes.size() << std::endl;
-
-          for (auto& plane : hyperplanes) {
-            Vector normal(problem_dimension);
-            normal << plane.normal[0], plane.normal[1];
-            cb.addHyperplane(j, normal, plane.distance);
-
-            output_json["hyperplanes"][output_iter][i][hpidx].clear();
-            output_json["hyperplanes"][output_iter][i][hpidx].push_back(plane.normal[0]); //normal first
-            output_json["hyperplanes"][output_iter][i][hpidx].push_back(plane.normal[1]);//normal seconds
-            output_json["hyperplanes"][output_iter][i][hpidx].push_back(plane.distance); //distance
-            output_json["hyperplanes"][output_iter][i][hpidx].push_back(j);
-            ++hpidx;
-          }
-        }
-        t_end_svm = Time::now();
-#endif
-
-        factor = 1.0f / curve_count;
-        for (size_t j = 1; j < curve_count; ++j) {
-          vectoreuc OBJPOS = original_trajectories[i].neval(min(ct+hor * (j+1)/(double)curve_count, total_times[i]), 0);
-          Vector targetPosition(problem_dimension);
-          targetPosition << OBJPOS[0], OBJPOS[1];
-          ob.endCloseTo(j, factor * (j+1), targetPosition);
-        }
-
+      for (const auto& hpc : hyperplaneConstraints) {
+        cb.addHyperplane(hpc.piece, hpc.normal, hpc.dist);
       }
 
       const size_t numConstraints = cb.A().rows();
 
-      output_json["controlpoints_guessed"][output_iter][i].clear();
-      for (size_t j = 0; j < curve_count; ++j) {
-        for(int k=0; k<ppc; k++) {
-          std::vector<double> crds;
-          crds.push_back(y(0, j * ppc + k));
-          crds.push_back(y(1, j * ppc + k));
-          output_json["controlpoints_guessed"][output_iter][i].push_back(crds);
-        }
+      std::cout << "piece durations: ";
+      for (const auto& pd : pieceDurations) {
+        std::cout << pd << ",";
       }
+      std::cout << std::endl;
 
-      t_start_qp = Time::now();
+
 #if QP_SOLVER == QP_SOLVER_OSQP
       ////
       // Problem settings
@@ -874,8 +927,8 @@ int main(int argc, char** argv) {
       // of  working  set  recalculations  actually  performed!)
       qpOASES::int_t nWSR = 10000;
 
-      std::cout << "H: " << ob.H() << std::endl;
-      std::cout << "A: " << cb.A() << std::endl;
+      // std::cout << "H: " << ob.H() << std::endl;
+      // std::cout << "A: " << cb.A() << std::endl;
 
       // auto t0 = Time::now();
       qpOASES::returnValue status = qp.init(
@@ -927,6 +980,11 @@ int main(int argc, char** argv) {
 
       // scale until slow enough
 
+      for (size_t j = 0; j < curve_count; ++j) {
+        trajectories[i][j].duration = pieceDurations[j];
+        std::cout << "traj " << j << " " << trajectories[i][j].duration << std::endl;
+      }
+
       double max_velocity = -1;
       double max_acceleration = -1;
       for (double t = 0; t < trajectories[i].duration(); t+=dt/10.0) {
@@ -951,13 +1009,10 @@ int main(int argc, char** argv) {
       //   std::cout << "traj " << j << " " << trajectories[i][j].duration << std::endl;
       // }
 
-      for (size_t j = 0; j < curve_count; ++j) {
-        trajectories[i][j].duration = pieceDurations[j];
-        std::cout << "traj " << j << " " << trajectories[i][j].duration << std::endl;
-      }
 
 
-      } while (true); // TODO
+
+      } while (true); // temporal scaling
 
 
 
