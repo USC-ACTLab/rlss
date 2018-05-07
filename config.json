@@ -2,30 +2,16 @@
   "trajectories": "../test_data/trajectories/swap4",
   "obstacles": "../test_data/obstacles/3obstacles/",
   "robot_radius": 0.15,
-  "cell_size": 0.25,
+  "cell_size": 0.1,
+  "v_max": 3.0,
+  "a_max": 6.0,
   "replan_period": 0.1,
   "set_max_time_as_replan_period": true,
   "planning_horizon": 3,
-  "plan_for_curves": 3,
-  "objective_stop_value": 1,
-  "objective_relative_stop_value": 0.0001,
+  "plan_for_curves": 4,
   "problem_dimension": 2,
   "points_per_curve": 8,
-  "continuity_upto_degree": 4,
-  "continuity_tolerances": [
-    0.00001, 0.0001, 0.001, 0.1, 1, 10
-  ],
-  "initial_point_constraints_upto_degree": 2,
-  "initial_point_tolerances": [
-    0.000001, 0.0001, 0.01
-  ],
-  "dynamic_constraint_degrees": [
-
-  ],
-  "dynamic_constraint_max_value_squares": [
-
-  ],
-  "obstacle_tolerance": 0,
+  "continuity_upto_degree": 2,
   "enable_voronoi": true,
   "output_file": "res.json",
   "print_dt": 0.01,

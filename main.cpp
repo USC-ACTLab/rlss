@@ -76,8 +76,6 @@ int main(int argc, char** argv) {
   string initial_trajectories_path = jsn["trajectories"];
   string obstacles_path = jsn["obstacles"];
   double dt = jsn["replan_period"];
-  double integral_stopval = jsn["objective_stop_value"];
-  double relative_integral_stopval = jsn["objective_relative_stop_value"];
   int problem_dimension = jsn["problem_dimension"];
   int ppc = jsn["points_per_curve"];
   int max_continuity = jsn["continuity_upto_degree"];
@@ -88,33 +86,12 @@ int main(int argc, char** argv) {
   string outputfile = jsn["output_file"];
   const double robot_radius = jsn["robot_radius"];
   const double cell_size = jsn["cell_size"];
-
-  vector<double> continuity_tols;
-  if(max_continuity >= 0) {
-    continuity_tols.resize(max_continuity+1);
-    for(int i=0; i<=max_continuity; i++) {
-      continuity_tols[i] = jsn["continuity_tolerances"][i];
-    }
-  }
-
-  int max_initial_point_degree = jsn["initial_point_constraints_upto_degree"];
-  vector<double> initial_point_tols;
-  if(max_initial_point_degree >= 0) {
-    initial_point_tols.resize(max_initial_point_degree+1);
-    for(int i=0; i<=max_initial_point_degree; i++) {
-      initial_point_tols[i] = jsn["initial_point_tolerances"][i];
-    }
-  }
-
-  double obstacle_tolerance = jsn["obstacle_tolerance"];
+  const double v_max = jsn["v_max"];
+  const double a_max = jsn["a_max"];
 
   bool enable_voronoi = jsn["enable_voronoi"];
 
-  vector<int> dynamic_constraint_degrees = jsn["dynamic_constraint_degrees"];
-  vector<double> dynamic_constraint_max_values = jsn["dynamic_constraint_max_value_squares"];
-
   string alg = jsn["algorithm"];
-
 
   nlohmann::json output_json;
 
@@ -752,20 +729,20 @@ int main(int argc, char** argv) {
       // initial point constraints
 
         // position (with added noise)
-      if(max_initial_point_degree >= 0) {
+      if(max_continuity >= 0) {
         Vector value(problem_dimension);
         value << positions[i][0] + distribution(generator), positions[i][1] + distribution(generator);
         cb.addConstraintBeginning(0, 0, value); // Position
       }
 
         // higher order constraints
-      if(max_initial_point_degree >= 1) {
+      if(max_continuity >= 1) {
         Vector value(problem_dimension);
         value << velocities[i][0], velocities[i][1];
         cb.addConstraintBeginning(0, 1, value); // Velocity
       }
 
-      if(max_initial_point_degree >= 2) {
+      if(max_continuity >= 2) {
         Vector value(problem_dimension);
         value << accelerations[i][0], accelerations[i][1];
         cb.addConstraintBeginning(0, 2, value); // Acceleration
@@ -942,9 +919,9 @@ int main(int argc, char** argv) {
         // throw std::runtime_error(sstr.str());
         std::cerr << sstr.str() << std::endl;
 
-        y.setZero();
+        // y.setZero();
 
-        continue;
+        // continue;
       }
 
       qp.getPrimalSolution(y.data());
@@ -991,8 +968,8 @@ int main(int argc, char** argv) {
       }
       std::cout << "max_vel " << max_velocity << std::endl;
       std::cout << "max_acc " << max_acceleration << std::endl;
-      if (   max_velocity > 2.0
-          || max_acceleration > 4.0) {
+      if (   max_velocity > v_max
+          || max_acceleration > a_max) {
         for (auto& pd : pieceDurations) {
           pd *= 1.2;
         }
