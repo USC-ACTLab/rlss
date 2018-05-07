@@ -276,7 +276,7 @@ int main(int argc, char** argv) {
 
   double everyone_reached = false;
 
-  for(double ct = 0; ct <= total_t + 5 /*!everyone_reached*/ ; ct+=dt) {
+  for(double ct = 0; ct <= total_t /*+ 5*/ /*!everyone_reached*/ ; ct+=dt) {
 
     outStats << ct;
 
@@ -349,7 +349,8 @@ int main(int argc, char** argv) {
       // }
 
       // Create objective (min energy + reach goal)
-      std::vector<double> pieceDurations(curve_count, hor / curve_count);
+      double planning_horizon = std::max(hor, curve_count * dt * 1.5);
+      std::vector<double> pieceDurations(curve_count, planning_horizon / curve_count);
 
       // y are our control points (decision variable)
       // Vector y(numVars);
@@ -681,7 +682,7 @@ int main(int argc, char** argv) {
 
         double factor = 1.0f / curve_count;
         for (size_t j = 1; j < curve_count; ++j) {
-          vectoreuc OBJPOS = original_trajectories[i].neval(min(ct+hor * (j+1)/(double)curve_count, total_times[i]), 0);
+          vectoreuc OBJPOS = original_trajectories[i].neval(min(ct+planning_horizon * (j+1)/(double)curve_count, total_times[i]), 0);
           Vector targetPosition(problem_dimension);
           targetPosition << OBJPOS[0], OBJPOS[1];
           // ob.endCloseTo(j, factor * (j+1), targetPosition);
