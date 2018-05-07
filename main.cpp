@@ -23,19 +23,11 @@
 #include "svm_seperator.h"
 #include "discrete_search.hpp"
 
-#define QP_SOLVER_QPOASES 0
-#define QP_SOLVER_OSQP    1
-#define QP_SOLVER QP_SOLVER_QPOASES
-// #define QP_SOLVER QP_SOLVER_OSQP
-
 #include "qp_optimize.h"
 
-#if QP_SOLVER == QP_SOLVER_QPOASES
-  #include <qpOASES.hpp>
-#endif
-#if QP_SOLVER == QP_SOLVER_OSQP
-  #include "osqp.h"
-#endif
+// different solvers
+#include <qpOASES.hpp>
+#include "osqp.h"
 
 #define PATHREPLAN_EPSILON 0.00001
 
@@ -795,142 +787,143 @@ int main(int argc, char** argv) {
       }
       std::cout << std::endl;
 
+      if (alg == "OSQP") {
+        ////
+        // Problem settings
+        OSQPSettings settings;
+        osqp_set_default_settings(&settings);
+        // settings.polish = 1;
+        // settings.eps_abs = 1.0e-4;
+        // settings.eps_rel = 1.0e-4;
+        // settings.max_iter = 20000;
+        // settings.verbose = false;
 
-#if QP_SOLVER == QP_SOLVER_OSQP
-      ////
-      // Problem settings
-      OSQPSettings settings;
-      osqp_set_default_settings(&settings);
-      // settings.polish = 1;
-      // settings.eps_abs = 1.0e-4;
-      // settings.eps_rel = 1.0e-4;
-      // settings.max_iter = 20000;
-      // settings.verbose = false;
-
-      // Structures
-      typedef Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor> MatrixCM;
-      MatrixCM H_CM = ob.H();
-      std::vector<c_int> rowIndicesH(numVars * numVars);
-      std::vector<c_int> columnIndicesH(numVars + 1);
-      for (size_t c = 0; c < numVars; ++c) {
-        for (size_t r = 0; r < numVars; ++r) {
-          rowIndicesH[c * numVars + r] = r;
-        }
-        columnIndicesH[c] = c * numVars;
-      }
-      columnIndicesH[numVars] = numVars * numVars;
-
-      MatrixCM A_CM = cb.A();
-      std::vector<c_int> rowIndicesA(numConstraints * numVars);
-      std::vector<c_int> columnIndicesA(numVars + 1);
-      for (size_t c = 0; c < numVars; ++c) {
-        for (size_t r = 0; r < numConstraints; ++r) {
-          rowIndicesA[c * numConstraints + r] = r;
-        }
-        columnIndicesA[c] = c * numConstraints;
-      }
-      columnIndicesA[numVars] = numConstraints * numVars;
-
-
-      OSQPData data;
-      data.n = numVars;
-      data.m = numConstraints;
-      data.P = csc_matrix(numVars, numVars, numVars * numVars, H_CM.data(), rowIndicesH.data(), columnIndicesH.data());
-      data.q = const_cast<double*>(ob.g().data());
-      data.A = csc_matrix(numConstraints, numVars, numConstraints * numVars, A_CM.data(), rowIndicesA.data(), columnIndicesA.data());
-      data.l = const_cast<double*>(cb.lbA().data());
-      data.u = const_cast<double*>(cb.ubA().data());
-
-      OSQPWorkspace* work = osqp_setup(&data, &settings);
-
-      // Solve Problem
-      osqp_warm_start_x(work, y.data());
-      osqp_solve(work);
-
-      if (work->info->status_val != OSQP_SOLVED) {
-        std::stringstream sstr;
-        sstr << "Couldn't solve QP! @ " << ct << " robot " << i;
-        // throw std::runtime_error(sstr.str());
-        std::cerr << sstr.str() << std::endl;
-      }
-
-      // work->solution->x
-      for (size_t i = 0; i < numVars; ++i) {
-        y(i) = work->solution->x[i];
-      }
-      // for(int j=0; j<trajectories[i].size(); j++) {
-      //   for(int k=0; k<ppc; k++) {
-      //     for(int p=0; p<problem_dimension; p++) {
-      //       trajectories[i][j][k][p] = work->solution->x[p * numVars + j * ppc + k];
-      //     }
-      //   }
-      // }
-
-      // Clean workspace
-      osqp_cleanup(work);
-#endif
-#if QP_SOLVER == QP_SOLVER_QPOASES
-      // const size_t numVars = cb.A().columns();
-
-      qpOASES::QProblem qp(numVars, numConstraints, qpOASES::HST_SEMIDEF);
-
-      qpOASES::Options options;
-      options.setToMPC(); // maximum speed; others: setToDefault() and setToReliable()
-      // options.setToDefault();
-      // options.setToReliable();
-      options.printLevel = qpOASES::PL_LOW; // only show errors
-      // options.boundTolerance =  1e5;//1e-6;
-      qp.setOptions(options);
-
-      // The  integer  argument nWSR specifies  the  maximum  number  of  working  set
-      // recalculations to be performed during the initial homotopy (on output it contains the number
-      // of  working  set  recalculations  actually  performed!)
-      qpOASES::int_t nWSR = 10000;
-
-      // std::cout << "H: " << ob.H() << std::endl;
-      // std::cout << "A: " << cb.A() << std::endl;
-
-      // auto t0 = Time::now();
-      qpOASES::returnValue status = qp.init(
-        ob.H().data(),
-        ob.g().data(),
-        cb.A().data(),
-        lb.data(),
-        ub.data(),
-        cb.lbA().data(),
-        cb.ubA().data(),
-        nWSR,
-        /*cputime*/ NULL,
-        y.data());
-
-      qpOASES::int_t simpleStatus = qpOASES::getSimpleStatus(status);
-      if (simpleStatus != 0) {
-        std::stringstream sstr;
-        sstr << "Couldn't solve QP! @ " << ct << " robot " << i;
-
-        Eigen::Map<Matrix> yVec(y.data(), numVars, 1);
-
-        auto constraints = cb.A() * yVec;
-        // std::cout << "constraints: " << constraints << std::endl;
-        for (size_t c = 0; c < numConstraints; ++c) {
-          if (cb.lbA()(c) > constraints(c) || constraints(c) > cb.ubA()(c)) {
-            std::cout << "Constraint " << c << " violated!" << std::endl;
+        // Structures
+        typedef Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor> MatrixCM;
+        MatrixCM H_CM = ob.H();
+        std::vector<c_int> rowIndicesH(numVars * numVars);
+        std::vector<c_int> columnIndicesH(numVars + 1);
+        for (size_t c = 0; c < numVars; ++c) {
+          for (size_t r = 0; r < numVars; ++r) {
+            rowIndicesH[c * numVars + r] = r;
           }
+          columnIndicesH[c] = c * numVars;
         }
-        // throw std::runtime_error(sstr.str());
-        std::cerr << sstr.str() << std::endl;
+        columnIndicesH[numVars] = numVars * numVars;
 
-        // y.setZero();
+        MatrixCM A_CM = cb.A();
+        std::vector<c_int> rowIndicesA(numConstraints * numVars);
+        std::vector<c_int> columnIndicesA(numVars + 1);
+        for (size_t c = 0; c < numVars; ++c) {
+          for (size_t r = 0; r < numConstraints; ++r) {
+            rowIndicesA[c * numConstraints + r] = r;
+          }
+          columnIndicesA[c] = c * numConstraints;
+        }
+        columnIndicesA[numVars] = numConstraints * numVars;
 
-        // continue;
+
+        OSQPData data;
+        data.n = numVars;
+        data.m = numConstraints;
+        data.P = csc_matrix(numVars, numVars, numVars * numVars, H_CM.data(), rowIndicesH.data(), columnIndicesH.data());
+        data.q = const_cast<double*>(ob.g().data());
+        data.A = csc_matrix(numConstraints, numVars, numConstraints * numVars, A_CM.data(), rowIndicesA.data(), columnIndicesA.data());
+        data.l = const_cast<double*>(cb.lbA().data());
+        data.u = const_cast<double*>(cb.ubA().data());
+
+        OSQPWorkspace* work = osqp_setup(&data, &settings);
+
+        // Solve Problem
+        osqp_warm_start_x(work, y.data());
+        osqp_solve(work);
+
+        if (work->info->status_val != OSQP_SOLVED) {
+          std::stringstream sstr;
+          sstr << "Couldn't solve QP! @ " << ct << " robot " << i;
+          // throw std::runtime_error(sstr.str());
+          std::cerr << sstr.str() << std::endl;
+        }
+
+        // work->solution->x
+        for (size_t i = 0; i < numVars; ++i) {
+          y(i) = work->solution->x[i];
+        }
+        // for(int j=0; j<trajectories[i].size(); j++) {
+        //   for(int k=0; k<ppc; k++) {
+        //     for(int p=0; p<problem_dimension; p++) {
+        //       trajectories[i][j][k][p] = work->solution->x[p * numVars + j * ppc + k];
+        //     }
+        //   }
+        // }
+
+        // Clean workspace
+        osqp_cleanup(work);
+      } else if (alg == "QPOASES") {
+        // const size_t numVars = cb.A().columns();
+
+        qpOASES::QProblem qp(numVars, numConstraints, qpOASES::HST_SEMIDEF);
+
+        qpOASES::Options options;
+        options.setToMPC(); // maximum speed; others: setToDefault() and setToReliable()
+        // options.setToDefault();
+        // options.setToReliable();
+        options.printLevel = qpOASES::PL_LOW; // only show errors
+        // options.boundTolerance =  1e5;//1e-6;
+        qp.setOptions(options);
+
+        // The  integer  argument nWSR specifies  the  maximum  number  of  working  set
+        // recalculations to be performed during the initial homotopy (on output it contains the number
+        // of  working  set  recalculations  actually  performed!)
+        qpOASES::int_t nWSR = 10000;
+
+        // std::cout << "H: " << ob.H() << std::endl;
+        // std::cout << "A: " << cb.A() << std::endl;
+
+        // auto t0 = Time::now();
+        qpOASES::returnValue status = qp.init(
+          ob.H().data(),
+          ob.g().data(),
+          cb.A().data(),
+          lb.data(),
+          ub.data(),
+          cb.lbA().data(),
+          cb.ubA().data(),
+          nWSR,
+          /*cputime*/ NULL,
+          y.data());
+
+        qpOASES::int_t simpleStatus = qpOASES::getSimpleStatus(status);
+        if (simpleStatus != 0) {
+          std::stringstream sstr;
+          sstr << "Couldn't solve QP! @ " << ct << " robot " << i;
+
+          Eigen::Map<Matrix> yVec(y.data(), numVars, 1);
+
+          auto constraints = cb.A() * yVec;
+          // std::cout << "constraints: " << constraints << std::endl;
+          for (size_t c = 0; c < numConstraints; ++c) {
+            if (cb.lbA()(c) > constraints(c) || constraints(c) > cb.ubA()(c)) {
+              std::cout << "Constraint " << c << " violated!" << std::endl;
+            }
+          }
+          // throw std::runtime_error(sstr.str());
+          std::cerr << sstr.str() << std::endl;
+
+          // y.setZero();
+
+          // continue;
+        }
+
+        qp.getPrimalSolution(y.data());
+
+        std::cout << "status: " << status << std::endl;
+        std::cout << "objective: " << qp.getObjVal() << std::endl;
+        // std::cout << "y: " << y << std::endl;
+      } else {
+        throw std::runtime_error("Unknown algorithms!");
       }
 
-      qp.getPrimalSolution(y.data());
-
-      std::cout << "status: " << status << std::endl;
-      std::cout << "objective: " << qp.getObjVal() << std::endl;
-      // std::cout << "y: " << y << std::endl;
-#endif
       t_end_qp = Time::now();
       // Update trajectories with our solution
       for(int j=0; j<trajectories[i].size(); j++) {
