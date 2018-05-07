@@ -4,6 +4,7 @@ from matplotlib import pyplot as plt
 from shapely.geometry.polygon import LinearRing, Polygon
 from descartes import PolygonPatch
 from matplotlib.patches import Rectangle
+import matplotlib.gridspec as gridspec
 import numpy as np
 
 
@@ -21,19 +22,11 @@ if __name__ == "__main__":
 
   colors = ['b', 'g', 'r', 'c', 'm', 'k']
 
+  gs = gridspec.GridSpec(5, 1)
   fig = plt.figure()
-  ax = plt.axes()
 
-  # for i in range(jsn["number_of_robots"]):
-  #   x = []
-  #   y = []
-  #   for frame in range(len(jsn["points"])):
-  #     x.append(jsn["accelerations"][frame][i][0])
-  #     y.append(jsn["accelerations"][frame][i][1])
-
-  #   ax.plot(t, y, lw=2, zorder=0, color = colors[i], marker='o')
-
-
+  # plot trajectories
+  ax = plt.subplot(gs[0:3, 0])
   ax.set_aspect('equal')
 
   polygon_patches = []
@@ -53,6 +46,28 @@ if __name__ == "__main__":
       x.append(jsn["points"][frame][i][0])
       y.append(jsn["points"][frame][i][1])
     ax.plot(x, y, lw=2, zorder=0, color = colors[i])
+
+  # plot velocity
+  ax = plt.subplot(gs[3, 0]) # row 2
+
+  for i in range(jsn["number_of_robots"]):
+    vel = np.empty((len(t), 2))
+    for frame in range(len(jsn["points"])):
+      vel[frame, 0:2] = [jsn["velocities"][frame][i][0], jsn["velocities"][frame][i][1]]
+    ax.plot(t, np.linalg.norm(vel[:,0:2], axis=1), lw=2, zorder=0, color = colors[i])
+  ax.set_xlabel("time [s]")
+  ax.set_ylabel("velocity [m/s]")
+
+  # plot acceleration
+  ax = plt.subplot(gs[4, 0]) # row 2
+
+  for i in range(jsn["number_of_robots"]):
+    acc = np.empty((len(t), 2))
+    for frame in range(len(jsn["points"])):
+      acc[frame, 0:2] = [jsn["accelerations"][frame][i][0], jsn["accelerations"][frame][i][1]]
+    ax.plot(t, np.linalg.norm(acc[:,0:2], axis=1), lw=2, zorder=0, color = colors[i])
+  ax.set_xlabel("time [s]")
+  ax.set_ylabel("acceleration [m/s^2]")
 
   if args.output:
     fig.savefig(args.output)
