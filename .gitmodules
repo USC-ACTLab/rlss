@@ -1,3 +1,9 @@
 [submodule "lib/libsvm"]
 	path = lib/libsvm
 	url = https://github.com/cjlin1/libsvm
+[submodule "lib/qpOASES"]
+	path = lib/qpOASES
+	url = https://github.com/whoenig/qpOASES.git
+[submodule "lib/osqp"]
+	path = lib/osqp
+	url = https://github.com/oxfordcontrol/osqp.git
