@@ -97,10 +97,7 @@ https://www.jstage.jst.go.jp/article/jrsj/32/6/32_32_536/_pdf
 
 ## TODO
 
-D* fix obstacle handling
-D    * fix A* and shift hyperplanes, only
-D    * use usenko data structure for obstacles ?;
+* add soft margin to objective to improve numerical stability?
 * look into RVO2 baseline
     * supports obstacles: http://gamma.cs.unc.edu/RVO2/documentation/2.0/using.html; how would we model target trajectories?
-D * try doing discrete planning when original traj up to horizon has obs
 * automatic test/movie generation?

@@ -99,9 +99,10 @@ def init():
                 (xx,yy) = genvoroxy(v)
                 voronois[i][j].set_data(xx,yy)
                 j+=1
-    for i in range(jsn["number_of_robots"]):
-        plans[i].set_data(jsn["planned_trajs"][0][i]["x"], jsn["planned_trajs"][0][i]["y"])
-        originals[i].set_data(jsn["originals"][i]["x"], jsn["originals"][i]["y"])
+    if "planned_trajs" in jsn:
+      for i in range(jsn["number_of_robots"]):
+          plans[i].set_data(jsn["planned_trajs"][0][i]["x"], jsn["planned_trajs"][0][i]["y"])
+          originals[i].set_data(jsn["originals"][i]["x"], jsn["originals"][i]["y"])
     if args.controlpoints:
       for i in range(jsn["number_of_robots"]):
           cpts = controlpoints[i]
@@ -140,7 +141,7 @@ def animate(frame):
                 (xx,yy) = genvoroxy(v)
                 voronois[j][i].set_data(xx, yy)
 
-    if(frame < len(jsn["planned_trajs"]) and jsn["planned_trajs"][frame] != None):
+    if "planned_trajs" in jsn and frame < len(jsn["planned_trajs"]) and jsn["planned_trajs"][frame] != None:
         for i in range(jsn["number_of_robots"]):
             plans[i].set_data(jsn["planned_trajs"][frame][i]["x"], jsn["planned_trajs"][frame][i]["y"])
 
@@ -295,12 +296,13 @@ if __name__ == "__main__":
       originals.append(orig)
       to_animate.append(orig)
 
-  for i in range(jsn["number_of_robots"]):
-      x = jsn["planned_trajs"][0][i]["x"]
-      y = jsn["planned_trajs"][0][i]["y"]
-      tr = ax.plot(x, y, lw=2, zorder = 10, color=colors[i], alpha=0.4)[0]
-      plans.append(tr)
-      to_animate.append(tr)
+  if "planned_trajs" in jsn:
+    for i in range(jsn["number_of_robots"]):
+        x = jsn["planned_trajs"][0][i]["x"]
+        y = jsn["planned_trajs"][0][i]["y"]
+        tr = ax.plot(x, y, lw=2, zorder = 10, color=colors[i], alpha=0.4)[0]
+        plans.append(tr)
+        to_animate.append(tr)
 
   if args.controlpoints:
     for i in range(jsn["number_of_robots"]):

@@ -81,3 +81,16 @@ target_link_libraries(main
   svm8pt4obs
   osqp
 )
+
+add_executable(rvo2_main
+  rvo2_main.cpp
+)
+target_include_directories(rvo2_main PRIVATE lib lib/RVO2/src)
+target_link_libraries(rvo2_main
+  obstacle
+  geometry
+  traj
+  csv
+  stdc++fs
+  RVO
+)
