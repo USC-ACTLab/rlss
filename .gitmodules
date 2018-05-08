@@ -7,3 +7,6 @@
 [submodule "lib/osqp"]
 	path = lib/osqp
 	url = https://github.com/oxfordcontrol/osqp.git
+[submodule "lib/RVO2"]
+	path = lib/RVO2
+	url = https://github.com/snape/RVO2.git

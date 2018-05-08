@@ -7,6 +7,8 @@ add_subdirectory(lib/qpOASES)
 set(UNITTESTS OFF CACHE BOOL "disable osqp unittests")
 add_subdirectory(lib/osqp)
 
+add_subdirectory(lib/RVO2)
+
 find_package (Eigen3 REQUIRED)
 find_package(stdc++fs)
 
