@@ -40,12 +40,12 @@ class OG {
     pair<double, double> get_coordinates(index& idx);
 
     /* returns whether given point in space is occupied */
-    bool occupied(double x, double y);
+    bool occupied(double x, double y, double robot_radius);
     /* returns whether grid[x][y] or neighbors are occupied, which means that grid is occupied in that index */
     bool idx_occupied(index& idx);
 
     /*checks whether given trajectory passes through an obstacle*/
-    bool occupied(trajectory& traj);
+    bool occupied(trajectory& traj, double robot_radius, double start_time = 0, double end_time = -1);
 
     void set_occupied(double x, double y);
     void set_free(double x, double y);

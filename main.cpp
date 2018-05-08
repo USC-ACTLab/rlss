@@ -153,7 +153,7 @@ int main(int argc, char** argv) {
       o.add_pt(pt);
     }
     o.convex_hull();
-    o.ch_planes();
+    o.ch_planes(/*shift*/ 0);
     obstacles.push_back(o);
     obs_idx++;
   }
@@ -186,7 +186,7 @@ int main(int argc, char** argv) {
         pt[1] = coord.second - cell_size / 2.0;
         o.add_pt(pt);
         o.convex_hull();
-        o.ch_planes();
+        o.ch_planes(/*shift*/0);
         cell_based_obstacles.push_back(o);
       }
     }
@@ -226,6 +226,7 @@ int main(int argc, char** argv) {
   double printdt = jsn["print_dt"];
 
   output_json["dt"] = printdt;
+  output_json["robot_radius"] = robot_radius;
   output_json["number_of_robots"] = original_trajectories.size();
   int steps_per_cycle = (dt / printdt)+0.5;
   int output_iter = 0;
@@ -312,7 +313,7 @@ int main(int argc, char** argv) {
       /*calculate voronoi hyperplanes for robot i*/
       vector<hyperplane> voronoi_hyperplanes;
       if(enable_voronoi) {
-        voronoi_hyperplanes = voronoi(positions,i);
+        voronoi_hyperplanes = voronoi(positions,i, robot_radius);
       }
 
       for(int j=0; j<voronoi_hyperplanes.size(); j++) {
@@ -375,11 +376,11 @@ int main(int argc, char** argv) {
 
 
       // check if those trajectories are collision-free w/ respect to the environment
-      bool planned_traj_occupied = og.occupied(trajectories[i]);
+      bool planned_traj_occupied = og.occupied(trajectories[i], robot_radius);
       vectoreuc goalPos = original_trajectories[i].neval(min(ct+hor, total_times[i]), 0);
 
       // only considers static obstacles, not other robots (intentionally)
-      bool goal_occupied = og.occupied(goalPos[0], goalPos[1]);
+      // bool goal_occupied = og.occupied(goalPos[0], goalPos[1], robot_radius);
 
       // check if the first curve will violate voronoi constraints
       bool voronoi_violated = false;
@@ -400,8 +401,11 @@ int main(int argc, char** argv) {
         }
       }
 
+      // check if original trajectory is occupied
+      bool original_traj_occupied = og.occupied(original_trajectories[i], robot_radius, ct, min(ct+hor, total_times[i]));
+
       bool discretePath = false;
-      if (planned_traj_occupied || goal_occupied || voronoi_violated) {
+      if (planned_traj_occupied /*|| goal_occupied*/ || voronoi_violated || original_traj_occupied) {
         // the trajectory is now on top of an obstacle => discrete re-planning!
 
 
@@ -420,11 +424,12 @@ int main(int argc, char** argv) {
         for (double t = arrivalTime; t <= total_times[i]; t += 0.01) {
           goalPos = original_trajectories[i].neval(t, 0);
           OG::index goalIdx = og.get_index(goalPos[0], goalPos[1]);
-          if (!og.idx_occupied(goalIdx)) {
+          std::pair<double, double> coord = og.get_coordinates(goalIdx);
+          if (!og.occupied(coord.first, coord.second, robot_radius)) {
 
             // check of occupied by another robot
             bool occupiedByOtherRobot = false;
-            std::pair<double, double> coord = og.get_coordinates(goalIdx);
+
             for (const auto& otherRobot : otherRobots) {
               double distSq = pow(otherRobot.first - coord.first, 2) + pow(otherRobot.second - coord.second, 2);
               if (distSq < pow(2 * robot_radius, 2)) {
@@ -530,7 +535,7 @@ int main(int argc, char** argv) {
                 pt[1] = positions[j][1] - robot_radius;
                 o.add_pt(pt);
                 o.convex_hull();
-                o.ch_planes();
+                o.ch_planes(/*shift*/0);
                 cell_based_obstacles.push_back(o);
               }
             }
@@ -567,11 +572,11 @@ int main(int argc, char** argv) {
                   Vector normal(problem_dimension);
                   normal << plane.normal[0], plane.normal[1];
                   // cb.addHyperplane(j, normal, plane.distance);
-                  hyperplaneConstraints.push_back({j, normal, plane.distance});
+                  hyperplaneConstraints.push_back({j, normal, plane.distance - robot_radius});
 
                   output_json["hyperplanes"][output_iter][i][hpidx].push_back(plane.normal[0]); //normal first
                   output_json["hyperplanes"][output_iter][i][hpidx].push_back(plane.normal[1]);//normal seconds
-                  output_json["hyperplanes"][output_iter][i][hpidx].push_back(plane.distance); //distance
+                  output_json["hyperplanes"][output_iter][i][hpidx].push_back(plane.distance - robot_radius); //distance
                   output_json["hyperplanes"][output_iter][i][hpidx].push_back(j);
                   ++hpidx;
                 }
@@ -658,13 +663,13 @@ int main(int argc, char** argv) {
           for (auto& plane : hyperplanes) {
             Vector normal(problem_dimension);
             normal << plane.normal[0], plane.normal[1];
-            hyperplaneConstraints.push_back({j, normal, plane.distance});
+            hyperplaneConstraints.push_back({j, normal, plane.distance - robot_radius});
             // cb.addHyperplane(j, normal, plane.distance);
 
             output_json["hyperplanes"][output_iter][i][hpidx].clear();
             output_json["hyperplanes"][output_iter][i][hpidx].push_back(plane.normal[0]); //normal first
             output_json["hyperplanes"][output_iter][i][hpidx].push_back(plane.normal[1]);//normal seconds
-            output_json["hyperplanes"][output_iter][i][hpidx].push_back(plane.distance); //distance
+            output_json["hyperplanes"][output_iter][i][hpidx].push_back(plane.distance - robot_radius); //distance
             output_json["hyperplanes"][output_iter][i][hpidx].push_back(j);
             ++hpidx;
           }
@@ -672,7 +677,7 @@ int main(int argc, char** argv) {
         t_end_svm = Time::now();
 #endif
 
-        double factor = 1.0f / curve_count;
+        double factor = 0.5f / curve_count;
         for (size_t j = 1; j < curve_count; ++j) {
           vectoreuc OBJPOS = original_trajectories[i].neval(min(ct+planning_horizon * (j+1)/(double)curve_count, total_times[i]), 0);
           Vector targetPosition(problem_dimension);
@@ -708,13 +713,8 @@ int main(int argc, char** argv) {
         ob.endCloseTo(o.piece, o.lambda, o.value);
       }
 
-      // lower and upper bound for decision variables (i.e., workspace)
-      const size_t numVars = problem_dimension * 8 * curve_count;
-      Vector lb(numVars);
-      lb.setConstant(-10);
-      Vector ub(numVars);
-      ub.setConstant(10);
 
+      const size_t numVars = problem_dimension * 8 * curve_count;
 
       // constraint matrix A
       ConstraintBuilder cb(problem_dimension, pieceDurations);
@@ -777,6 +777,24 @@ int main(int argc, char** argv) {
 
       for (const auto& hpc : hyperplaneConstraints) {
         cb.addHyperplane(hpc.piece, hpc.normal, hpc.dist);
+      }
+
+      // lower and upper bound for decision variables (i.e., workspace)
+      const double margin = 0.5;
+      for(int j=0; j<trajectories[i].size(); j++) {
+        Vector minVec(2);
+        minVec << std::numeric_limits<double>::max(), std::numeric_limits<double>::max();
+        Vector maxVec(2);
+        maxVec << std::numeric_limits<double>::lowest(), std::numeric_limits<double>::lowest();
+        for(int p=0; p<problem_dimension; p++) {
+          for(int k=0; k<ppc; k++) {
+            minVec(p) = std::min(y(p, j * ppc + k), minVec(p));
+            maxVec(p) = std::max(y(p, j * ppc + k), maxVec(p));
+          }
+          minVec(p) -= margin;
+          maxVec(p) += margin;
+        }
+        cb.addBounds(j, minVec, maxVec);
       }
 
       const size_t numConstraints = cb.A().rows();
@@ -881,16 +899,17 @@ int main(int argc, char** argv) {
         // std::cout << "A: " << cb.A() << std::endl;
 
         // auto t0 = Time::now();
+      qpOASES::real_t cputime = dt;
         qpOASES::returnValue status = qp.init(
           ob.H().data(),
           ob.g().data(),
           cb.A().data(),
-          lb.data(),
-          ub.data(),
+          cb.lb().data(),
+          cb.ub().data(),
           cb.lbA().data(),
           cb.ubA().data(),
           nWSR,
-          /*cputime*/ NULL,
+          set_max_time ? &cputime : NULL,
           y.data());
 
         qpOASES::int_t simpleStatus = qpOASES::getSimpleStatus(status);
@@ -898,15 +917,15 @@ int main(int argc, char** argv) {
           std::stringstream sstr;
           sstr << "Couldn't solve QP! @ " << ct << " robot " << i;
 
-          Eigen::Map<Matrix> yVec(y.data(), numVars, 1);
+          // Eigen::Map<Matrix> yVec(y.data(), numVars, 1);
 
-          auto constraints = cb.A() * yVec;
-          // std::cout << "constraints: " << constraints << std::endl;
-          for (size_t c = 0; c < numConstraints; ++c) {
-            if (cb.lbA()(c) > constraints(c) || constraints(c) > cb.ubA()(c)) {
-              std::cout << "Constraint " << c << " violated!" << std::endl;
-            }
-          }
+          // auto constraints = cb.A() * yVec;
+          // // std::cout << "constraints: " << constraints << std::endl;
+          // for (size_t c = 0; c < numConstraints; ++c) {
+          //   if (cb.lbA()(c) > constraints(c) || constraints(c) > cb.ubA()(c)) {
+          //     std::cout << "Constraint " << c << " violated!" << std::endl;
+          //   }
+          // }
           // throw std::runtime_error(sstr.str());
           std::cerr << sstr.str() << std::endl;
 

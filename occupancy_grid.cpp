@@ -10,9 +10,15 @@ OG::index::index(int a, int b, direction c): i(a), j(b), d(c) {
 
 
 OG::OG(double step_size, double xm, double xM, double ym, double yM, vector<obstacle2D>& obstacles): ss(step_size), ss2(step_size/2), x_min(xm), y_min(ym), x_max(xM), y_max(yM) {
-  for(double y = y_min + ss2; y<=y_max; y+=ss) {
-    vector<bool> distRow;
-    for(double x = x_min + ss2; x<=x_max; x+=ss) {
+
+  const size_t numColumns = ceil((x_max - x_min) / ss);
+  const size_t numRows = ceil((y_max - y_min) / ss);
+  // initialize as empty
+  grid.resize(numRows, vector<bool>(numColumns, false));
+
+  const double sampleDist = 0.01;
+  for(double y = y_min; y<=y_max; y+= sampleDist) {
+    for(double x = x_min; x<=x_max; x+= sampleDist) {
       vectoreuc pt(2);
       pt[0] = x;
       pt[1] = y;
@@ -20,13 +26,11 @@ OG::OG(double step_size, double xm, double xM, double ym, double yM, vector<obst
       for(int i=0; i<obstacles.size(); i++) {
         obstacle2D& obs = obstacles[i];
         if(obs.point_inside(pt)) {
-            occupied = true;
+            set_occupied(x, y);
             break;
         }
       }
-      distRow.push_back(occupied);
     }
-    grid.push_back(distRow);
   }
 }
 
@@ -54,9 +58,22 @@ bool OG::idx_occupied(index& idx) {
   //     || ((idx.i-1 > -1 && idx.j-1 > -1) && grid[idx.i-1][idx.j-1]);
 }
 
-bool OG::occupied(double x, double y) {
-  index idx = get_index(x, y);
-  return idx_occupied(idx);
+bool OG::occupied(double x, double y, double robot_radius)
+{
+  // check all neighbors within the specified radius
+
+  index idxMin = get_index(x - robot_radius, y - robot_radius);
+  index idxMax = get_index(x + robot_radius, y + robot_radius);
+
+  for (int i = idxMin.i; i <= idxMax.i; ++i) {
+    for (int j = idxMin.j; j <= idxMax.j; ++j) {
+      index idx(i, j);
+      if (idx_occupied(idx)) {
+        return true;
+      }
+    }
+  }
+  return false;
 }
 
 
@@ -95,11 +112,15 @@ vector<OG::index> OG::neighbors(index& cur) {
   return n;
 }
 
-bool OG::occupied(trajectory& traj) {
-  double dt = 0.01;
-  for(double t = 0; t<=traj.duration(); t+=dt) {
+bool OG::occupied(trajectory& traj, double robot_radius, double start_time, double end_time)
+{
+  if (end_time < 0) {
+    end_time = traj.duration();
+  }
+  const double dt = 0.01;
+  for(double t = start_time; t<=end_time; t+=dt) {
     vectoreuc pos = traj.eval(t);
-    if(occupied(pos[0], pos[1])) {
+    if(occupied(pos[0], pos[1], robot_radius)) {
       return true;
     }
   }

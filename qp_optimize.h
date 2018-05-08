@@ -190,6 +190,8 @@ public:
     , m_pieceDurations(pieceDurations)
     , m_numPieces(pieceDurations.size())
     , m_numVars(dimension * 8 * m_numPieces)
+    , m_lb(m_numVars)
+    , m_ub(m_numVars)
   {
   }
 
@@ -287,6 +289,23 @@ public:
     }
   }
 
+  // adds bounds to the decision variables
+  void addBounds(
+    size_t piece,
+    Vector min,
+    Vector max)
+  {
+    assert(piece < m_numPieces);
+
+    for (size_t d = 0; d < m_dimension; ++d) {
+      size_t idx = column(piece, d);
+      for (size_t cp = 0; cp < 8; ++cp) {
+        m_lb(idx + cp) = min(d);
+        m_ub(idx + cp) = max(d);
+      }
+    }
+  }
+
   const Matrix& A() const
   {
     return m_A;
@@ -300,6 +319,16 @@ public:
   const Vector& ubA() const
   {
     return m_ubA;
+  }
+
+  const Vector& lb() const
+  {
+    return m_lb;
+  }
+
+  const Vector& ub() const
+  {
+    return m_ub;
   }
 
 private:
@@ -368,6 +397,8 @@ private:
   Matrix m_A;
   Vector m_lbA;
   Vector m_ubA;
+  Vector m_lb;
+  Vector m_ub;
 };
 
 #endif

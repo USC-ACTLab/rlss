@@ -4,7 +4,7 @@ using namespace std;
 
 #define PI 3.14159265
 
-vector<hyperplane> voronoi(vector<vectoreuc>& positions, int robotidx) {
+vector<hyperplane> voronoi(vector<vectoreuc>& positions, int robotidx, double robot_radius) {
   static double COS = cos(15*PI/180);
   static double SIN = sin(15*PI/180);
 
@@ -24,7 +24,7 @@ vector<hyperplane> voronoi(vector<vectoreuc>& positions, int robotidx) {
     /*seperation[0] = COS * seperation[0] - SIN * seperation[1];
     seperation[1] = SIN * seperation[0] + COS * seperation[1];*/
     nplane.normal = seperation.normalized();
-    nplane.distance = mid.dot(nplane.normal) - 0.15; // robots have 15 cm radius
+    nplane.distance = mid.dot(nplane.normal) - robot_radius;
     res.push_back(nplane);
   }
 

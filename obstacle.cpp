@@ -69,7 +69,7 @@ void obstacle2D::convex_hull() {
   }
 }
 
-void obstacle2D::ch_planes() {
+void obstacle2D::ch_planes(double shift) {
   chplanes.clear();
   for(int i=0; i<ch.size()-1; i++) {
     hyperplane hp;
@@ -79,7 +79,7 @@ void obstacle2D::ch_planes() {
     normal[0] = secondpt[1] - firstpt[1];
     normal[1] = firstpt[0] - secondpt[0];
     hp.normal = normal.normalized();
-    hp.distance = firstpt.dot(hp.normal) - 0.15;
+    hp.distance = firstpt.dot(hp.normal) - shift;
     chplanes.push_back(hp);
   }
 }

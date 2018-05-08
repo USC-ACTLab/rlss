@@ -68,7 +68,10 @@ hyperplane _8pt4obspt_svm(const vectoreuc& pt1, const vectoreuc& pt2,
 
   int num_iters = solver_84::solve();
 
-  std::cout << "8-4 converged: " << solver_84::work.converged << std::endl;
+  // std::cout << "8-4 converged: " << solver_84::work.converged << std::endl;
+  if (!solver_84::work.converged) {
+      std::cerr << "8-4 not converged" << std::endl;
+  }
 
   double nx = solver_84::vars.w[0];
   double ny = solver_84::vars.w[1];

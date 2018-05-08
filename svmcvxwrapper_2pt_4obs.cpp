@@ -45,7 +45,10 @@ hyperplane _2pt4obspt_svm(const vectoreuc& pt1, const vectoreuc& pt2,
     int num_iters = solver_24::solve();
 
 
-    std::cout << "2-4 converged: " << solver_24::work.converged << std::endl;
+    // std::cout << "2-4 converged: " << solver_24::work.converged << std::endl;
+    if (!solver_24::work.converged) {
+        std::cerr << "2-4 not converged" << std::endl;
+    }
 
     double nx = solver_24::vars.w[0];
     double ny = solver_24::vars.w[1];

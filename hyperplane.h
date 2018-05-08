@@ -9,5 +9,5 @@ class hyperplane {
     double distance;
     double dist(vectoreuc& pt);
 };
-vector<hyperplane> voronoi(vector<vectoreuc>& positions, int robotidx);
+vector<hyperplane> voronoi(vector<vectoreuc>& positions, int robotidx, double robot_radius);
 #endif

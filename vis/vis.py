@@ -182,7 +182,7 @@ def animate(frame):
 
 
     hpIdx = 0
-    robot = 1
+    robot = 0
     if args.hyperplanes and "hyperplanes" in jsn and frame < len(jsn["hyperplanes"]) and jsn["hyperplanes"][frame] and robot < len(jsn["hyperplanes"][frame]) and jsn["hyperplanes"][frame][robot]:
       for hp in jsn["hyperplanes"][frame][robot]:
         if hp:
@@ -329,7 +329,7 @@ if __name__ == "__main__":
       trajectories.append(atraj)
       to_animate.append(atraj)
 
-      circle = plt.Circle((jsn["points"][0][i][0],jsn["points"][0][i][1]), radius=0.15, fc=colors[i], lw=0, alpha=0.2)
+      circle = plt.Circle((jsn["points"][0][i][0],jsn["points"][0][i][1]), radius=jsn["robot_radius"], fc=colors[i], lw=0, alpha=0.2)
       circles.append(circle)
       to_animate.append(circle)
       ax.add_artist(circle)

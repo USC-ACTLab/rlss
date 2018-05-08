@@ -67,7 +67,7 @@ public:
     , m_goal(goal)
   {
 
-    if (!stateValid(goal, true)) {
+    if (!stateValid(goal)) {
       std::cerr << "GOAL not valid!" << std::endl;
     }
   }
@@ -163,24 +163,19 @@ public:
 
 private:
   bool stateValid(
-    const State& s,
-    bool verbose = false)
+    const State& s)
   {
     // check if occupied in grid
     OG::index idx(s.x, s.y);
-    if (m_og.idx_occupied(idx)) {
-      if (verbose)
-        std::cerr << "idx occupied!" << std::endl;
+    std::pair<double, double> coord = m_og.get_coordinates(idx);
+    if (m_og.occupied(coord.first, coord.second, m_robotRadius)) {
       return false;
     }
 
     // check of occupied by another robot
-    std::pair<double, double> coord = m_og.get_coordinates(idx);
     for (const auto& otherRobot : m_otherRobots) {
       double distSq = pow(otherRobot.first - coord.first, 2) + pow(otherRobot.second - coord.second, 2);
       if (distSq < pow(2 * m_robotRadius, 2)) {
-        if (verbose)
-          std::cerr << "otherRobot: " << otherRobot.first << "," << otherRobot.second << "," << distSq << std::endl;
         return false;
       }
     }
