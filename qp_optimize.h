@@ -5,6 +5,7 @@
 #include <Eigen/Dense>
 
 #include <iostream>
+#include <vector>
 
 // qpOASES assumes row-major!
 typedef Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> Matrix;
