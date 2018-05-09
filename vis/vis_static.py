@@ -33,7 +33,7 @@ if __name__ == "__main__":
   if("obstacles" in jsn):
     for obs in jsn["obstacles"]:
       poly = Polygon(obs)
-      polypatch = PolygonPatch(poly, color='yellow', zorder = 5)
+      polypatch = PolygonPatch(poly, color='gray', zorder = 5)
       ax.add_patch(polypatch)
 
   for i in range(jsn["number_of_robots"]):

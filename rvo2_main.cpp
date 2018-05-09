@@ -18,7 +18,7 @@
 #include <random>
 #include "utility.h"
 #include "occupancy_grid.h"
-// #include "discrete_search.hpp"
+#include "discrete_search.hpp"
 
 #include <RVO.h>
 
@@ -189,8 +189,8 @@ int main(int argc, char** argv) {
   sim.setAgentDefaults(
     /*neighborDist*/ 4 * robot_radius,
     /*maxNeighbors*/ original_trajectories.size() - 1,
-    /*timeHorizon*/ hor, // or hor?
-    /*timeHorizonObst*/ hor, // or hor?
+    /*timeHorizon*/ 1.5 * dt, // or hor?
+    /*timeHorizonObst*/ 1.5 * dt, // or hor?
     /*radius*/ robot_radius,
     /*maxSpeed*/ v_max);
 
@@ -216,6 +216,7 @@ int main(int argc, char** argv) {
   // main loop
   for(double ct = 0; ct <= total_t /*+ 5*/ /*!everyone_reached*/ ; ct+=dt) {
     for(int i=0; i<trajectories.size(); i++) {
+      std::cout << "ct: " << ct << ", i: " << i << std::endl;
       RVO::Vector2 pos = sim.getAgentPosition(i);
       vectoreuc curPos(2);
       curPos[0] = pos.x();
@@ -227,18 +228,176 @@ int main(int argc, char** argv) {
       vectoreuc goalPos = original_trajectories[i].neval(min(ct, total_times[i]), 0);
       vectoreuc goalVel = original_trajectories[i].neval(min(ct, total_times[i]), 1);
 
-      if ((goalPos - curPos).L2norm() < 0.01) {
-        // if we are close to our target position, just use the planned velocity
-        sim.setAgentPrefVelocity(i, RVO::Vector2(goalVel[0], goalVel[1]));
-      } else {
-        // otherwise, use a velocity that reaches the target position in the next time step
-        goalPos = original_trajectories[i].neval(min(ct+dt, total_times[i]), 0);
-        vectoreuc vel = (goalPos - curPos) / dt;
-        sim.setAgentPrefVelocity(i, RVO::Vector2(vel[0], vel[1]));
+      // check if original trajectory is occupied
+      bool original_traj_occupied = og.occupied(original_trajectories[i], robot_radius, ct, min(ct+hor, total_times[i]));
+
+      bool discretePath = false;
+      if (original_traj_occupied) {
+        // attempt to follow discrete path
+
+        std::vector< std::pair<double, double> > otherRobots;
+        for (int j = 0; j < original_trajectories.size(); ++j) {
+          if (i != j) {
+            RVO::Vector2 otherPos = sim.getAgentPosition(j);
+            otherRobots.emplace_back(std::make_pair(otherPos.x(), otherPos.y()));
+          }
+        }
+
+        // the goal is the next point on the original trajectory that is not occupied
+        discreteSearch::State goal(-1, -1, OG::direction::NONE);
+        double arrivalTime = min(ct+hor, total_times[i]);
+        vectoreuc goalPos;
+        double discrete_horizon = 0;
+        for (double t = arrivalTime; t <= total_times[i]; t += 0.01) {
+          goalPos = original_trajectories[i].neval(t, 0);
+          OG::index goalIdx = og.get_index(goalPos[0], goalPos[1]);
+          std::pair<double, double> coord = og.get_coordinates(goalIdx);
+          if (!og.occupied(coord.first, coord.second, robot_radius)) {
+
+            // check of occupied by another robot
+            bool occupiedByOtherRobot = false;
+
+            for (const auto& otherRobot : otherRobots) {
+              double distSq = pow(otherRobot.first - coord.first, 2) + pow(otherRobot.second - coord.second, 2);
+              if (distSq < pow(2 * robot_radius, 2)) {
+                occupiedByOtherRobot = true;
+                break;
+              }
+            }
+
+            if (!occupiedByOtherRobot) {
+              goal.x = goalIdx.i;
+              goal.y = goalIdx.j;
+              discrete_horizon = t - ct;
+              break;
+            }
+          }
+        }
+
+        if (goal.x == -1) {
+          std::cerr << "Couldn't find unoccupied space on original trajectory!" << ct << std::endl;
+          // throw std::runtime_error("Couldn't find unoccupied space on original trajectory!");
+        }
+        std::cout << "discrete horizon: " << discrete_horizon << std::endl;
+
+        OG::index startIdx = og.get_index(pos.x(), pos.y());
+        discreteSearch::State start(startIdx.i, startIdx.j, OG::direction::NONE);
+
+        discreteSearch::Environment env(og, otherRobots, robot_radius, goal);
+
+        libSearch::AStar<discreteSearch::State, discreteSearch::Action, int, discreteSearch::Environment> astar(env);
+        libSearch::PlanResult<discreteSearch::State, discreteSearch::Action, int> solution;
+
+        // t_start_a_star = Time::now();
+        bool success = astar.search(start, solution);
+        // t_end_a_star = Time::now();
+
+        if (success) {
+          std::cout << "discrete planning successful! Total cost: " << solution.cost << std::endl;
+          // for (size_t i = 0; i < solution.actions.size(); ++i) {
+          //   std::cout << solution.states[i].second << ": " << solution.states[i].first << "->" << solution.actions[i].first << "(cost: " << solution.actions[i].second << ")" << std::endl;
+          // }
+          // std::cout << solution.states.back().second << ": " << solution.states.back().first << std::endl;
+
+          // for (const auto& s : solution.states) {
+          //   const discreteSearch::State& state = s.first;
+          //   OG::index idx(state.x, state.y);
+          //   pair<double, double> coord = og.get_coordinates(idx);
+          //   std::cout << coord.first << "," << coord.second << std::endl;
+          // }
+
+          // combine results to lines (stored in corners vector; contains at least 2 elements)
+          std::vector<pair<double, double>> corners;
+          const discreteSearch::State& state = solution.states.front().first;
+          OG::index idx1(state.x, state.y);
+          // corners.emplace_back(og.get_coordinates(idx1));
+          // double startx = positions[i][0];
+          // double starty = positions[i][1];
+          corners.emplace_back(std::make_pair(pos.x(), pos.y()));
+
+          corners.emplace_back(og.get_coordinates(idx1));
+
+
+          for (size_t j = 0; j < solution.actions.size(); ++j) {
+            if (solution.actions[j].first != discreteSearch::Action::Forward) {
+              const discreteSearch::State& state2 = solution.states[j].first;
+              OG::index idx2(state2.x, state2.y);
+              corners.emplace_back(og.get_coordinates(idx2));
+            }
+          }
+          const discreteSearch::State& state3 = solution.states.back().first;
+          OG::index idx3(state3.x, state3.y);
+          corners.emplace_back(og.get_coordinates(idx3));
+          corners.emplace_back(std::make_pair(goalPos[0], goalPos[1]));
+
+          for (const auto& corner : corners) {
+            std::cout << "corner: " << corner.first << "," << corner.second << std::endl;
+            output_json["discrete_plan"][output_iter][i]["x"].push_back(corner.first);
+            output_json["discrete_plan"][output_iter][i]["y"].push_back(corner.second);
+          }
+
+          double total_discrete_path_length = 0.0;
+          for (size_t j = 0; j < corners.size() - 1; ++j) {
+            total_discrete_path_length += sqrt(pow(corners[j].first - corners[j+1].first, 2) +
+                                               pow(corners[j].second - corners[j+1].second, 2));
+          }
+
+          // compute preferred velocities
+          double current_discrete_path_length = 0.0;
+          for (size_t j = 1; j < corners.size(); ++j) {
+            vectoreuc pt(2);
+            pt[0] = corners[j].first;
+            pt[1] = corners[j].second;
+            current_discrete_path_length += sqrt(pow(corners[j].first - corners[j-1].first, 2) +
+                                                 pow(corners[j].second - corners[j-1].second, 2));
+
+            if ((pt - curPos).L2norm() > 0.2) {
+              // attempt to reach next goal point by the desired time
+              double timeToReach = current_discrete_path_length / total_discrete_path_length * discrete_horizon;
+              vectoreuc vel = (pt - curPos) / timeToReach;
+              std::cout << "pt " << pt << " curPos: " << curPos << " timeToReach: " << timeToReach <<
+              " tdpl " << total_discrete_path_length << " cdpl " << current_discrete_path_length << " dh " << discrete_horizon <<
+              std::endl;
+              sim.setAgentPrefVelocity(i, RVO::Vector2(vel[0], vel[1]));
+              std::cout << " prefvel: " << vel << std::endl;
+              break;
+            }
+          }
+
+
+          discretePath = true;
+
+        } else {
+          std::cerr << "discrete planning NOT successful!" << ct << std::endl;
+        }
       }
 
+      if (!discretePath) {
+        // attempt to follow original trajectory
+
+        if ((goalPos - curPos).L2norm() < 0.01) {
+          // if we are close to our target position, just use the planned velocity
+          sim.setAgentPrefVelocity(i, RVO::Vector2(goalVel[0], goalVel[1]));
+        } else {
+          // otherwise, use a velocity that reaches the target position in the next time step
+          goalPos = original_trajectories[i].neval(min(ct+dt, total_times[i]), 0);
+          vectoreuc vel = (goalPos - curPos) / dt;
+          sim.setAgentPrefVelocity(i, RVO::Vector2(vel[0], vel[1]));
+        }
+      }
+
+
+      /*
+       * Perturb a little to avoid deadlocks due to perfect symmetry.
+       */
+      float angle = std::rand() * 2.0f * M_PI / RAND_MAX;
+      float dist = std::rand() * 0.0001f / RAND_MAX;
+
+      sim.setAgentPrefVelocity(i, sim.getAgentPrefVelocity(i) +
+                                dist * RVO::Vector2(std::cos(angle), std::sin(angle)));
     }
     output_iter++;
+
     sim.doStep();
   }
 
