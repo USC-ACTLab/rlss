@@ -232,7 +232,7 @@ int main(int argc, char** argv) {
       bool original_traj_occupied = og.occupied(original_trajectories[i], robot_radius, ct, min(ct+hor, total_times[i]));
 
       bool discretePath = false;
-      if (original_traj_occupied) {
+      if (false && original_traj_occupied) {
         // attempt to follow discrete path
 
         std::vector< std::pair<double, double> > otherRobots;

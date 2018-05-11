@@ -74,6 +74,29 @@ public:
     }
   }
 
+  // Maximize distance to the given hyperplane
+  // d^2 - 2 d n1 x1 - 2 d n2 x2 + n1^2 x1^2 + 2 n1 n2 x1 x2 + n2^2 x2^2
+  void maxHyperplaneDist(
+    size_t piece,
+    double lambda,
+    const Vector& normal,
+    double dist)
+  {
+    for (size_t i = 0; i < 8; ++i) {
+      size_t idx_x = column(piece, 0) + i;
+      size_t idx_y = column(piece, 1) + i;
+     /* m_H(idx_x, idx_x) += -2 * normal[0] * normal[0] * lambda;
+      m_H(idx_y, idx_y) += -2 * normal[1] * normal[1] * lambda;
+      m_H(idx_x, idx_y) += -2 * normal[0] * normal[1] * lambda;
+      m_H(idx_y, idx_x) += -2 * normal[0] * normal[1] * lambda;
+      m_g(idx_x) += 2 * dist * normal[0] * lambda;
+      m_g(idx_y) += 2 * dist * normal[1] * lambda;
+    */
+      m_g(idx_x) += normal[0] * lambda;
+      m_g(idx_y) += normal[1] * lambda;
+    }
+  }
+
   const Matrix& H() const
   {
     return m_H;

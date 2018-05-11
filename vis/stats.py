@@ -10,7 +10,7 @@ if __name__ == "__main__":
   parser.add_argument("--robot", default='all', help="robot number for details for one robot, or all for overview of all robots")
   args = parser.parse_args()
 
-  colors = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
+  colors = ['b', 'g', 'r', 'c', 'm', 'y', 'k'] * 10
   entries = ["total", "Astar", "SVM", "QP"]
 
   csvfile = args.csvfile

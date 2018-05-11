@@ -172,7 +172,7 @@ private:
       return false;
     }
 
-    // check of occupied by another robot
+    // check if occupied by another robot
     for (const auto& otherRobot : m_otherRobots) {
       double distSq = pow(otherRobot.first - coord.first, 2) + pow(otherRobot.second - coord.second, 2);
       if (distSq < pow(2 * m_robotRadius, 2)) {
