@@ -23,6 +23,7 @@ class SvmSeperator {
     vector<hyperplane> seperate();
     vector<hyperplane> _2_4_seperate();
     vector<hyperplane> _8_4_seperate();
+    vector<hyperplane> _32_4_seperate();
 };
 
 #endif

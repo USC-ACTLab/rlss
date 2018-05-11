@@ -36,6 +36,14 @@ add_library(svm8pt4obs
   svmcvxwrapper_8pt_4obs.cpp
 )
 
+add_library(svm32pt4obs
+  cvxgen/32pt4obspt/cvxgen/solver.cpp
+  cvxgen/32pt4obspt/cvxgen/ldl.cpp
+  cvxgen/32pt4obspt/cvxgen/matrix_support.cpp
+  cvxgen/32pt4obspt/cvxgen/util.cpp
+  svmcvxwrapper_32pt_4obs.cpp
+)
+
 add_library(geometry
   hyperplane.cpp
   vectoreuc.cpp
@@ -79,6 +87,7 @@ target_link_libraries(main
   qpOASES
   svm2pt4obs
   svm8pt4obs
+  svm32pt4obs
   osqp
 )
 

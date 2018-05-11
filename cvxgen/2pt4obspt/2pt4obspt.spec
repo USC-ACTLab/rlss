@@ -5,7 +5,7 @@ end
 
 parameters
 	A(p,n) # constraint matrix
-	H(n,n) diagonal # cost matrix
+	H(n,n) diagonal psd# cost matrix
 end
 
 variables
@@ -14,8 +14,6 @@ end
 
 minimize
 	quad(w, H)
-end
-
 subject to
 	A*w <= -1
 end
