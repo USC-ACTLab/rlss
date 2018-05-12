@@ -24,6 +24,9 @@ class SvmSeperator {
     vector<hyperplane> _2_4_seperate();
     vector<hyperplane> _8_4_seperate();
     vector<hyperplane> _32_4_seperate();
+    const vector<vectoreuc>& getPts() const {
+      return pts;
+    }
 };
 
 #endif

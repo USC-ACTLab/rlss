@@ -53,7 +53,7 @@ vectoreuc vectoreuc::normalized() {
   return res;
 }
 
-double vectoreuc::dot(vectoreuc& rhs) {
+double vectoreuc::dot(vectoreuc& rhs) const {
   double res = 0;
   for(int i=0; i<crds.size(); i++) {
     res += crds[i] * rhs[i];

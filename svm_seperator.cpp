@@ -43,17 +43,18 @@ vector<hyperplane> SvmSeperator::_2_4_seperate() {
 
     auto& hp = result.back();
     for (auto& pt : obs.pts) {
-      if (pt.dot(hp.normal) < hp.distance - 1e-6) {
+      if (pt.dot(hp.normal) < hp.distance) {
         std::stringstream sstr;
-        sstr << "Couldn't find hyperplane normal " << hp.normal << " dist: " << hp.distance << " pt: " << pt << " dot product: " << pt.dot(hp.normal);
+        sstr << "Couldn't find hyperplane (obs.pts) normal " << hp.normal << " dist: " << hp.distance << " pt: " << pt << " dot product: " << pt.dot(hp.normal);
         // throw runtime_error(sstr.str());
         std::cerr << sstr.str() << std::endl;
       }
     }
+
     for (auto& pt : pts) {
-      if (pt.dot(hp.normal) > hp.distance + 1e-6) {
+      if (pt.dot(hp.normal) > hp.distance) {
         std::stringstream sstr;
-        sstr << "Couldn't find hyperplane normal " << hp.normal << " dist: " << hp.distance << " pt: " << pt << " dot product: " << pt.dot(hp.normal);
+        sstr << "Couldn't find hyperplane (pts) normal " << hp.normal << " dist: " << hp.distance << " pt: " << pt << " dot product: " << pt.dot(hp.normal);
         // throw runtime_error(sstr.str());
         std::cerr << sstr.str() << std::endl;
       }
@@ -89,18 +90,18 @@ vector<hyperplane> SvmSeperator::_8_4_seperate() {
 
     auto& hp = result.back();
     for (auto& pt : obs.pts) {
-      if (pt.dot(hp.normal) < hp.distance - 1e-6) {
+      if (pt.dot(hp.normal) < hp.distance) {
         std::stringstream sstr;
-        sstr << "Couldn't find hyperplane normal " << hp.normal << " dist: " << hp.distance << " pt: " << pt << " dot product: " << pt.dot(hp.normal);
+        sstr << "Couldn't find hyperplane (obs.pts) normal " << hp.normal << " dist: " << hp.distance << " pt: " << pt << " dot product: " << pt.dot(hp.normal);
         // throw runtime_error(sstr.str());
         std::cerr << sstr.str() << std::endl;
       }
     }
 
     for (auto& pt : pts) {
-      if (pt.dot(hp.normal) > hp.distance + 1e-6) {
+      if (pt.dot(hp.normal) > hp.distance) {
         std::stringstream sstr;
-        sstr << "Couldn't find hyperplane normal " << hp.normal << " dist: " << hp.distance << " pt: " << pt << " dot product: " << pt.dot(hp.normal);
+        sstr << "Couldn't find hyperplane (pts) normal " << hp.normal << " dist: " << hp.distance << " pt: " << pt << " dot product: " << pt.dot(hp.normal);
         // throw runtime_error(sstr.str());
         std::cerr << sstr.str() << std::endl;
       }
@@ -162,18 +163,18 @@ vector<hyperplane> SvmSeperator::_32_4_seperate() {
 
     auto& hp = result.back();
     for (auto& pt : obs.pts) {
-      if (pt.dot(hp.normal) < hp.distance - 1e-6) {
+      if (pt.dot(hp.normal) < hp.distance) {
         std::stringstream sstr;
-        sstr << "Couldn't find hyperplane normal " << hp.normal << " dist: " << hp.distance << " pt: " << pt << " dot product: " << pt.dot(hp.normal);
+        sstr << "Couldn't find hyperplane (obs.pts) normal " << hp.normal << " dist: " << hp.distance << " pt: " << pt << " dot product: " << pt.dot(hp.normal);
         // throw runtime_error(sstr.str());
         std::cerr << sstr.str() << std::endl;
       }
     }
 
     for (auto& pt : pts) {
-      if (pt.dot(hp.normal) > hp.distance + 1e-6) {
+      if (pt.dot(hp.normal) > hp.distance) {
         std::stringstream sstr;
-        sstr << "Couldn't find hyperplane normal " << hp.normal << " dist: " << hp.distance << " pt: " << pt << " dot product: " << pt.dot(hp.normal);
+        sstr << "Couldn't find hyperplane (pts) normal " << hp.normal << " dist: " << hp.distance << " pt: " << pt << " dot product: " << pt.dot(hp.normal);
         // throw runtime_error(sstr.str());
         std::cerr << sstr.str() << std::endl;
       }
@@ -286,7 +287,7 @@ vector<hyperplane> SvmSeperator::seperate() {
         std::stringstream sstr;
         sstr << "Couldn't find hyperplane normal " << hp.normal << " dist: " << hp.distance << " pt: " << pt << " dot product: " << pt.dot(hp.normal);
         // throw runtime_error(sstr.str());
-        std::cerr << sstr.str() << std::endl;
+        //std::cerr << sstr.str() << std::endl;
       }
     }
 

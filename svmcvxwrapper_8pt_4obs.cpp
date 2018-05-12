@@ -19,6 +19,10 @@ hyperplane _8pt4obspt_svm(const vectoreuc& pt1, const vectoreuc& pt2,
                           const vectoreuc& obs3, const vectoreuc& obs4)
 {
   solver_84::set_defaults();
+  solver_84::settings.eps = 1e-8;
+  solver_84::settings.max_iters = 100;
+  solver_84::settings.resid_tol = 1e-8;
+  solver_84::settings.kkt_reg = 1e-4;
   solver_84::setup_indexing();
 
   solver_84::params.H[0] = 1;
@@ -70,12 +74,12 @@ hyperplane _8pt4obspt_svm(const vectoreuc& pt1, const vectoreuc& pt2,
 
   // std::cout << "8-4 converged: " << solver_84::work.converged << std::endl;
   if (!solver_84::work.converged) {
-      std::cerr << "8-4 not converged" << std::endl;
+      //std::cerr << "8-4 not converged" << std::endl;
   }
 
   double nx = solver_84::vars.w[0];
   double ny = solver_84::vars.w[1];
-  double d = solver_84::vars.w[2] + solver_84::work.converged;
+  double d = solver_84::vars.w[2];//  + (2*solver_84::work.converged-0.01);// + solver_84::work.converged;
 
   vectoreuc normal(2);
   normal[0] = nx;

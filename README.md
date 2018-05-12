@@ -3,7 +3,7 @@
 ### To build the project
 
 ```
-sudo apt install libnlopt-dev coinor-libipopt-dev
+sudo apt install libeigen3-dev
 mkdir build
 cd build
 cmake ..
@@ -97,7 +97,6 @@ https://www.jstage.jst.go.jp/article/jrsj/32/6/32_32_536/_pdf
 
 ## TODO
 
-* add soft margin to objective to improve numerical stability?
-* look into RVO2 baseline
-    * supports obstacles: http://gamma.cs.unc.edu/RVO2/documentation/2.0/using.html; how would we model target trajectories?
+* try osqp instead of cvxgen for numerical stability?
 * automatic test/movie generation?
+* add soft margin to objective to improve numerical stability?

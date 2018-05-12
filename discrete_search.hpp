@@ -174,8 +174,13 @@ private:
 
     // check if occupied by another robot
     for (const auto& otherRobot : m_otherRobots) {
-      double distSq = pow(otherRobot.first - coord.first, 2) + pow(otherRobot.second - coord.second, 2);
-      if (distSq < pow(2 * m_robotRadius, 2)) {
+      // double distSq = pow(otherRobot.first - coord.first, 2) + pow(otherRobot.second - coord.second, 2);
+      // if (distSq < pow(2 * m_robotRadius, 2)) {
+      //   return false;
+      // }
+
+      if (   fabs(coord.first - otherRobot.first) <= 2 * m_robotRadius
+          && fabs(coord.second - otherRobot.second) <= 2 * m_robotRadius) {
         return false;
       }
     }

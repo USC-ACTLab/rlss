@@ -31,6 +31,10 @@ hyperplane _32pt4obspt_svm(const vectoreuc& pt1, const vectoreuc& pt2,
                           const vectoreuc& obs3, const vectoreuc& obs4)
 {
   solver_324::set_defaults();
+  solver_324::settings.eps = 1e-8;
+  solver_324::settings.max_iters = 100;
+  solver_324::settings.resid_tol = 1e-8;
+  solver_324::settings.kkt_reg = 1e-4;
   solver_324::setup_indexing();
 
   solver_324::params.H[0] = 1;
@@ -155,12 +159,12 @@ hyperplane _32pt4obspt_svm(const vectoreuc& pt1, const vectoreuc& pt2,
 
   // std::cout << "8-4 converged: " << solver_84::work.converged << std::endl;
   if (!solver_324::work.converged) {
-      std::cerr << "32-4 not converged" << std::endl;
+      //std::cerr << "32-4 not converged" << std::endl;
   }
 
   double nx = solver_324::vars.w[0];
   double ny = solver_324::vars.w[1];
-  double d = solver_324::vars.w[2] + solver_324::work.converged;
+  double d = solver_324::vars.w[2];// + (2*solver_324::work.converged-1);// + solver_324::work.converged;
 
   vectoreuc normal(2);
   normal[0] = nx;

@@ -15,6 +15,10 @@ hyperplane _2pt4obspt_svm(const vectoreuc& pt1, const vectoreuc& pt2,
 {
 
     solver_24::set_defaults();
+    solver_24::settings.eps = 1e-8;
+    solver_24::settings.max_iters = 100;
+    solver_24::settings.resid_tol = 1e-8;
+    solver_24::settings.kkt_reg = 1e-4;
     solver_24::setup_indexing();
 
     solver_24::params.H[0] = 1;
@@ -52,7 +56,7 @@ hyperplane _2pt4obspt_svm(const vectoreuc& pt1, const vectoreuc& pt2,
 
     double nx = solver_24::vars.w[0];
     double ny = solver_24::vars.w[1];
-    double d = solver_24::vars.w[2] + solver_24::work.converged;
+    double d = solver_24::vars.w[2];// + (2*solver_24::work.converged - 1);
 
     vectoreuc normal(2);
     normal[0] = nx;

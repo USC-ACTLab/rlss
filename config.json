@@ -1,20 +1,21 @@
 {
-  "trajectories": "../test_data/trajectories/swapCircle16",
-  "obstacles": "../test_data/obstacles/3obstacles/",
+  "trajectories": "../test_data/trajectories/straight_to_right",
+  "obstacles": "../test_data/obstacles/obsdiamond/",
   "robot_radius": 0.25,
-  "cell_size": 0.25,
-  "v_max": 3.5,
-  "a_max": 7.0,
+  "cell_size": 0.5,
+  "v_max": 2,
+  "a_max": 4,
   "replan_period": 0.1,
   "set_max_time_as_replan_period": true,
   "planning_horizon": 1,
   "plan_for_curves": 4,
   "problem_dimension": 2,
   "points_per_curve": 8,
-  "continuity_upto_degree": 3,
+  "continuity_upto_degree": 2,
   "enable_voronoi": true,
   "output_file": "res.json",
   "print_dt": 0.01,
   "algorithm": "QPOASES",
-  "lambda_hyperplanes": 0.00
+  "lambda_hyperplanes": 0.00,
+  "scaling_multiplier": 2.0
 }

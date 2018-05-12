@@ -20,7 +20,7 @@ if __name__ == "__main__":
   dt = jsn["dt"]
   t = np.arange(0, numFrames * dt, dt)
 
-  colors = ['b', 'g', 'r', 'c', 'm', 'k']
+  colors = ['b', 'g', 'r', 'c', 'm', 'k'] * 10
 
   gs = gridspec.GridSpec(5, 1)
   fig = plt.figure()

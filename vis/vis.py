@@ -198,10 +198,10 @@ def animate(frame):
 
 
     hpIdx = 0
-    robot = 10
+    robot = 0
     if args.hyperplanes and "hyperplanes" in jsn and frame < len(jsn["hyperplanes"]) and jsn["hyperplanes"][frame] and robot < len(jsn["hyperplanes"][frame]) and jsn["hyperplanes"][frame][robot]:
       for hp in jsn["hyperplanes"][frame][robot]:
-        if hp and hp[3] == 1:
+        if hp: # and hp[3] == 0:
           (hpx,hpy) = genvoroxy(hp)
           (hpnx, hpny) = genvoronormal(hp)
           if hpIdx >= len(hyperplanes):
@@ -279,7 +279,7 @@ if __name__ == "__main__":
   colors = ['b', 'g', 'r', 'c', 'm', 'k'] * 10
 
   fig = plt.figure()
-  ax = plt.axes(xlim=(-2.4,2.6), ylim=(-0.8,2.1))
+  ax = plt.axes(xlim=(-4,4), ylim=(-4,4))
   ax.set_aspect('equal')
   # plt.axis('off')
   time_text = ax.text(0.02, 0.95, '', transform=ax.transAxes)

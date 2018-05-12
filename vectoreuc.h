@@ -17,7 +17,7 @@ class vectoreuc {
     vectoreuc operator/(const double& s);
     vectoreuc normalized();
     double L2norm();
-    double dot(vectoreuc& rhs);
+    double dot(vectoreuc& rhs) const;
     friend ostream& operator<<(ostream& out, const vectoreuc& vec);
     void zero();
     vectoreuc operator*(double rhs);

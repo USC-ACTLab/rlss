@@ -205,7 +205,7 @@ private:
 class ConstraintBuilder
 {
 public:
-  static constexpr double EPS = 0.0;//1e-3;
+  static constexpr double EPS = 0;//1e-3;
 
   ConstraintBuilder(
     size_t dimension,
@@ -236,9 +236,11 @@ public:
       for (size_t i = 0; i < 8; ++i) {
         m_A(idx + d, column(piece, d) + i) = derivativeBeginning[derivative][i] / pow(T, derivative);
       }
-      std::cout << "addConstraint: " << idx +d << " (constraintBeginning " << piece << "," << derivative << ")" << std::endl;
-      m_lbA(idx + d) = value(d) - EPS / 2.0;
-      m_ubA(idx + d) = value(d) + EPS / 2.0;
+      std::stringstream sstr;
+      sstr << "(constraintBeginning piece: " << piece << ", derivative: " << derivative << ")";
+      m_info[idx + d] = sstr.str();
+      m_lbA(idx + d) = value(d);// - EPS / 2.0;
+      m_ubA(idx + d) = value(d);// + EPS / 2.0;
     }
   }
 
@@ -259,9 +261,13 @@ public:
       for (size_t i = 0; i < 8; ++i) {
         m_A(idx + d, column(piece, d) + i) = derivativeEnd[derivative][i] / pow(T, derivative);
       }
-      std::cout << "addConstraint: " << idx +d << " (constraintEnd " << piece << "," << derivative << ")" << std::endl;
-      m_lbA(idx + d) = value(d) - EPS / 2.0;
-      m_ubA(idx + d) = value(d) + EPS / 2.0;
+      // std::cout << "addConstraint: " << idx +d << " (constraintEnd " << piece << "," << derivative << ")" << std::endl;
+      std::stringstream sstr;
+      sstr << "(constraintEnd piece: " << piece << ", derivative: " << derivative << ")";
+      m_info[idx + d] = sstr.str();
+
+      m_lbA(idx + d) = value(d);// - EPS / 2.0;
+      m_ubA(idx + d) = value(d);// + EPS / 2.0;
     }
   }
 
@@ -286,9 +292,14 @@ public:
       for (size_t i = 0; i < 8; ++i) {
         m_A(idx + d, column(firstPiece+1, d) + i) = -derivativeBeginning[derivative][i] / pow(Tsecond, derivative);
       }
-      std::cout << "addConstraint: " << idx +d << " (continuity " << firstPiece << "," << derivative << ")" << std::endl;
-      m_lbA(idx + d) = -EPS / 2.0;//-0.00001;
-      m_ubA(idx + d) = EPS / 2.0;//0.00001;
+      // std::cout << "addConstraint: " << idx +d << " (continuity " << firstPiece << "," << derivative << ")" << std::endl;
+
+      std::stringstream sstr;
+      sstr << "(continuity piece: " << firstPiece << ", derivative: " << derivative << ")";
+      m_info[idx + d] = sstr.str();
+
+      m_lbA(idx + d) = 0;//-0.00001;
+      m_ubA(idx + d) = 0;//0.00001;
     }
   }
 
@@ -307,9 +318,13 @@ public:
       for (size_t d = 0; d < m_dimension; ++d) {
         m_A(idx + cp, column(piece, d) + cp) = normal(d);
       }
-      std::cout << "addConstraint: " << idx+cp << " (hyperplane " << piece << ")" << std::endl;
+      // std::cout << "addConstraint: " << idx+cp << " (hyperplane " << piece << ")" << std::endl;
+      std::stringstream sstr;
+      sstr << "(hyperspace piece: " << piece << ", cp: " << cp << ")";
+      m_info[idx + cp] = sstr.str();
+
       m_lbA(idx + cp) = std::numeric_limits<double>::lowest();
-      m_ubA(idx + cp) = dist + EPS;
+      m_ubA(idx + cp) = dist;// + 1e-3;// + EPS;
     }
   }
 
@@ -355,6 +370,11 @@ public:
     return m_ub;
   }
 
+  const std::string& info(size_t constraint) const
+  {
+    return m_info[constraint];
+  }
+
 private:
   size_t addConstraints(size_t numConstraints)
   {
@@ -363,6 +383,7 @@ private:
     m_lbA.conservativeResize(idx + numConstraints);
     m_ubA.conservativeResize(idx + numConstraints);
     m_A.block(idx, 0, numConstraints, m_numVars).setZero();
+    m_info.resize(idx + numConstraints);
     return idx;
   }
 
@@ -423,6 +444,8 @@ private:
   Vector m_ubA;
   Vector m_lb;
   Vector m_ub;
+
+  std::vector<std::string> m_info;
 };
 
 #endif
