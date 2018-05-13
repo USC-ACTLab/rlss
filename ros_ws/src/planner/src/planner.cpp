@@ -24,7 +24,9 @@
 #include "create2_controller/TrajectoryState2D.h"
 #include "create2_controller/Vector2D.h"
 #include <tf/transform_listener.h>
-#include <boost/asio.hpp>
+#include <boost/asio/ip/udp.hpp>
+#include <boost/asio/ip/address.hpp>
+#include <boost/asio/ip/multicast.hpp>
 #include <array>
 #include <iterator>
 
