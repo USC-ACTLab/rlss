@@ -50,13 +50,13 @@ double linearInterpolation(double start, double end, size_t idx, size_t count)
 
 vector<vectoreuc> positions;
 
-void getPositions(const tf::TransformListener& listener, int number_of_robots) {
+void getPositions(const tf::TransformListener& listener, const std::vector<std::string>& robots) {
   tf::StampedTransform transform;
 
-  for(int i=1; i<=number_of_robots; i++) {
-    listener.lookupTransform("/world", "/create" + std::to_string(i), ros::Time(0), transform);
-    positions[i-1][0] = transform.getOrigin().x();
-    positions[i-1][1] = transform.getOrigin().y();
+  for(int i=0; i<robots.size(); i++) {
+    listener.lookupTransform("/world", robots[i], ros::Time(0), transform);
+    positions[i][0] = transform.getOrigin().x();
+    positions[i][1] = transform.getOrigin().y();
   }
 }
 
@@ -85,6 +85,9 @@ int main(int argc, char **argv) {
 
   config_path = result["cfg"].as<string>();
 
+  ros::NodeHandle nl("~");
+  nl.param<std::string>("configFile", config_path, "../config.json");
+
   ifstream cfg(config_path);
 
   nlohmann::json jsn = nlohmann::json::parse(cfg);
@@ -106,9 +109,16 @@ int main(int argc, char **argv) {
   const double a_max = jsn["a_max"];
   const double lambda_hyperplanes = jsn["lambda_hyperplanes"];
   const double scaling_multiplier = jsn["scaling_multiplier"];
-  const int number_of_robots = jsn["number_of_robots"];
+  // const int number_of_robots = jsn["number_of_robots"];
+  const std::vector<std::string> robots = jsn["robots"];
+  const int number_of_robots = (int)robots.size();
   const int robot_id = jsn["robot_id"];
-
+  const double scale_traj = jsn["scale_traj"];
+  const float lambda_min_der = jsn["lambda_min_der"];
+  const float lambda_min_der_vel = jsn["lambda_min_der_vel"];
+  const float lambda_min_der_acc = jsn["lambda_min_der_acc"];
+  const float lambda_min_der_jerk = jsn["lambda_min_der_jerk"];
+  const float lambda_min_der_snap = jsn["lambda_min_der_snap"];
 
   bool enable_voronoi = jsn["enable_voronoi"];
 
@@ -130,7 +140,7 @@ int main(int argc, char **argv) {
   csv::Parser file(initial_trajectory_path);
   for(int i=0; i<file.rowCount(); i++) {
     double duration = stod(file[i][0]);
-    curve crv(duration, problem_dimension);
+    curve crv(duration * scale_traj, problem_dimension);
     for(int j=1; j<=problem_dimension * ppc; j+=problem_dimension) {
       vectoreuc cp(problem_dimension);
       for(int u=0; u<problem_dimension; u++) {
@@ -230,7 +240,7 @@ int main(int argc, char **argv) {
   for(double ct = 0; ct <= total_t && ros::ok() ; ct+=dt) {
     ros::spinOnce();
 
-    getPositions(transformlistener, number_of_robots);
+    getPositions(transformlistener, robots);
 
     cerr << ct << " / " << total_t << endl;
 
@@ -646,8 +656,8 @@ int main(int argc, char **argv) {
     ObjectiveBuilder ob(problem_dimension, pieceDurations);
 
     double remaining_time = std::max(total_t - ct, curve_count * dt * 1.1);
-    double factor = 1.0f / remaining_time;
-    ob.minDerivativeSquared(1 * factor, 0 * factor, 5e-3 * factor, 0 * factor);
+    double factor = lambda_min_der / remaining_time;
+    ob.minDerivativeSquared(lambda_min_der_vel * factor, lambda_min_der_acc * factor, lambda_min_der_jerk * factor, lambda_min_der_snap * factor);
 
     for (const auto& o : endCloseToObjectives) {
       ob.endCloseTo(o.piece, o.lambda, o.value);
@@ -963,11 +973,11 @@ int main(int argc, char **argv) {
     accelerationdes = traj.neval(dt, 2);
 
     desired_state_msg.position.x = despos[0];
-    desired_state_msg.position.x = despos[1];
+    desired_state_msg.position.y = despos[1];
     desired_state_msg.velocity.x = velocitydes[0];
-    desired_state_msg.velocity.x = velocitydes[1];
+    desired_state_msg.velocity.y = velocitydes[1];
     desired_state_msg.acceleration.x = accelerationdes[0];
-    desired_state_msg.acceleration.x = accelerationdes[1];
+    desired_state_msg.acceleration.y = accelerationdes[1];
 
     desired_state_publisher.publish(desired_state_msg);
 
