@@ -1,8 +1,9 @@
 {
-  "trajectory": "/home/odroid/robustMotionExecution/mr-trajectory-replanning/test_data/trajectories/straight_to_right/bezier3.csv",
+  "trajectory": "/home/odroid/robustMotionExecution/mr-trajectory-replanning/test_data/trajectories/swap2/ground2_bezier.csv",
   "scale_traj": 2.0,
-  "obstacles": "/home/odroid/robustMotionExecution/mr-trajectory-replanning/test_data/obstacles/obsdiamond/",
+  "obstacles": "/home/odroid/robustMotionExecution/mr-trajectory-replanning/test_data/obstacles/noobs/",
   "robots": [
+    "create9",
     "create7"
   ],
   "robot_id": 0,

@@ -14,8 +14,6 @@
 #include "curve.h"
 #include "hyperplane.h"
 #include "obstacle.h"
-#include "cxxopts.hpp"
-#include "json.hpp"
 #include <chrono>
 #include <random>
 #include "svmoptimization.h"
@@ -26,6 +24,9 @@
 #include "create2_controller/TrajectoryState2D.h"
 #include "create2_controller/Vector2D.h"
 #include <tf/transform_listener.h>
+#include <boost/asio.hpp>
+#include <array>
+#include <iterator>
 
 #include "qp_optimize.h"
 
@@ -38,6 +39,8 @@ using namespace std;
 namespace fs = std::experimental::filesystem::v1;
 using namespace std;
 
+using boost::asio::ip::udp;
+using boost::asio::ip::address;
 
 typedef chrono::high_resolution_clock Time;
 typedef chrono::milliseconds ms;
@@ -70,59 +73,78 @@ int main(int argc, char **argv) {
 
   tf::TransformListener transformlistener;
 
-  string config_path;
-  cxxopts::Options options("Trajectory Replanner", "trajectory replanner");
-  options.add_options()
-    ("cfg", "Config file", cxxopts::value<std::string>()->default_value("/home/odroid/robustMotionExecution/mr-trajectory-replanning/ros_ws/src/planner/src/config.json"))
-    ("help", "Display help page");
-
-  auto result = options.parse(argc, argv);
-
-  if(result.count("help")>0) {
-    cout << options.help() << endl;
-    return 0;
-  }
-
-  config_path = result["cfg"].as<string>();
-
   ros::NodeHandle nl("~");
-  nl.param<std::string>("configFile", config_path, "/home/odroid/robustMotionExecution/mr-trajectory-replanning/ros_ws/src/planner/src/config.json");
 
-  ifstream cfg(config_path);
+  string initial_trajectory_path;
+  nl.getParam("trajectory", initial_trajectory_path);
+  cout << initial_trajectory_path << endl;
+  
+  string obstacles_path;
+  nl.getParam("obstacles", obstacles_path);
 
-  nlohmann::json jsn = nlohmann::json::parse(cfg);
+  double dt;
+  nl.getParam("replan_period", dt);
 
-  string initial_trajectory_path = jsn["trajectory"];
-  string obstacles_path = jsn["obstacles"];
-  double dt = jsn["replan_period"];
-  int problem_dimension = jsn["problem_dimension"];
-  int ppc = jsn["points_per_curve"];
-  int max_continuity = jsn["continuity_upto_degree"];
-  bool set_max_time = jsn["set_max_time_as_replan_period"];
-  double hor = jsn["planning_horizon"];
-  int curve_count = jsn["plan_for_curves"];
+  int problem_dimension;
+  nl.getParam("problem_dimension", problem_dimension);
+
+  int ppc;
+  nl.getParam("points_per_curve", ppc);
+  int max_continuity;
+  nl.getParam("continuity_upto_degree", max_continuity);
+  bool set_max_time;
+  nl.getParam("set_max_time_as_replan_period", set_max_time);
+  double hor;
+  nl.getParam("planning_horizon", hor);
+  int curve_count;
+  nl.getParam("plan_for_curves", curve_count);
   double time_per_curve = hor / curve_count;
-  string outputfile = jsn["output_file"];
-  const double robot_radius = jsn["robot_radius"];
-  const double cell_size = jsn["cell_size"];
-  const double v_max = jsn["v_max"];
-  const double a_max = jsn["a_max"];
-  const double lambda_hyperplanes = jsn["lambda_hyperplanes"];
-  const double scaling_multiplier = jsn["scaling_multiplier"];
-  // const int number_of_robots = jsn["number_of_robots"];
-  const std::vector<std::string> robots = jsn["robots"];
-  const int number_of_robots = (int)robots.size();
-  const int robot_id = jsn["robot_id"];
-  const double scale_traj = jsn["scale_traj"];
-  const float lambda_min_der = jsn["lambda_min_der"];
-  const float lambda_min_der_vel = jsn["lambda_min_der_vel"];
-  const float lambda_min_der_acc = jsn["lambda_min_der_acc"];
-  const float lambda_min_der_jerk = jsn["lambda_min_der_jerk"];
-  const float lambda_min_der_snap = jsn["lambda_min_der_snap"];
+  string outputfile;
+  nl.getParam("output_file", outputfile);
+  
+  double robot_radius;
+  nl.getParam("robot_radius", robot_radius);
+  double cell_size;
+  nl.getParam("cell_size", cell_size);
+  double v_max;
+  nl.getParam("v_max", v_max);
+  double a_max;
+  nl.getParam("a_max", a_max);
+  double lambda_hyperplanes;
+  nl.getParam("lambda_hyperplanes", lambda_hyperplanes);
+  double scaling_multiplier;
+  nl.getParam("scaling_multiplier", scaling_multiplier);
+  
+  vector<string> robots;
 
-  bool enable_voronoi = jsn["enable_voronoi"];
+  nl.getParam("robots", robots);
 
-  string alg = jsn["algorithm"];
+  for(int i=0; i<robots.size(); i++)
+    cout << robots[i] << " ";
+  cout << endl;
+
+  int number_of_robots = (int)robots.size();
+
+  int robot_id;
+  nl.getParam("robot_id", robot_id);
+  double scale_traj;
+  nl.getParam("scale_traj", scale_traj);
+  float lambda_min_der;
+  nl.getParam("lambda_min_der", lambda_min_der);
+  float lambda_min_der_vel;
+  nl.getParam("lambda_min_der_vel", lambda_min_der_vel);
+  float lambda_min_der_acc;
+  nl.getParam("lambda_min_der_acc", lambda_min_der_acc);
+  float lambda_min_der_jerk;
+  nl.getParam("lambda_min_der_jerk", lambda_min_der_jerk);
+  float lambda_min_der_snap;
+  nl.getParam("lambda_min_der_snap", lambda_min_der_snap);
+
+  bool enable_voronoi;
+  nl.getParam("enable_voronoi", enable_voronoi);
+
+  string alg;
+  nl.getParam("algorithm", alg);
 
 
 
@@ -238,6 +260,32 @@ int main(int argc, char **argv) {
   std::chrono::time_point<std::chrono::high_resolution_clock> t_start, t_start_a_star, t_end_a_star, t_start_svm, t_end_svm, t_start_qp, t_end_qp;
 
   double everyone_reached = false;
+
+
+  boost::asio::io_service ioserv;
+  udp::socket socket(ioserv);
+  socket.open(udp::v4());
+  udp::endpoint ep(boost::asio::ip::address_v4::any(), 5007);
+  boost::asio::socket_base::reuse_address option(true);
+  socket.set_option(option);
+  socket.bind(ep);
+
+
+  boost::asio::ip::address multicast_address = boost::asio::ip::address::from_string("224.1.1.1");
+  boost::asio::ip::multicast::join_group multicast_join(multicast_address);
+  socket.set_option(multicast_join);
+
+
+  std::array<char, 128> recv_buf;
+
+  while(true) {
+    int len = socket.receive(boost::asio::buffer(recv_buf));
+    string socketdata(recv_buf.data(), len);
+    cout << socketdata << endl;
+    if(socketdata == "startTrajectory")
+      break;
+  }
+
 
 
   for(double ct = 0; ct <= total_t && ros::ok() ; ct+=dt) {
