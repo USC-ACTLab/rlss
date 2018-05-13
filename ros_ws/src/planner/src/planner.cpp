@@ -228,7 +228,7 @@ int main(int argc, char **argv) {
 
 
   for(double ct = 0; ct <= total_t && ros::ok() ; ct+=dt) {
-
+    ros::spinOnce();
 
     getPositions(transformlistener, number_of_robots);
 
