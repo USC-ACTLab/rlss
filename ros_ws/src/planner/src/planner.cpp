@@ -73,7 +73,7 @@ int main(int argc, char **argv) {
   string config_path;
   cxxopts::Options options("Trajectory Replanner", "trajectory replanner");
   options.add_options()
-    ("cfg", "Config file", cxxopts::value<std::string>()->default_value("../config.json"))
+    ("cfg", "Config file", cxxopts::value<std::string>()->default_value("/home/odroid/robustMotionExecution/mr-trajectory-replanning/ros_ws/src/planner/src/config.json"))
     ("help", "Display help page");
 
   auto result = options.parse(argc, argv);
@@ -86,7 +86,7 @@ int main(int argc, char **argv) {
   config_path = result["cfg"].as<string>();
 
   ros::NodeHandle nl("~");
-  nl.param<std::string>("configFile", config_path, "../config.json");
+  nl.param<std::string>("configFile", config_path, "/home/odroid/robustMotionExecution/mr-trajectory-replanning/ros_ws/src/planner/src/config.json");
 
   ifstream cfg(config_path);
 
@@ -217,6 +217,9 @@ int main(int argc, char **argv) {
 
 
   positions.resize(number_of_robots);
+  for(int i=0;i<number_of_robots; ++i) {
+    positions[i] = vectoreuc(2);
+  }
   positions[robot_id] = traj.eval(0);
   vectoreuc velocitydes = traj.neval(0,1);
   vectoreuc accelerationdes = traj.neval(0,2);
