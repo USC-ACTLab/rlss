@@ -81,6 +81,11 @@ int main(int argc, char** argv) {
   const double v_max = jsn["v_max"];
   const double a_max = jsn["a_max"];
   const double lambda_hyperplanes = jsn["lambda_hyperplanes"];
+  const double lambda_min_der = jsn["lambda_min_der"];
+  const double lambda_min_der_vel = jsn["lambda_min_der_vel"];
+  const double lambda_min_der_acc = jsn["lambda_min_der_acc"];
+  const double lambda_min_der_jerk = jsn["lambda_min_der_jerk"];
+  const double lambda_min_der_snap = jsn["lambda_min_der_snap"];
   const double scaling_multiplier = jsn["scaling_multiplier"];
 
   bool enable_voronoi = jsn["enable_voronoi"];
@@ -793,8 +798,8 @@ int main(int argc, char** argv) {
       ObjectiveBuilder ob(problem_dimension, pieceDurations);
 
       double remaining_time = std::max(total_times[i] - ct, curve_count * dt * 1.1);
-      double factor = 1.0f / remaining_time;
-      ob.minDerivativeSquared(1 * factor, 0 * factor, 5e-3 * factor, 0 * factor);
+      double factor = lambda_min_der / remaining_time;
+      ob.minDerivativeSquared(lambda_min_der_vel * factor, lambda_min_der_acc * factor, lambda_min_der_jerk * factor, lambda_min_der_snap * factor);
 
       for (const auto& o : endCloseToObjectives) {
         ob.endCloseTo(o.piece, o.lambda, o.value);

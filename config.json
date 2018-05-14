@@ -17,5 +17,9 @@
   "print_dt": 0.01,
   "algorithm": "QPOASES",
   "lambda_hyperplanes": 0.00,
+  "lambda_min_der_vel": 1.0,
+  "lambda_min_der_acc": 0.0,
+  "lambda_min_der_jerk": 5e-3,
+  "lambda_min_der_snap": 0.0,
   "scaling_multiplier": 2.0
 }
