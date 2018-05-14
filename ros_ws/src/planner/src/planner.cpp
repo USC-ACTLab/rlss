@@ -289,9 +289,17 @@ int main(int argc, char **argv) {
   }
 
 
+  ros::Time start = ros::Time::now();
 
-  for(double ct = 0; ct <= total_t && ros::ok() ; ct+=dt) {
+  // for(double ct = 0; ct <= total_t && ros::ok() ; ct+=dt) {
+  while (ros::ok()) {
     ros::spinOnce();
+    ros::Time now = ros::Time::now();
+    ros::Duration duration = now - start;
+    double ct = duration.toSec();
+    if (ct > total_t) {
+      break;
+    }
 
     getPositions(transformlistener, robots);
 
@@ -1021,9 +1029,9 @@ int main(int argc, char **argv) {
     cout << "optimization time: " << d.count() << "ms" << endl;
 
 
-    vectoreuc despos = traj.neval(dt, 0);
-    velocitydes = traj.neval(dt, 1);
-    accelerationdes = traj.neval(dt, 2);
+    vectoreuc despos = traj.neval(2*dt, 0);
+    velocitydes = traj.neval(2*dt, 1);
+    accelerationdes = traj.neval(2*dt, 2);
 
     desired_state_msg.position.x = despos[0];
     desired_state_msg.position.y = despos[1];
