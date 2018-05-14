@@ -66,6 +66,7 @@ int main(int argc, char** argv) {
   nlohmann::json jsn = nlohmann::json::parse(cfg);
 
   string initial_trajectories_path = jsn["trajectories"];
+  float scale_traj = jsn["scale_traj"];
   string obstacles_path = jsn["obstacles"];
   double dt = jsn["replan_period"];
   int problem_dimension = jsn["problem_dimension"];
@@ -109,7 +110,7 @@ int main(int argc, char** argv) {
     trajectory trj;
     for(int i=0; i<file.rowCount(); i++) {
       double duration = stod(file[i][0]);
-      curve crv(duration, problem_dimension);
+      curve crv(duration * scale_traj, problem_dimension);
       for(int j=1; j<=problem_dimension * ppc; j+=problem_dimension) {
         vectoreuc cp(problem_dimension);
         for(int u=0; u<problem_dimension; u++) {
