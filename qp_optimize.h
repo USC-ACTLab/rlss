@@ -311,21 +311,44 @@ public:
     double dist)
   {
     assert(piece < m_numPieces);
-    // one constraint per control point
-    size_t idx = addConstraints(8);
 
-    for (size_t cp = 0; cp < 8; ++cp) {
-      for (size_t d = 0; d < m_dimension; ++d) {
-        m_A(idx + cp, column(piece, d) + cp) = normal(d);
+    if (piece == 0) {
+      // one constraint per control point
+      size_t idx = addConstraints(7);
+
+      for (size_t cp = 1; cp < 8; ++cp) {
+        for (size_t d = 0; d < m_dimension; ++d) {
+          m_A(idx + cp - 1, column(piece, d) + cp) = normal(d);
+        }
+        // std::cout << "addConstraint: " << idx+cp << " (hyperplane " << piece << ")" << std::endl;
+        std::stringstream sstr;
+        sstr << "(hyperspace piece: " << piece << ", cp: " << cp << ")";
+        m_info[idx + cp - 1] = sstr.str();
+
+        m_lbA(idx + cp - 1) = std::numeric_limits<double>::lowest();
+        m_ubA(idx + cp - 1) = dist;// + 1e-3;// + EPS;
       }
-      // std::cout << "addConstraint: " << idx+cp << " (hyperplane " << piece << ")" << std::endl;
-      std::stringstream sstr;
-      sstr << "(hyperspace piece: " << piece << ", cp: " << cp << ")";
-      m_info[idx + cp] = sstr.str();
 
-      m_lbA(idx + cp) = std::numeric_limits<double>::lowest();
-      m_ubA(idx + cp) = dist;// + 1e-3;// + EPS;
+    } else {
+      // one constraint per control point
+      size_t idx = addConstraints(8);
+
+      for (size_t cp = 0; cp < 8; ++cp) {
+        for (size_t d = 0; d < m_dimension; ++d) {
+          m_A(idx + cp, column(piece, d) + cp) = normal(d);
+        }
+        // std::cout << "addConstraint: " << idx+cp << " (hyperplane " << piece << ")" << std::endl;
+        std::stringstream sstr;
+        sstr << "(hyperspace piece: " << piece << ", cp: " << cp << ")";
+        m_info[idx + cp] = sstr.str();
+
+        m_lbA(idx + cp) = std::numeric_limits<double>::lowest();
+        m_ubA(idx + cp) = dist;// + 1e-3;// + EPS;
+      }
     }
+
+
+
   }
 
   // adds bounds to the decision variables
