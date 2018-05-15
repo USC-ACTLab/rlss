@@ -94,6 +94,15 @@ bool obstacle2D::point_inside(vectoreuc& pt) {
   return true;
 }
 
+bool obstacle2D::point_inside(vectoreuc& pt, double shift) {
+  for(int i=0; i<chplanes.size(); i++) {
+    if(chplanes[i].dist(pt) < -shift) {
+      return false;
+    }
+  }
+  return true;
+}
+
 double obstacle2D::closest_distance(vectoreuc& pt) {
   double mindist = numeric_limits<double>::infinity();
   for(int i=0; i<chplanes.size(); i++) {

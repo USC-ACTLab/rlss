@@ -49,6 +49,8 @@ int main(int argc, char** argv) {
 
   ifstream cfg(config_path);
 
+
+  nlohmann::json compareStats;
   nlohmann::json jsn = nlohmann::json::parse(cfg);
 
   string initial_trajectories_path = jsn["trajectories"];
@@ -66,6 +68,8 @@ int main(int argc, char** argv) {
   const double cell_size = jsn["cell_size"];
   const double v_max = jsn["v_max"];
   const double a_max = jsn["a_max"];
+
+  const bool enable_discrete = jsn["rvo2_enable_discrete"];
 
   bool enable_voronoi = jsn["enable_voronoi"];
 
@@ -172,6 +176,7 @@ int main(int argc, char** argv) {
   output_json["dt"] = dt;//printdt;
   output_json["robot_radius"] = robot_radius;
   output_json["number_of_robots"] = original_trajectories.size();
+  compareStats["number_of_robots"] = original_trajectories.size();
   int steps_per_cycle = (dt / printdt)+0.5;
   int output_iter = 0;
 
@@ -182,6 +187,15 @@ int main(int argc, char** argv) {
       output_json["originals"][i]["y"].push_back(eu[1]);
     }
   }
+
+
+  vector<double> max_opt_times(original_trajectories.size(), -1);
+  vector<double> average_opt_times(original_trajectories.size(), 0);
+  vector<int> opt_counts(original_trajectories.size(), 0);
+  vector<int> obstacle_crash_counts(original_trajectories.size(), 0);
+  vector<int> obstacle_no_crash_counts(original_trajectories.size(), 0);
+  vector<int> robot_crash_counts(original_trajectories.size(), 0);
+  vector<int> robot_no_crash_counts(original_trajectories.size(), 0);
 
   // RVO2
   RVO::RVOSimulator sim;
@@ -213,9 +227,11 @@ int main(int argc, char** argv) {
   // Process obstacles so that they are accounted for in the simulation.
   sim.processObstacles();
 
+  std::chrono::time_point<std::chrono::high_resolution_clock> t_start, t_start_a_star, t_end_a_star, t_start_svm, t_end_svm, t_start_qp, t_end_qp;
   // main loop
   for(double ct = 0; ct <= total_t /*+ 5*/ /*!everyone_reached*/ ; ct+=dt) {
     for(int i=0; i<trajectories.size(); i++) {
+      t_start = Time::now();
       std::cout << "ct: " << ct << ", i: " << i << std::endl;
       RVO::Vector2 pos = sim.getAgentPosition(i);
       vectoreuc curPos(2);
@@ -232,7 +248,7 @@ int main(int argc, char** argv) {
       bool original_traj_occupied = og.occupied(original_trajectories[i], robot_radius, ct, min(ct+hor, total_times[i]));
 
       bool discretePath = false;
-      if (false && original_traj_occupied) {
+      if (enable_discrete && original_traj_occupied) {
         // attempt to follow discrete path
 
         std::vector< std::pair<double, double> > otherRobots;
@@ -377,11 +393,18 @@ int main(int argc, char** argv) {
 
         if ((goalPos - curPos).L2norm() < 0.01) {
           // if we are close to our target position, just use the planned velocity
+        /*  if(goalVel.L2norm() > v_max) {
+            goalVel = goalVel * (v_max/goalVel.L2norm());
+          }*/
           sim.setAgentPrefVelocity(i, RVO::Vector2(goalVel[0], goalVel[1]));
         } else {
           // otherwise, use a velocity that reaches the target position in the next time step
           goalPos = original_trajectories[i].neval(min(ct+dt, total_times[i]), 0);
           vectoreuc vel = (goalPos - curPos) / dt;
+        /*  if(vel.L2norm() > v_max) {
+            vel = vel * (v_max/vel.L2norm());
+          }*/
+
           sim.setAgentPrefVelocity(i, RVO::Vector2(vel[0], vel[1]));
         }
       }
@@ -395,14 +418,89 @@ int main(int argc, char** argv) {
 
       sim.setAgentPrefVelocity(i, sim.getAgentPrefVelocity(i) +
                                 dist * RVO::Vector2(std::cos(angle), std::sin(angle)));
+
+      fsec fs = Time::now() - t_start;
+      ms d = chrono::duration_cast<ms>(fs);
+      average_opt_times[i]+=d.count();
+      opt_counts[i]++;
+      max_opt_times[i] = max((double)d.count(), max_opt_times[i]);
     }
     output_iter++;
 
     sim.doStep();
+    for(int i=0; i<original_trajectories.size(); i++) {
+      RVO::Vector2 pos = sim.getAgentPosition(i);
+      vectoreuc vec(2);
+      vec[0] = pos.x();
+      vec[1] = pos.y();
+
+      bool crashed = false;
+      for(int p=0; p<cell_based_obstacles.size(); p++) {
+        obstacle2D& obs = cell_based_obstacles[p];
+        if(obs.point_inside(vec, robot_radius)) {
+          crashed = true;
+          break;
+        }
+      }
+
+      if(crashed) {
+        obstacle_crash_counts[i]++;
+      } else {
+        obstacle_no_crash_counts[i]++;
+      }
+
+      crashed = false;
+      for(int p = 0; p<original_trajectories.size(); p++) {
+        if(p==i) continue;
+        vectoreuc vec2(2);
+        vec2[0] = sim.getAgentPosition(p).x();
+        vec2[1] = sim.getAgentPosition(p).y();
+        if((vec2-vec).L2norm() < 2*robot_radius) {
+          crashed = true;
+          break;
+        }
+      }
+
+      if(crashed) {
+        robot_crash_counts[i]++;
+      } else {
+        robot_no_crash_counts[i]++;
+      }
+
+    }
   }
 
   // write output file
   out << std::setw(2) << output_json << endl;
+
+
+    for(int i=0; i<average_opt_times.size(); i++) {
+      average_opt_times[i] /= opt_counts[i];
+    }
+
+  compareStats["average_cycle_times"] = average_opt_times;
+  compareStats["maximum_cycle_times"] = max_opt_times;
+  compareStats["robot_crash_counts"] = robot_crash_counts;
+  compareStats["robot_no_crash_counts"] = robot_no_crash_counts;
+  compareStats["obstacle_crash_counts"] = obstacle_crash_counts;
+  compareStats["obstacle_no_crash_counts"] = obstacle_no_crash_counts;
+
+
+  vector<bool> robots_reached(original_trajectories.size());
+  for(int i=0; i<original_trajectories.size(); i++) {
+    vectoreuc pos(2);
+    pos[0] = sim.getAgentPosition(i).x();
+    pos[1] = sim.getAgentPosition(i).y();
+    double diff = (original_trajectories[i].eval(total_times[i]) - pos).L2norm();
+    robots_reached[i] = (diff <= 0.2);
+  }
+
+  compareStats["robots_reached"] = robots_reached;
+
+  ofstream compfile("compareStats_rvo2.json");
+  compfile << std::setw(2) << compareStats << endl;
+  compfile.close();
+
   return 0;
 
 }

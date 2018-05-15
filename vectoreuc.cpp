@@ -40,6 +40,7 @@ vectoreuc vectoreuc::operator/(const double& s) {
   return res;
 }
 
+
 vectoreuc vectoreuc::normalized() {
   vectoreuc res(crds.size());
   double length = 0;

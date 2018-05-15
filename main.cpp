@@ -59,9 +59,12 @@ int main(int argc, char** argv) {
     return 0;
   }
 
+
   config_path = result["cfg"].as<string>();
 
   ifstream cfg(config_path);
+
+  nlohmann::json compareStats;
 
   nlohmann::json jsn = nlohmann::json::parse(cfg);
 
@@ -240,6 +243,7 @@ int main(int argc, char** argv) {
   output_json["dt"] = printdt;
   output_json["robot_radius"] = robot_radius;
   output_json["number_of_robots"] = original_trajectories.size();
+  compareStats["number_of_robots"] = original_trajectories.size();
   int steps_per_cycle = (dt / printdt)+0.5;
   int output_iter = 0;
 
@@ -288,6 +292,14 @@ int main(int argc, char** argv) {
   std::chrono::time_point<std::chrono::high_resolution_clock> t_start, t_start_a_star, t_end_a_star, t_start_svm, t_end_svm, t_start_qp, t_end_qp;
 
   double everyone_reached = false;
+
+  vector<double> max_opt_times(original_trajectories.size(), -1);
+  vector<double> average_opt_times(original_trajectories.size(), 0);
+  vector<int> opt_counts(original_trajectories.size(), 0);
+  vector<int> obstacle_crash_counts(original_trajectories.size(), 0);
+  vector<int> obstacle_no_crash_counts(original_trajectories.size(), 0);
+  vector<int> robot_crash_counts(original_trajectories.size(), 0);
+  vector<int> robot_no_crash_counts(original_trajectories.size(), 0);
 
   for(double ct = 0; ct <= total_t /*+ 5*/ /*!everyone_reached*/ ; ct+=dt) {
 
@@ -1154,6 +1166,9 @@ int main(int argc, char** argv) {
       total_time_for_opt += d.count();
       total_count_for_opt++;
       cout << "optimization time: " << d.count() << "ms" << endl;
+      average_opt_times[i]+=d.count();
+      opt_counts[i]++;
+      max_opt_times[i] = max((double)d.count(), max_opt_times[i]);
       outStats << "," << d.count()
                << "," << chrono::duration_cast<ms>(t_end_a_star - t_start_a_star).count()
                << "," << chrono::duration_cast<ms>(t_end_svm - t_start_svm).count()
@@ -1185,6 +1200,38 @@ int main(int argc, char** argv) {
     for(int v = 0; v < steps_per_cycle; v++) {
       for(int i=0; i<trajectories.size(); i++) {
         vec = trajectories[i].neval(v*printdt, 0);
+
+
+        bool crashed = false;
+        for(int p=0; p<cell_based_obstacles.size(); p++) {
+          obstacle2D& obs = cell_based_obstacles[p];
+          if(obs.point_inside(vec, robot_radius)) {
+            crashed = true;
+            break;
+          }
+        }
+
+        if(crashed) {
+          obstacle_crash_counts[i]++;
+        } else {
+          obstacle_no_crash_counts[i]++;
+        }
+
+        crashed = false;
+        for(int p = 0; p<trajectories.size(); p++) {
+          if(p==i) continue;
+          vectoreuc vec2 = trajectories[p].neval(v*printdt, 0);
+          if((vec2-vec).L2norm() < 2*robot_radius) {
+            crashed = true;
+            break;
+          }
+        }
+
+        if(crashed) {
+          robot_crash_counts[i]++;
+        } else {
+          robot_no_crash_counts[i]++;
+        }
         //cout << vec << endl;
         output_json["points"][output_iter].push_back(vec.crds);
 
@@ -1224,6 +1271,27 @@ int main(int argc, char** argv) {
   }
 
 
+  for(int i=0; i<average_opt_times.size(); i++) {
+    average_opt_times[i] /= opt_counts[i];
+  }
+
+  compareStats["average_cycle_times"] = average_opt_times;
+  compareStats["maximum_cycle_times"] = max_opt_times;
+  compareStats["robot_crash_counts"] = robot_crash_counts;
+  compareStats["robot_no_crash_counts"] = robot_no_crash_counts;
+  compareStats["obstacle_crash_counts"] = obstacle_crash_counts;
+  compareStats["obstacle_no_crash_counts"] = obstacle_no_crash_counts;
+
+
+  vector<bool> robots_reached(original_trajectories.size());
+  for(int i=0; i<original_trajectories.size(); i++) {
+    double diff = (original_trajectories[i].eval(total_times[i]) - positions[i]).L2norm();
+    robots_reached[i] = (diff <= 0.2);
+  }
+
+  compareStats["robots_reached"] = robots_reached;
+
+  cout << compareStats << endl;
 
   cout << "average opt time: " << total_time_for_opt / total_count_for_opt << "ms" << endl;
 
@@ -1231,6 +1299,10 @@ int main(int argc, char** argv) {
   out << std::setw(2) << output_json << endl;
 
   out.close();
+
+  ofstream compfile("compareStats_main.json");
+  compfile << std::setw(2) << compareStats << endl;
+  compfile.close();
   return 0;
 
 }
