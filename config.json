@@ -1,14 +1,14 @@
 {
-  "trajectories": "../test_data/trajectories/straight_to_right",
+  "trajectories": "../test_data/trajectories/swapCircle16",
   "scale_traj": 1.0,
-  "obstacles": "../test_data/obstacles/obsdiamond/",
+  "obstacles": "../test_data/obstacles/obsdiamonds/",
   "robot_radius": 0.25,
   "cell_size": 0.5,
   "v_max": 2,
   "a_max": 4,
   "replan_period": 0.1,
   "set_max_time_as_replan_period": true,
-  "planning_horizon": 1,
+  "planning_horizon": 5,
   "plan_for_curves": 4,
   "problem_dimension": 2,
   "points_per_curve": 8,
@@ -20,8 +20,9 @@
   "lambda_hyperplanes": 0.00,
   "lambda_min_der": 1.0,
   "lambda_min_der_vel": 1.0,
-  "lambda_min_der_acc": 0.0,
-  "lambda_min_der_jerk": 5e-3,
+  "lambda_min_der_acc": 0.5,
+  "lambda_min_der_jerk": 0.0,
   "lambda_min_der_snap": 0.0,
-  "scaling_multiplier": 2.0
+  "scaling_multiplier": 2.0,
+  "rvo2_enable_discrete": false
 }

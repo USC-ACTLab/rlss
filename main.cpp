@@ -437,7 +437,7 @@ int main(int argc, char** argv) {
       bool original_traj_occupied = og.occupied(original_trajectories[i], robot_radius, ct, min(ct+hor, total_times[i]));
 
       bool discretePath = false;
-      if (planned_traj_occupied /*|| goal_occupied*/ || voronoi_violated || original_traj_occupied) {
+      if (planned_traj_occupied || /*goal_occupied ||*/ voronoi_violated || original_traj_occupied) {
         // the trajectory is now on top of an obstacle => discrete re-planning!
         bool discretePlanningNeeded = true;
 
