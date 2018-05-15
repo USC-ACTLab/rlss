@@ -148,7 +148,10 @@ int main(int argc, char **argv) {
   string alg;
   nl.getParam("algorithm", alg);
 
+  string outFile;
+  nl.getParam("outFile", outFile);
 
+  std::ofstream out(outFile);
 
   srand(time(NULL));
 
@@ -203,12 +206,18 @@ int main(int argc, char **argv) {
 
   OG og(cell_size, -10, 10, -10, 10, obstacles);
 
+  out << "environment:" << endl;
+  out << "  robot_radius: " << robot_radius << endl;
+  out << "  cellSize: " << cell_size << endl;
+  out << "  obstacles:" << endl;
+
   vector<obstacle2D> cell_based_obstacles;
   for (size_t i = 0; i < og.max_i(); ++i) {
     for (size_t j = 0; j < og.max_j(); ++j) {
       OG::index idx(i, j);
       if (og.idx_occupied(idx)) {
         pair<double, double> coord = og.get_coordinates(idx);
+        out << "    - [" << coord.first << "," << coord.second << "]" << endl;
         // std::cout << "occ: " << coord.first << "," << coord.second << std::endl;
 
         obstacle2D o;
@@ -280,6 +289,7 @@ int main(int argc, char **argv) {
 
   std::array<char, 128> recv_buf;
 
+  ROS_INFO("Waiting for startTrajectory command!");
   while(true) {
     int len = socket.receive(boost::asio::buffer(recv_buf));
     string socketdata(recv_buf.data(), len);
@@ -287,9 +297,13 @@ int main(int argc, char **argv) {
     if(socketdata == "startTrajectory")
       break;
   }
+  socket.set_option(boost::asio::ip::multicast::leave_group(multicast_address));
+  socket.close();
 
 
   ros::Time start = ros::Time::now();
+
+  out << "iterations:" << endl;
 
   // for(double ct = 0; ct <= total_t && ros::ok() ; ct+=dt) {
   while (ros::ok()) {
@@ -301,10 +315,14 @@ int main(int argc, char **argv) {
       break;
     }
 
-    getPositions(transformlistener, robots);
-
     cerr << ct << " / " << total_t << endl;
+    out << "  - time: " << ct << endl;
 
+    getPositions(transformlistener, robots);
+    out << "    positions:" << endl;
+    for (size_t i = 0; i < number_of_robots; ++i) {
+      out << "      - [" << positions[i][0] << "," << positions[i][1] << "]" << endl;
+    }
 
     t_start = Time::now();
 
@@ -711,6 +729,23 @@ int main(int argc, char **argv) {
 
     t_start_qp = Time::now();
 
+
+    // output initially guessed controlpoints
+    out << "    controlpointsGuessed:" << endl;
+    for(int j=0; j<traj.size(); j++) {
+      for(int k=0; k<ppc; k++) {
+        out << "      - [" << y(0, j * ppc + k) << "," << y(1, j * ppc + k) << "]" << endl;
+      }
+    }
+
+    // output hyperplanes
+    out << "    hyperplanes:" << endl;
+    for (const auto& hpc : hyperplaneConstraints) {
+      out << "      - piece: " << hpc.piece << endl;
+      out << "        normal: [" << hpc.normal[0] << "," << hpc.normal[1] << "]" << endl;
+      out << "        dist: " << hpc.dist << endl;
+    }
+
     do { // loop for temporal scaling
 
     // construct QP matrices
@@ -1021,12 +1056,25 @@ int main(int argc, char **argv) {
     } while (true); // temporal scaling
 
 
+    // output computed controlpoints
+    out << "    controlpoints:" << endl;
+    for(int j=0; j<traj.size(); j++) {
+      for(int k=0; k<ppc; k++) {
+        out << "      - [" << y(0, j * ppc + k) << "," << y(1, j * ppc + k) << "]" << endl;
+      }
+    }
+
     auto t1 = Time::now();
     fsec fs = t1 - t_start;
     ms d = chrono::duration_cast<ms>(fs);
     total_time_for_opt += d.count();
     total_count_for_opt++;
     cout << "optimization time: " << d.count() << "ms" << endl;
+
+    out << "    timeQP: " << d.count() << endl;
+    out << "    timeAstar: " <<  chrono::duration_cast<ms>(t_end_a_star - t_start_a_star).count() << endl;
+    out << "    timeSVM: " <<  chrono::duration_cast<ms>(t_end_svm - t_start_svm).count() << endl;
+
 
 
     vectoreuc despos = traj.neval(2*dt, 0);
@@ -1042,6 +1090,10 @@ int main(int argc, char **argv) {
 
     desired_state_publisher.publish(desired_state_msg);
 
+    out << "    desiredState:" << endl;
+    out << "      - pos: [" << desired_state_msg.position.x << "," << desired_state_msg.position.y << "]" << endl;
+    out << "      - vel: [" << desired_state_msg.velocity.x << "," << desired_state_msg.velocity.y << "]" << endl;
+    out << "      - acc: [" << desired_state_msg.acceleration.x << "," << desired_state_msg.acceleration.y << "]" << endl;
 
     rate.sleep();
   }

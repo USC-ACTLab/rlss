@@ -40,7 +40,7 @@
 
   <node name="planner" pkg="planner" type="planner" output="screen">
     <rosparam>
-      trajectory: "/home/odroid/robustMotionExecution/mr-trajectory-replanning/test_data/trajectories/swapCircle6/agent0_bezier.csv"
+      trajectory: "/home/odroid/robustMotionExecution/mr-trajectory-replanning/test_data/trajectories/swapCircle6/agent3_bezier.csv"
       scale_traj: 1.2
       obstacles: "/home/odroid/robustMotionExecution/mr-trajectory-replanning/test_data/obstacles/swapCircle6/"
       robots: [
@@ -52,13 +52,13 @@
         create9
       ]
       robot_id: 0
-      robot_radius: 0.20
+      robot_radius: 0.22
       cell_size: 0.25
       v_max: 0.4
       a_max: 1
       replan_period: 0.1
       set_max_time_as_replan_period: true
-      planning_horizon: 2
+      planning_horizon: 5
       plan_for_curves: 3
       problem_dimension: 2
       points_per_curve: 8
@@ -74,6 +74,7 @@
       lambda_min_der_jerk: 0.0
       lambda_min_der_snap: 0.0
       scaling_multiplier: 2.0
+      outFile: "/home/odroid/robustMotionExecution/mr-trajectory-replanning/ros_ws/log.yaml"
     </rosparam>
   </node>
 
