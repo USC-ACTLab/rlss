@@ -42,8 +42,8 @@
      id="namedview231"
      showgrid="false"
      inkscape:zoom="1.4485868"
-     inkscape:cx="171.00924"
-     inkscape:cy="283.56865"
+     inkscape:cx="48.476023"
+     inkscape:cy="280.80734"
      inkscape:window-x="0"
      inkscape:window-y="31"
      inkscape:window-maximized="1"
@@ -656,6 +656,17 @@
     <g
        style="stroke-linecap:butt;stroke-linejoin:round"
        id="line2d_8" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:4.99999952px;line-height:125%;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.74999994px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       x="2.0709841"
+       y="157.65825"
+       id="text937"><tspan
+         sodipodi:role="line"
+         id="tspan935"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:20px;font-family:'TeX Gyre Bonum';-inkscape-font-specification:'TeX Gyre Bonum';stroke-width:0.74999994px;stroke-linecap:butt;stroke-linejoin:round"
+         x="2.0709841"
+         y="157.65825">(b)</tspan></text>
   </g>
   <defs
      id="defs227">

@@ -25,7 +25,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -43,8 +43,8 @@
      id="namedview231"
      showgrid="false"
      inkscape:zoom="2.0486111"
-     inkscape:cx="233.27665"
-     inkscape:cy="224.46828"
+     inkscape:cx="146.63258"
+     inkscape:cy="222.51574"
      inkscape:window-x="0"
      inkscape:window-y="31"
      inkscape:window-maximized="1"
@@ -4418,6 +4418,17 @@
          id="path159"
          inkscape:connector-curvature="0"
          transform="translate(-0.96013759,-2.0286593)" />
+      <text
+         xml:space="preserve"
+         style="font-style:normal;font-weight:normal;font-size:4.99999952px;line-height:125%;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.74999994px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+         x="67.937843"
+         y="96.876152"
+         id="text937"><tspan
+           sodipodi:role="line"
+           id="tspan935"
+           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:20px;font-family:'TeX Gyre Bonum';-inkscape-font-specification:'TeX Gyre Bonum';stroke-width:0.74999994px;stroke-linecap:butt;stroke-linejoin:round"
+           x="67.937843"
+           y="96.876152">(b)</tspan></text>
     </g>
   </g>
   <defs
