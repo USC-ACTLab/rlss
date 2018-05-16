@@ -173,5 +173,28 @@ ax6.set_xticklabels(tpl)
 ax6.legend((rects11[0], rects12[0]), ("rme", "rvo2"))
 ax6.set_ylim(top=rvo2["number_of_robots"])
 
+print "minimum no crash percentages"
+print "rme: " + str(min(total_no_crash_percentages_rme))
+print "rvo2: " + str(min(total_no_crash_percentages_rvo2))
+
+print
+
+print "number of robots reached on time"
+print "rme: " + str(robots_reached_rme)
+print "rvo2: " + str(robots_reached_rvo2)
+
+print
+
+print "average cycle time"
+print "rme: " + str(sum(avg_cycles_rme)/len(avg_cycles_rme))
+print "rvo2: " + str(sum(avg_cycles_rvo2)/len(avg_cycles_rvo2))
+
+
+print
+
+print "max cycle time"
+print "rme: " + str(max(maximum_cycles_rme))
+print "rvo2: " + str(max(maximum_cycles_rvo2))
+
 
 plt.show()

@@ -56,6 +56,7 @@ int main(int argc, char** argv) {
   string initial_trajectories_path = jsn["trajectories"];
   string obstacles_path = jsn["obstacles"];
   double dt = jsn["replan_period"];
+  dt/=10;
   int problem_dimension = jsn["problem_dimension"];
   int ppc = jsn["points_per_curve"];
   int max_continuity = jsn["continuity_upto_degree"];
@@ -68,6 +69,7 @@ int main(int argc, char** argv) {
   const double cell_size = jsn["cell_size"];
   const double v_max = jsn["v_max"];
   const double a_max = jsn["a_max"];
+  const double additional_time = jsn["additional_time"];
 
   const bool enable_discrete = jsn["rvo2_enable_discrete"];
 
@@ -229,7 +231,7 @@ int main(int argc, char** argv) {
 
   std::chrono::time_point<std::chrono::high_resolution_clock> t_start, t_start_a_star, t_end_a_star, t_start_svm, t_end_svm, t_start_qp, t_end_qp;
   // main loop
-  for(double ct = 0; ct <= total_t /*+ 5*/ /*!everyone_reached*/ ; ct+=dt) {
+  for(double ct = 0; ct <= total_t + additional_time /*+ 5*/ /*!everyone_reached*/ ; ct+=dt) {
     for(int i=0; i<trajectories.size(); i++) {
       t_start = Time::now();
       std::cout << "ct: " << ct << ", i: " << i << std::endl;
@@ -492,7 +494,7 @@ int main(int argc, char** argv) {
     pos[0] = sim.getAgentPosition(i).x();
     pos[1] = sim.getAgentPosition(i).y();
     double diff = (original_trajectories[i].eval(total_times[i]) - pos).L2norm();
-    robots_reached[i] = (diff <= 0.2);
+    robots_reached[i] = (diff <= 0.4);
   }
 
   compareStats["robots_reached"] = robots_reached;
