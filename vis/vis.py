@@ -272,15 +272,36 @@ if __name__ == "__main__":
   parser.add_argument('--no-hyperplanes', dest='hyperplanes', action='store_false')
   parser.set_defaults(hyperplanes=True)
 
+  parser.add_argument('--video', dest='video', default=None, help="output video file (or leave empty to show on screen)")
+
   args = parser.parse_args()
 
   jsn = json.load(open(args.file))
 
   colors = ['b', 'g', 'r', 'c', 'm', 'k'] * 10
 
-  fig = plt.figure()
-  ax = plt.axes(xlim=(-4,4), ylim=(-4,4))
-  ax.set_aspect('equal')
+  # fig = plt.figure()
+  # ax = plt.axes(xlim=(-4,4), ylim=(-4,4))
+  # ax.set_aspect('equal')
+  xmin = -2.5
+  xmax = 2.5
+  ymin = -1.0
+  ymax = 2.5
+
+  aspect = (xmax - xmin) / (ymax - ymin)
+
+  if args.video:
+    fig = plt.figure(frameon=False, figsize=(6 * aspect, 6))
+    ax = fig.add_subplot(111, aspect='equal')
+    fig.subplots_adjust(left=0,right=1,bottom=0,top=1, wspace=None, hspace=None)
+  else:
+    fig = plt.figure()
+    ax = plt.axes(xlim=(-4,4), ylim=(-4,4))
+    ax.set_aspect('equal')
+
+  plt.xlim(xmin, xmax)
+  plt.ylim(ymin, ymax)
+
   # plt.axis('off')
   time_text = ax.text(0.02, 0.95, '', transform=ax.transAxes)
   trajectories = dict()
@@ -393,8 +414,16 @@ if __name__ == "__main__":
   step = False
   frameId = 0
   numFrames = len(jsn["points"])
-  # fig.canvas.mpl_connect('button_press_event', onClick)
-  fig.canvas.mpl_connect('key_press_event', onKey)
-  anim = animation.FuncAnimation(fig, animate, init_func=init,frames=frameGen,interval=jsn["dt"]*1000,blit=args.blit,repeat=True)
 
-  plt.show()
+  if args.video:
+    SPEED = 1
+    anim = animation.FuncAnimation(fig, animate, init_func=init, frames=range(0, numFrames, args.frameinc))
+    anim.save(
+      args.video,
+      "ffmpeg",
+      fps=1.0 / jsn["dt"] / args.frameinc * SPEED,
+      dpi=150)
+  else:
+    fig.canvas.mpl_connect('key_press_event', onKey)
+    anim = animation.FuncAnimation(fig, animate, init_func=init,frames=frameGen, interval=jsn["dt"]*1000,blit=args.blit,repeat=True)
+    plt.show()
