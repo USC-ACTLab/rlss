@@ -41,7 +41,7 @@ vector<hyperplane> SvmSeperator::_2_4_seperate() {
 
     result.push_back(_2pt4obspt_svm(pt1, pt2, obs1, obs2, obs3, obs4));
 
-    auto& hp = result.back();
+    /*auto& hp = result.back();
     for (auto& pt : obs.pts) {
       if (pt.dot(hp.normal) < hp.distance) {
         std::stringstream sstr;
@@ -58,7 +58,7 @@ vector<hyperplane> SvmSeperator::_2_4_seperate() {
         // throw runtime_error(sstr.str());
         std::cerr << sstr.str() << std::endl;
       }
-    }
+    }*/
 
   }
 
@@ -88,7 +88,7 @@ vector<hyperplane> SvmSeperator::_8_4_seperate() {
 
     result.push_back(_8pt4obspt_svm(pt1, pt2, pt3, pt4, pt5, pt6, pt7, pt8, obs1, obs2, obs3, obs4));
 
-    auto& hp = result.back();
+    /*auto& hp = result.back();
     for (auto& pt : obs.pts) {
       if (pt.dot(hp.normal) < hp.distance) {
         std::stringstream sstr;
@@ -105,7 +105,7 @@ vector<hyperplane> SvmSeperator::_8_4_seperate() {
         // throw runtime_error(sstr.str());
         std::cerr << sstr.str() << std::endl;
       }
-    }
+    }*/
 
   }
 
@@ -161,7 +161,7 @@ vector<hyperplane> SvmSeperator::_32_4_seperate() {
                                     pt25, pt26, pt27, pt28, pt29, pt30, pt31, pt32,
                                     obs1, obs2, obs3, obs4));
 
-    auto& hp = result.back();
+    /*auto& hp = result.back();
     for (auto& pt : obs.pts) {
       if (pt.dot(hp.normal) < hp.distance) {
         std::stringstream sstr;
@@ -178,7 +178,7 @@ vector<hyperplane> SvmSeperator::_32_4_seperate() {
         // throw runtime_error(sstr.str());
         std::cerr << sstr.str() << std::endl;
       }
-    }
+    }*/
 
   }
 

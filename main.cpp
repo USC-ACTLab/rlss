@@ -91,6 +91,7 @@ int main(int argc, char** argv) {
   const double lambda_min_der_jerk = jsn["lambda_min_der_jerk"];
   const double lambda_min_der_snap = jsn["lambda_min_der_snap"];
   const double scaling_multiplier = jsn["scaling_multiplier"];
+  const double additional_time = jsn["additional_time"];
 
   bool enable_voronoi = jsn["enable_voronoi"];
 
@@ -204,6 +205,7 @@ int main(int argc, char** argv) {
       }
     }
   }
+  cout << "obs count: " << cell_based_obstacles.size() << endl;
   SvmSeperator svm(&cell_based_obstacles);
 
 /*
@@ -301,7 +303,7 @@ int main(int argc, char** argv) {
   vector<int> robot_crash_counts(original_trajectories.size(), 0);
   vector<int> robot_no_crash_counts(original_trajectories.size(), 0);
 
-  for(double ct = 0; ct <= total_t /*+ 5*/ /*!everyone_reached*/ ; ct+=dt) {
+  for(double ct = 0; ct <= total_t + additional_time/*+ 5*/ && !everyone_reached ; ct+=dt) {
 
     outStats << ct;
 
@@ -810,7 +812,7 @@ int main(int argc, char** argv) {
       // construct QP matrices
       ObjectiveBuilder ob(problem_dimension, pieceDurations);
 
-      double remaining_time = std::max(total_times[i] - ct, curve_count * dt * 1.1);
+      double remaining_time = std::max(total_times[i] - ct, curve_count * dt * 10.1);
       double factor = lambda_min_der / remaining_time;
       ob.minDerivativeSquared(lambda_min_der_vel * factor, lambda_min_der_acc * factor, lambda_min_der_jerk * factor, lambda_min_der_snap * factor);
 
@@ -1050,7 +1052,7 @@ int main(int argc, char** argv) {
         if (simpleStatus != 0) {
 
           //std::cerr << "MPC failed" << endl;
-          qpOASES::QProblem qp2(numVars, numConstraints, qpOASES::HST_SEMIDEF);
+          /*qpOASES::QProblem qp2(numVars, numConstraints, qpOASES::HST_SEMIDEF);
           qpOASES::Options opts2;
           opts2.setToReliable();
           opts2.printLevel = qpOASES::PL_LOW;
@@ -1067,7 +1069,7 @@ int main(int argc, char** argv) {
             set_max_time ? &cputime : NULL,
             y.data());
 
-          simpleStatus = qpOASES::getSimpleStatus(status);
+          simpleStatus = qpOASES::getSimpleStatus(status);*/
 
           if(simpleStatus != 0) {
             std::stringstream sstr;
@@ -1078,14 +1080,14 @@ int main(int argc, char** argv) {
 
             Eigen::Map<Matrix> yVec(y.data(), numVars, 1);
 
-            auto constraints = cb.A() * yVec;
+            /*auto constraints = cb.A() * yVec;
             // std::cout << "constraints: " << constraints << std::endl;
             for (size_t c = 0; c < numConstraints; ++c) {
               if (cb.lbA()(c) > constraints(c) || constraints(c) > cb.ubA()(c)) {
                 std::cerr << "Constraint " << cb.info(c) << " violated!" << " value: " << constraints(c) << " lb: " << cb.lbA()(c) << " ub: " << cb.ubA()(c) << std::endl;
               }
             }
-            std::cerr << "vel: " << velocities[i] << "acc: " << accelerations[i] << std::endl;
+            std::cerr << "vel: " << velocities[i] << "acc: " << accelerations[i] << std::endl;*/
           }
 
           // y.setZero();
@@ -1286,7 +1288,7 @@ int main(int argc, char** argv) {
   vector<bool> robots_reached(original_trajectories.size());
   for(int i=0; i<original_trajectories.size(); i++) {
     double diff = (original_trajectories[i].eval(total_times[i]) - positions[i]).L2norm();
-    robots_reached[i] = (diff <= 0.2);
+    robots_reached[i] = (diff <= 0.4);
   }
 
   compareStats["robots_reached"] = robots_reached;

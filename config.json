@@ -1,8 +1,8 @@
 {
   "trajectories": "../test_data/trajectories/swapCircle16",
   "scale_traj": 1.0,
-  "obstacles": "../test_data/obstacles/obsdiamonds/",
-  "robot_radius": 0.25,
+  "obstacles": "../test_data/obstacles/3obstacles/",
+  "robot_radius": 0.23,
   "cell_size": 0.5,
   "v_max": 2,
   "a_max": 4,
@@ -16,13 +16,14 @@
   "enable_voronoi": true,
   "output_file": "res.json",
   "print_dt": 0.01,
-  "algorithm": "QPOASES",
+  "algorithm": "OSQP",
   "lambda_hyperplanes": 0.00,
-  "lambda_min_der": 1.0,
+  "lambda_min_der": 0.1,
   "lambda_min_der_vel": 1.0,
   "lambda_min_der_acc": 0.5,
   "lambda_min_der_jerk": 0.0,
   "lambda_min_der_snap": 0.0,
   "scaling_multiplier": 2.0,
-  "rvo2_enable_discrete": false
+  "rvo2_enable_discrete": false,
+  "additional_time": 5
 }
