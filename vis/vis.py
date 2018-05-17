@@ -192,7 +192,7 @@ def animate(frame):
         for i in robots:
           if i < len(jsn["discrete_plan"][frame]) and jsn["discrete_plan"][frame][i]:
             discrete_plans[i].set_data(jsn["discrete_plan"][frame][i]["x"], jsn["discrete_plan"][frame][i]["y"])
-    else:
+    elif frame % 10 == 0:
         for i in robots:
             discrete_plans[i].set_data([], [])
 
