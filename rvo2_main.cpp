@@ -369,7 +369,7 @@ int main(int argc, char** argv) {
             current_discrete_path_length += sqrt(pow(corners[j].first - corners[j-1].first, 2) +
                                                  pow(corners[j].second - corners[j-1].second, 2));
 
-            if ((pt - curPos).L2norm() > 0.2) {
+            if ((pt - curPos).L2norm() > cell_size / sqrt(2)) {
               // attempt to reach next goal point by the desired time
               double timeToReach = current_discrete_path_length / total_discrete_path_length * discrete_horizon;
               vectoreuc vel = (pt - curPos) / timeToReach;

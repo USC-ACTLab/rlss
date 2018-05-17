@@ -192,6 +192,8 @@ def animate(frame):
         for i in robots:
           if i < len(jsn["discrete_plan"][frame]) and jsn["discrete_plan"][frame][i]:
             discrete_plans[i].set_data(jsn["discrete_plan"][frame][i]["x"], jsn["discrete_plan"][frame][i]["y"])
+          else:
+            discrete_plans[i].set_data([], [])
     elif frame % 10 == 0:
         for i in robots:
             discrete_plans[i].set_data([], [])
@@ -283,10 +285,10 @@ if __name__ == "__main__":
   # fig = plt.figure()
   # ax = plt.axes(xlim=(-4,4), ylim=(-4,4))
   # ax.set_aspect('equal')
-  xmin = -2.5
-  xmax = 2.5
-  ymin = -1.0
-  ymax = 2.5
+  xmin = -5
+  xmax = 4
+  ymin = -4
+  ymax = 4
 
   aspect = (xmax - xmin) / (ymax - ymin)
 
