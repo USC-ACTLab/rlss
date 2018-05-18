@@ -155,8 +155,9 @@ int main(int argc, char** argv) {
         pt[0] = coord.first - cell_size / 2.0;
         pt[1] = coord.second + cell_size / 2.0;
         o.add_pt(pt);
-        o.convex_hull();
-        o.ch_planes(/*shift*/0);
+        // This function sorts the points internally => do not call!
+        // o.convex_hull();
+        // o.ch_planes(/*shift*/0);
         cell_based_obstacles.push_back(o);
       }
     }
