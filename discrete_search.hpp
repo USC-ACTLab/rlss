@@ -68,7 +68,7 @@ public:
   {
 
     if (!stateValid(goal)) {
-      std::cerr << "GOAL not valid!" << std::endl;
+      std::cerr << "GOAL not valid! goal: " << goal.x << " " << goal.y  << std::endl;
     }
   }
 

@@ -484,9 +484,18 @@ int main(int argc, char** argv) {
                 occupiedByOtherRobot = true;
                 break;
               }
+
+              if (   fabs(coord.first - otherRobot.first) <= 2 * robot_radius
+                  && fabs(coord.second - otherRobot.second) <= 2 * robot_radius) {
+                occupiedByOtherRobot = true;
+                break;
+              }
             }
 
-            if (!occupiedByOtherRobot) {
+            bool occupiedByObstacle = og.occupied(goalPos[0], goalPos[1], robot_radius);
+
+
+            if (!occupiedByObstacle && !occupiedByOtherRobot) {
               goal.x = goalIdx.i;
               goal.y = goalIdx.j;
               discrete_horizon = t - ct;

@@ -10,6 +10,8 @@ from matplotlib.patches import Rectangle
 import numpy as np
 
 
+step = False
+
 def frameGen():
   global frameId
   global numFrames
@@ -141,6 +143,8 @@ def animate(frame):
     global step
     global x
     global y
+    global anim_running
+    global anim
 
     for i in robots:
         x[i].append(jsn["points"][frame][i][0])

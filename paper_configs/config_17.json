@@ -1,7 +1,7 @@
 {
-  "trajectories": "../test_data/trajectories/swapCircle6",
-  "scale_traj": 1.0,
-  "obstacles": "../test_data/obstacles/swapCircle6/",
+  "trajectories": "../test_data/trajectories/swap4",
+  "scale_traj": 1.5,
+  "obstacles": "../test_data/obstacles/ushape2/",
   "robot_radius": 0.23,
   "cell_size": 0.50,
   "v_max": 2,
@@ -24,6 +24,6 @@
   "lambda_min_der_jerk": 0.0,
   "lambda_min_der_snap": 0.0,
   "scaling_multiplier": 2.0,
-  "rvo2_enable_discrete": false,
-  "additional_time": 5
+  "rvo2_enable_discrete": true,
+  "additional_time": 0
 }
