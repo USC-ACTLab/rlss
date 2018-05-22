@@ -1,7 +1,7 @@
 {
   "trajectories": "../test_data/trajectories/swapCircle32",
   "scale_traj": 2.5,
-  "obstacles": "../test_data/obstacles/obsdiamonds2/",
+  "obstacles": "../test_data/obstacles/obsdiamonds3/",
   "robot_radius": 0.23,
   "cell_size": 0.25,
   "v_max": 2,

@@ -24,6 +24,6 @@
   "lambda_min_der_jerk": 0.0,
   "lambda_min_der_snap": 0.0,
   "scaling_multiplier": 2.0,
-  "rvo2_enable_discrete": true,
+  "rvo2_enable_discrete": false,
   "additional_time": 0
 }
