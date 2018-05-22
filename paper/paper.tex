@@ -36,8 +36,11 @@
 
 \usepackage{ upgreek }
 
-\usetikzlibrary{arrows, arrows.meta, fit, positioning, quotes,
-                shadows, shapes.geometric, shapes.misc}
+\usepackage{xcolor}
+\newcommand{\Nora}[1] {\textbf{\textcolor{red}{#1}}}
+
+
+\usetikzlibrary{arrows, arrows.meta, fit, positioning, quotes,shadows, shapes.geometric, shapes.misc}
 \usepackage[utf8]{inputenc}
 
 \inputencoding{utf8}
@@ -85,9 +88,11 @@
 \newcommand{\cC}{\mathcal{C}}
 \newcommand{\cE}{\mathcal{E}}
 \newcommand{\cO}{\mathcal{O}}
+\newcommand{\cH}{\mathcal{H}}
 
 % misc
 \newcommand{\R}{\mathbb{R}} % real numbers
+\renewcommand{\th}{^{\text{th}}}
 
 %%%%%%%%%%%%%
 \newcommand{\todo}[1]{\textbf{\textcolor{red}{TODO: #1}}}
@@ -119,7 +124,8 @@ Nora Ayanian}
 \maketitle              % typeset the title of the contribution
 
 \begin{abstract}
-We propose robust motion execution as a framework that takes pre-planned trajectories as input and compensates for a variety of dynamic changes, including newly appearing obstacles, robots breaking down, or external disturbances.
+We propose a method for robust motion execution that can be applied to a wide range  of  trajectory execution tasks. 
+It takes pre-planned trajectories as input and compensates for a variety of dynamic changes, including newly appearing obstacles, robots breaking down, or external disturbances.
 Robots do not communicate with each other and only sense other robots' positions and the obstacles around them.
 At the low-level, we use buffered Voronoi cells as multi-robot collision avoidance strategy.
 At the high-level we use a hybrid planning strategy employing both discrete planning and trajectory optimization with a dynamic receding horizon approach.
@@ -131,16 +137,16 @@ We demonstrate our approach in simulation and on real robots, showing that it ca
 
 
 \section{Introduction}
-Motion planning for multi-robot systems is widely used and in particular important in cases where many robots have to interact with each other in confined spaces, potentially with many obstacles around.
+Motion planning for multi-robot systems is widely used and in particular important in cases where many robots must interact with each other in confined spaces, potentially with many obstacles around.
 Examples include coordination of robots in warehouses~\cite{Kiva}, traffic management at intersections~\cite{IntersectionManagementDresner}, and airport management~\cite{AirportTug}.
 Modern planning algorithms can find trajectories that effectively coordinate hundreds of robots while approximately optimizing objectives like total energy used~\cite{crazyplanning-ieeetro}.
-All such solutions assume that the resulting trajectories can be executed approximately perfectly, which is not true for teams of hundreds of robots that have to operate persistently.
+However, all such solutions assume that the resulting trajectories can be executed nearly perfectly, which is an unrealistic assumption for teams of hundreds of robots that must operate persistently.%, as is true in these scenarios.
 
-We propose robust motion execution as a framework that takes pre-planned trajectories as input and compensates for a variety of dynamic changes, including imperfect motion execution of some robots, newly appearing obstacles, robots breaking down, or external disturbances.
-Consider the example in Fig.~\ref{fig:swap2}, where two robots are tasked with swapping their positions.
-The pre-planned trajectories are collision-free, but neither considers the new obstacle nor that the fact that blue robot does not start at its correct location.
-Robust motion execution can be used to successfully swap positions, while staying as close as possible to the pre-planned trajectories.
-Our framework is fully distributed and requires no communication; the robots only need to know their own trajectories and need to be able to sense their neighbors' positions and the obstacles around them.
+We propose a method for robust motion execution that can be applied to wide range of trajectory execution tasks. It takes pre-planned trajectories as input and compensates for a variety of dynamic changes, including imperfect motion execution of robots, newly appearing obstacles, robots breaking down, or other external disturbances.
+Consider the example in Fig.~\ref{fig:swap2}(a), where two robots have to swap their positions.
+Although the pre-planned trajectories are collision-free, they do not consider the new obstacle and the blue robot does not start at its correct location.
+Robust motion execution can be used to successfully swap positions, while staying as close as possible to the pre-planned trajectories, as in Fig.~\ref{fig:swap2}(b).
+Our method is fully distributed and requires no communication. The robots only need to know their own trajectories and be able to sense their neighbors' positions and the obstacles around them.
 
 \begin{figure}
 %\centering
@@ -166,47 +172,82 @@ Our framework is fully distributed and requires no communication; the robots onl
 %\label{fig:swap2:final}
 %\end{subfigure}
 \caption{Two robots (green and blue circles) are tasked with following their pre-planned trajectories (green and blue dashed lines; (a)).
-The initial plans were created without knowledge of the obstacle (gray) and the blue robot does not start at its planned start position.
-Our approach computes smooth trajectories in real-time, avoiding the new obstacle and other robots while staying close to the pre-planned trajectory (b).
+The initial plans were created without the knowledge of the obstacle (gray) and the blue robot does not start at its planned initial position.
+Our approach computes smooth trajectories in real-time, avoiding both the new obstacle and other robots while staying close to the pre-planned trajectory (b).
 }
 \label{fig:swap2}
 \end{figure}
 
-Robust motion execution is an extension of cooperative collision avoidance where the objective is to stay close to the originally planned trajectories as much as possible.
-In contrast, traditional collision avoidance methods frequently only take a desired velocity, desired goal state, or desired action as input (see Section~\ref{sec:relatedWork}).
-Our method is based on \emph{Buffered Voronoi Cells} (BVC)~\cite{bufferedVoronoiCells} as the underlying cooperative collision avoidance strategy and retains the same theoretical guarantees.
-At the high-level we employ a novel combination of trajectory optimization and discrete search-based planning with a dynamic receding horizon approach.
-The discrete search allows us to avoid local minima effectively even in difficult scenarios, while the trajectory optimization takes the dynamics of real physical robots into account.
+Robust motion execution is an extension of cooperative collision avoidance where the objective is to stay as close to the originally planned trajectories as possible.
+In contrast, traditional collision avoidance methods frequently only take a desired velocity, desired goal state, or desired action as input (we discuss these in more detail in Section~\ref{sec:relatedWork}).
+Our method relies on the \emph{Buffered Voronoi Cells} (BVC)~\cite{bufferedVoronoiCells} as the underlying cooperative collision avoidance strategy and retains the same theoretical guarantees.
+We employ a novel combination of trajectory optimization and discrete search-based planning using a dynamic receding horizon approach.
+The discrete search allows us to avoid local minima effectively even in difficult scenarios, while the trajectory optimization generates smooth trajectories that are collision-free.
 
-
+We show in simulations that our method avoids collisions and deadlocks more successfully compared to ORCA~\cite{orca}.
+Furthermore, we implement and test our approach on a team of six differential drive robots with several dynamic environmental changes.
 
 %\todo{perhaps write some more about what experiments we did, after we have the material}
+
+% \begin{tabular}{l||l}
+% \hline % global
+% $m$ & number of robots\\
+% $n$ & problem dimension\\
+% $c$ & order of derivative up to which smoothness is required \\
+% $\gamma_k$ & dynamic limit of each robot for the $k\th$ derivative of its trajectory\\
+% %$\Gamma_k$ & \\
+% %$r_s$ & radius\\
+% $R(\vp), r_s$ & space that robot occupies at position $\vp$ (sphere with radius $r_s$)\\
+% $\psi$ & current time\\
+% $\uptheta, \uptheta'$ & number of static obstacles\\
+% \hline % per robot
+% $\vo_i(t), t\in[0, T_i]$     &  original trajectory of robot $i$\\
+% $\vp_i(t)$ & position of robot $i$ at time $t$\\
+% $\cO_i$ & obstacles\\
+% %$\vf_i(t)$ & \\
+% $\cV_i$ & voronoi cell\\
+% $\cS_i^j$ & \\
+% $\cH_i^j, \valpha_i^j, \beta_i^j$ & hyperplane robot-robot\\
+% $M_j^b$ & hyperplane robot-obstacle\\
+% %$H$, $A$, $lbA$, $ubA$, $g$ & QP\\
+% $K$ & iteration\\
+% \hline % algorithm
+% $l$ & pieces\\
+% $d$ & degree\\
+% $\lambda_i, \theta_j$ & QP\\
+% $\tau, \tau'$ & \\
+% $\delta t$ & \\
+% $\vf^{K}_i(t)$ & duration $T^{K}_i$ \\
+% $\vf^{K}_{i,j}(t), t\in[0, T^{K}_{i,j}]$ & $j\th$ piece\\
+% $\vP^{K}_{i,j,\rho}$ & denotes the $\rho\th$ control point\\
+% \end{tabular}
 
 \section{Problem Formulation} \label{problemFormulation}
 % assumptions: circular robots; robots follow the same rules; static (or slow) obstacles
 % input: original curves; positions of peers; dynamic limits; environment (at least able to sense); dt; curve_count; T
 % output: at each dt: new trajectory such that there is no collision (guaranteed)
 % issues: no live-lock guarantee
-
-We consider a group of $m$ robots and each robot $i$ is given the following:
+The general problem we would like to solve can be formulated as follows. 
+Consider a group of $m$ robots. Each robot $i$ is given the following:
 \begin{align*}
-    \vo_i(t)&:\text{ original trajectory of $i^{th}$ robot where } t\in[0,T_i],\\
+    \vo_i(t)&:\text{ original trajectory of $i\th$ robot where time } t\in[0,T_i],\\
     %ct&:\text{ current global time},\\
     %\delta t&:\text{ replanning period},\\
     %\tau&: \text{time horizon},\\ 
-    c&:\text{ derivative up to which smoothness is required},\\
+    c&:\text{ order of derivative up to which smoothness is required},\\
     %\cO&:\text{ free space representation of the environment},\\
     %\{\vp_i\}&:\text{ set of positions of all robots},\\
-    R_i(\vp)&:\text{ physical extent of robot $i$ at position $\vp$, and}\\
-    \gamma_j&: \text{ dynamic limit of the robot for $j^{th}$ derivation degree}.%\\
-    %&\ \ \ \ \gamma_j \text{ being the limit for $j^{th}$ derivation degree}\\
+    R(\vp)&:\text{ collision model of a robot at position $\vp$ (sphere with radius $r_s$), and}\\
+    \gamma_k&: \text{ dynamic limit of the robot for the $k\th$ derivative of its trajectory}.%\\
+    %&\ \ \ \ \gamma_j \text{ being the limit for $j\th$ derivation degree}\\
 \end{align*}
 
-At time $t$, each robot $i$ can sense the positions $\{\vp_1(t),\ldots,\vp_m(t)\}$ of its neighbors as well as the current occupied space $\cO(t)$ around it.
-We assume that $\cO(t)$ is a set of $\uptheta$ convex obstacles, which can be achieved in practice by using data structures such as an OctoMap~\cite{octomap}.
-Robots cannot communicate with each other and are unaware of the other robots' trajectories.
+Each robot $i$ can sense the positions $\{\vp_1,\ldots,\vp_m\}$ of its neighbors as well as the current occupied space $\cO_i$ around it.
+We represent $\cO_i$ as a set of $\uptheta$ convex obstacles; our approach can accommodate for different sensing modalities, including LIDAR and RGB-D cameras.
+%, which can be achieved in practice by using data structures such as an OctoMap~\cite{octomap} \Nora{What can be achieved? sensing them? or knowing them? or the representation?}.
+Robots are unaware of the other robots' planned trajectories, and cannot communicate with each other.
 %Each robot can sense the position of their neighbors, but robots cannot communicate with each other.
-Each robot $i$ needs to execute a trajectory $\vf_i(t)$ where $\vf_i(t)$ is a solution to the following optimization problem:
+Each robot $i$ must execute a trajectory $\vf_i(t)$ where $\vf_i(t)$ is a solution to the following optimization problem:
 \begin{align}
 \begin{split}
     \text{minimize } & \int_{0}^{T_i}\left\|\vf_i(t)-\vo_i(t)\right\|^2 dt\\
@@ -214,13 +255,13 @@ Each robot $i$ needs to execute a trajectory $\vf_i(t)$ where $\vf_i(t)$ is a so
     &\vf_i(t) \text{ is}\text{ continuous up to degree $c$},\\
     &\frac{d^j\vf_i}{dt^j}(0) = \frac{d^j\vp_i}{dt^j}(0)\text{ for } j\in\{0,1,...,c\}\\
     &\vf_i(t)\text{ is collision free, and}\\ 
-    &\left\|\frac{d^j \vf_i(t)}{dt^j}\right\| \leq \gamma_j\text{ for all desired $j$s},\\
+    &\left\|\frac{d^k \vf_i(t)}{dt^k}\right\| \leq \gamma_k\text{ for all desired $k$},\\
     \text{where } & t\in [0,T_i].
 \end{split}
 \label{eq:problem:opt}
 \end{align}
 
-We approximately solve this problem iteratively using a dynamic receding horizon approach.
+We solve this problem approximately, using a dynamic receding horizon approach iteratively.
 At every iteration $K$, robot $i$ plans a trajectory $\vf^{K}_i(t)$ that starts at the robots' current position and is safe to execute up to period $\delta t$.
 %We adjust the planning horizon of $\vf^{K}_i(t)$ dynamically to avoid local minima.
 
@@ -236,7 +277,7 @@ At every iteration $K$, robot $i$ plans a trajectory $\vf^{K}_i(t)$ that starts 
 %     \cO&:\text{ free space representation of the environment},\\
 %     \{\vp_i\}&:\text{ set of positions of all robots},\\
 %     \gamma&: \text{ dynamic limits of robots in any derivation degree},\\
-%     &\ \ \ \ \gamma_j \text{ being the limit for $j^{th}$ derivation degree}\\
+%     &\ \ \ \ \gamma_j \text{ being the limit for $j\th$ derivation degree}\\
 %     \text{find a new}&\text{ trajectory $\vf^{i,K}(t)$ such that},\\
 %     \vf^{i,K}(t)&\text{ is}\text{ continuous up to degree $c$ for }t\in [0,\tau],\\
 %     \frac{d^j\vf^{i,K}}{dt^j}(0) &= \frac{d^j\vf^{i,K-1}}{dt^j}(\delta t)\text{ for } j\in\{0,1,...,c\}\\
@@ -249,28 +290,28 @@ At every iteration $K$, robot $i$ plans a trajectory $\vf^{K}_i(t)$ that starts 
 
 \section{Preliminaries}
 
-We now introduce important mathematical concepts and notations we use.
+This section introduces important mathematical concepts and notation that will be used throughout the paper.
 
-\subsection{Buffered Voronoi Cells} \label{bufferedVoronoi}
-Given a set of $m$ robots with positions $\vp_1,\vp_2,\ldots,\vp_m \in \R^n$ and radii $r_1,r_2,...r_m \in \R$, the buffered Voronoi cell $\cV_i$ of robot $i$ is defined as~\cite{bufferedVoronoiCells}:
+\subsection{Buffered Voronoi Cell} \label{bufferedVoronoi}
+Given a set of $m$ robots with positions $\vp_1,\vp_2,\ldots,\vp_m \in \R^n$ and radii $r_s \in \R$, the buffered Voronoi cell $\cV_i$ of robot $i$ is defined as~\cite{bufferedVoronoiCells}:
 \begin{align}
-    \cV_i &= \left\{\vp : \forall_{j\neq i} \frac{\vp_j-\vp_i}{\|\vp_j-\vp_i\|}\cdot \vp - \frac{\vp_j-\vp_i}{\|\vp_j-\vp_i\|}\cdot \frac{\vp_j+\vp_i}{2} + r_i\leq 0 \right\} \label{voronoi_cell_definition}
+    \cV_i &= \left\{\vp : \forall_{j\neq i} \frac{\vp_j-\vp_i}{\|\vp_j-\vp_i\|}\cdot \vp - \frac{\vp_j-\vp_i}{\|\vp_j-\vp_i\|}\cdot \frac{\vp_j+\vp_i}{2} + r_s\leq 0 \right\}, \label{voronoi_cell_definition}
 \end{align}
-where $\|\vp\|$ is the L2-norm of vector $\vp$.
+where $\|\vp\|$ is the L2-norm of the vector $\vp$.
 
-The inequality inside \eqref{voronoi_cell_definition} defines a hyperspace $\cS_i^j$ that is bounded by hyperplane $H_i^j$ that separates point $\vp_i$ from $\vp_j$ with normal $\valpha_i^j$ and distance along normal $\beta_i^j$ where $\valpha_i^j\in \R^n$ and $\beta_i^j\in \R$ such that
+The inequality inside \eqref{voronoi_cell_definition} defines a hyperspace $\cS_i^j$ bounded by hyperplane $\cH_i^j$ that separates point $\vp_i$ from $\vp_j$. $\cH_i^j$ has normal $\valpha_i^j \in \R^n$ and distance $\beta_i^j\in \R$ along $\valpha_i^j$ such that
 \begin{equation}
     \valpha_i^j = \frac{\vp_j - \vp_i}{\|\vp_j-\vp_i\|} \text{ and }
-    \beta_i^j = \valpha_i^j \cdot \left(\frac{\vp_i + \vp_j}{2}\right) - r_i.
+    \beta_i^j = \valpha_i^j \cdot \left(\frac{\vp_i + \vp_j}{2}\right) - r_s.
     \label{voronoiAlphaBeta}
 \end{equation}
 % \begin{align}
 %     \valpha_i^j &= \frac{\vp_j - \vp_i}{\|\vp_j-\vp_i\|}\label{voronoiAlpha}\\
-%     \beta_i^j &= \valpha_i^j \cdot \left(\frac{\vp_i + \vp_j}{2}\right) - r_i. \label{voronoiBeta}
+%     \beta_i^j &= \valpha_i^j \cdot \left(\frac{\vp_i + \vp_j}{2}\right) - r_s. \label{voronoiBeta}
 % \end{align}
 
 % The set of all buffered Voronoi cells is called the buffered Voronoi decomposition of the space.
-For a given buffered Voronoi decomposition of the space, any point $\vp\in \R^n$ can be inside at most one of the buffered Voronoi cells.
+For a given buffered Voronoi decomposition of the space, any point $\vp\in \R^n$ can be inside of at most one of the buffered Voronoi cells.
 We use this property in order to avoid robot-to-robot collisions.
 
 Using the hyperspaces $\cS_i^j$ we can reformulate $\cV_i$ as follows:
@@ -288,20 +329,20 @@ Using the hyperspaces $\cS_i^j$ we can reformulate $\cV_i$ as follows:
 %     \cV_i = \bigcap\limits_{j\neq i} \cS_i^j \label{voronoiEquation}.
 % \end{align}
 
-Thus, we can compute the buffered Voronoi cell of any robot $i$ as the set of hyperplanes $H_i^j$ in $O(m)$ time.
+Thus, we can compute the buffered Voronoi cell of any robot $i$ as the set of the hyperplanes $\cH_i^j$ in $O(m)$ time.
 
-\subsection{B\'ezier Curves} \label{bezierCurves}
-A degree $d$ B\'ezier curve $\vf(t)$ parametrized by duration $T$ is defined by $d+1$ control points $\vP_0, \vP_1, ..., \vP_d \in \R^n$ such that
+\subsection{B\'ezier Curve} \label{bezierCurves}
+A degree $d$ B\'ezier curve $\vf(t)$ implicitly parametrized by duration $T$ is defined by $d+1$ control points $\vP_0, \vP_1, ..., \vP_d \in \R^n$ such that
 \begin{align}
-    \vf(t; T) = \sum_{i=0}^d \vP_i {d\choose i}\left(\frac{t}{T}\right)^i\left(1-\frac{t}{T}\right)^{d-i},\hskip .5cm 0\leq t \leq T.
+    \vf(t) = \sum_{i=0}^d \vP_i {d\choose i}\left(\frac{t}{T}\right)^i\left(1-\frac{t}{T}\right)^{d-i},\hskip .5cm 0\leq t \leq T.
 \end{align}
 
 The curve starts at $\vP_0$ and ends at $\vP_d$, however does not interpolate other control points.
-A B\'ezier curve lies completely inside the convex hull of its control points~\cite{Bernstein}.
+A B\'ezier curve lies completely inside the convex hull of its control points~\cite{Bernstein};
 %This is called the \emph{convex hull property of B\'ezier curves}.
-We use this property to avoid robot-to-obstacle collisions.
+we leverage this property to avoid robot-to-obstacle collisions.
 
-We use splines as trajectories where each piece is a B\'ezier curve. Given a trajectory $\vf^{K}_i(t)$ for robot $i$ with $l$ pieces and duration $T^{K}_i$ at iteration $K$, $T^{K}_{i,j}$ denotes the duration of the $j^{th}$ piece where $j \in \{1,2,\ldots,l\}$. $\vf^{K}_{i,j}(t)$ denotes the $j^{th}$ piece of the trajectory with implicit duration parameter $T^K_{i,j}$ where $t\in[0, T^{K}_{i,j}]$. $\vP^{K}_{i,j,\rho}$ denotes the $\rho^{th}$ control point of the $j^{th}$ piece where $\rho \in \{0,1,\ldots,d\}$.
+We use splines as trajectories where each piece is a B\'ezier curve. Given a trajectory $\vf^{K}_i(t)$ for robot $i$ with $l$ pieces and duration $T^{K}_i$ at iteration $K$, $T^{K}_{i,j}$ denotes the duration of the $j\th$ piece where $j \in \{1,2,\ldots,l\}$. $\vf^{K}_{i,j}(t)$ denotes the $j\th$ piece of the trajectory with implicit duration parameter $T^K_{i,j}$ where $t\in[0, T^{K}_{i,j}]$. $\vP^{K}_{i,j,\rho}$ denotes the $\rho\th$ control point of the $j\th$ piece where $\rho \in \{0,1,\ldots,d\}$.
 
 
 % \subsection{Support Vector Machine}\label{svmSection}
@@ -316,8 +357,8 @@ We use splines as trajectories where each piece is a B\'ezier curve. Given a tra
 % We use SVMs to define collision free convex subspaces that are obstacle-free.
 
 \subsection{Trajectory Optimization using Quadratic Programming} \label{trajectoryOptimization}
-A part of our replanning approach utilizes \emph{quadratic programming} (QP) for trajectory optimization.
-The decision variables $\vx$ are all B\'ezier curve control points concatenated.
+Our replanning approach utilizes \emph{quadratic programming} (QP) for trajectory optimization.
+The decision variables $\vx$ are the concatenated B\'ezier curve control points.
 The overall structure of our quadratic optimization problem is as follows:
 \begin{align}
 \begin{split}
@@ -335,7 +376,7 @@ There are three types of constraints we impose on the curves: \emph{initial poin
 An initial point constraint on a B\'ezier curve requires the initial point of the curve to be equal to a given vector for a specified derivative. This translates to $n$ linear constraints on control points, $n$ being the dimension we are working in.
 A continuity constraint between curve $j$ and curve $j+1$ requires the end of curve $j$ to be equal to the beginning of curve $j+1$ at any order of differentiation.
 We take the vector difference of those values and require it to be equal to $\vzero$. This translates to $n$ linear constraints on control points.
-A hyperspace constraint requires all control points of a curve to be on a specific side of a hyperplane. If a curve has $d+1$ control points, this translates to $d+1$ constraints on control points. All 3 types of constraints are linear in control points, and the exact construction is discussed in a previous work~\cite{crazyplanning-ieeetro}.
+A hyperspace constraint requires all control points of a curve to be on a specific side of a hyperplane. If a curve has $d+1$ control points, this translates to $d+1$ constraints on control points. All 3 types of constraints are linear in control points. The construction is discussed in a previous work~\cite{crazyplanning-ieeetro}.
 
 % There are three types of constraints we impose on the curves: \emph{initial point constraints}, \emph{continuity constraints}, and \emph{hyperspace constraints}.
 
@@ -361,12 +402,17 @@ A hyperspace constraint requires all control points of a curve to be on a specif
 % TODO: running example?
 
 %\subsection{Approach Overview}
-Replanning is done at a fixed period of $\delta t$ and at each iteration $K$ we compute a trajectory $f^K_i(t)$.
+Replanning is done at a fixed period of $\delta t$.
+In each iteration $K$ that corresponds to the current time $\psi$, we sense the neighbors' positions to compute the buffered Voronoi cell $\cV_i$, update our current representation of the occupied space ($\cO_i$), and compute a trajectory $f^K_i(t)$.
 The planning horizon $\tau'$ is automatically adjusted, but the desired planning horizon $\tau$ can be provided.
-In the following, we assume that the robots are spherical with a uniform radius $r_s$.
+
+% In each planning iteration $K$ that corresponds to the current time $\psi$, we sense the neighbors' positions and compute the buffered Voronoi cell $\cV_i$.
+% We also assume that we have a current representation of the occupied space ($\cO_i$). Even if we use the complete occupation map in our examples, our method also works for local maps which can be constructed in practice by using LIDAR or RGB-D sensors.
+
 %The trajectory $f^K_i(t)$ is safe to execute at least up to time $\delta t$, and minimizes the deviation from the original trajectory $o_i(t)$.
 
-We execute the following three major components iteratively: \emph{discrete planning} that is used to efficiently plan around new obstacles, \emph{trajectory optimization} to generate smooth and collision-free trajectories, and \emph{temporal rescaling} to enforce the dynamic limits of the robot, see Fig.~\ref{fig:flowchart}.
+We execute the following three major components iteratively: \emph{discrete planning} that is used to efficiently plan around new obstacles, \emph{trajectory optimization} to generate smooth and collision-free trajectories, and \emph{temporal rescaling} to enforce the dynamic limits of the robot (see Fig.~\ref{fig:flowchart}).
+
 %In the beginning of each iteration, we check several conditions to decide if discrete planning is required.
 %If discrete planning is required, we execute a discrete search that results in a discrete path that is collision free but not smooth.
 %We use this discrete path as an initial guess in trajectory optimization.
@@ -379,7 +425,7 @@ We execute the following three major components iteratively: \emph{discrete plan
 %Thus, we check dynamic limit violations in the temporal rescaling stage that runs after optimization.
 %As long as dynamic limits are violated, we increase the durations of all trajectory pieces uniformly, followed by re-solving of the QP.
 
-%At the end of each iteration, each robot has its trajectory $\vf^{K}_i(t)$ that is guaranteed to be collision-free up to time $\delta t$, is continuous up to the $c^{th}$ derivative, obeys the dynamic limits of the robot, tries to stay close to the original trajectory, and is a good starting point for the next iteration. We execute this trajectory for a period of $\delta t$ and replan for the next iteration.
+At the end of each iteration, each robot has its trajectory $\vf^{K}_i(t)$ that is guaranteed to be collision-free up to time $\delta t$, is continuous up to the $c\th$ derivative, obeys the dynamic limits of the robot, tries to stay close to the original trajectory, and is a good starting point for the next iteration. We execute this trajectory for a period of $\delta t$ and replan for the next iteration.
 
 \begin{figure}
 \centering
@@ -457,32 +503,31 @@ We execute the following three major components iteratively: \emph{discrete plan
 
 \subsection{Discrete Planning} \label{discretePlanning}
 
-In each planning iteration $K$ that corresponds to the current time $\psi$, we sense the neighbors' positions and compute the buffered Voronoi cell $\cV_i(\psi)$.
-We also assume that we have a current representation of the occupied space ($\cO(\psi)$), which can be achieved in practice by using LIDAR or RGB-D sensors.
+
 
 Robot $i$ executes discrete planning if any of the following conditions are true:
 \begin{enumerate}
-    \item The original trajectory is not collision-free for the desired time horizon $\tau$, i.e., $\exists t\in [\psi,\psi+\tau] : R_i(\vo_i(t)) \cap \cO(\psi) \neq \emptyset$,
-    \item The first piece of the previously planned trajectory is outside the robot's buffered Voronoi cell, i.e., $\exists t\in [0, T^{K-1}_{i,1}] : \vf^{K-1}_{i,1}(t) \not\in \cV_i(\psi)$, or
-    \item The previously planned trajectory is not collision-free for the desired time horizon $\tau$, i.e., $\exists t\in [0,\tau] :  R_i(\vf^{K-1}_i(t)) \cap \cO(\psi) \neq \emptyset$.
+    \item The original trajectory is not collision-free for the desired time horizon $\tau$, i.e., $\exists t\in [\psi,\psi+\tau] : R(\vo_i(t)) \cap \cO_i \neq \emptyset$,
+    \item The first piece of the previously planned trajectory is outside the robot's buffered Voronoi cell, i.e., $\exists t\in [0, T^{K-1}_{i,1}] : \vf^{K-1}_{i,1}(t) \not\in \cV_i$, or
+    \item The previously planned trajectory is not collision-free for the desired time horizon $\tau$, i.e., $\exists t\in [0,\tau] :  R(\vf^{K-1}_i(t)) \cap \cO_i \neq \emptyset$.
 \end{enumerate}
-The first condition handles cases where previously unknown obstacles block the pre-planned path of a robot, the second case handles cases where previously unknown robots appear and robots move towards each other a lot, and the third condition handles numeric issues and dynamic obstacles.
+The first condition handles cases where previously unknown obstacles block the pre-planned path of a robot, the second condition handles cases where previously unknown robots appear and cases where robots are close and moving towards each other, and the third condition handles dynamic obstacles and numerical issues that resulted in a trajectory with collisions in the previous iteration. The main reason of these numerical issues is explained in Section~\ref{simulationSection}.
 
 Discrete planning uses a dynamic receding horizon approach. First, we find the earliest time $\tau'\in [\min(\tau, T_i-\psi), T_i-\psi]$ where the original trajectory is collision-free at time $\psi + \tau'$ with respect to both obstacles and other robots.
-Second, we use a discrete graph search to find a path from the robots current location to $\vo_i(\psi+\tau')$ that avoids both static obstacles and other robots.
-If $\tau'$ does not exist or no solution path exists, we skip the discrete planning stage and construct QP as if discrete planning was not required.
+Second, we use a discrete graph search to find a path from the robot's current location to $\vo_i(\psi+\tau')$ that avoids both static obstacles and other robots.
+If $\tau'$ does not exist or no solution path exists, we skip the discrete planning stage and construct the QP as if discrete planning was not required.
 Third, we use the first $l$ segments of the discrete path to uniformly place the new estimated control points on top of those segments.
 In case the discrete path has fewer than $l$ segments, the last discrete segment is shared between multiple B\'ezier curves.
 Finally, we adjust $T_{i,j}^K$ relative to the segment lengths and scale by $\tau'$, such that we would arrive at time $\psi+\tau'$ at $\vo_i(\psi+\tau')$ if we followed the discrete path with constant speed.
 To guarantee collision-free operation, we ensure that $T_{i,1}^K\geq \delta t$ in any case.
 
-An example is shown in Fig.~\ref{fig:swap2_2} (a). 
+An example is shown in Fig.~\ref{fig:swap2_2} (a), with parameters $l=4$ and $d=7$.
 Discrete planning is executed because the original trajectory (green dashed line) passes through an obstacle.
-The earliest time to avoid the obstacle $\tau'$ is found such that the green robot re-joins its original trajectory after the obstacle.
-A path that avoids both the static obstacle and the other (blue) robot is found (green dotted line) and has a total of six path segments.
-The first four ($l=4$) segments are used to place new guesses of B\'ezier control points (blue, green, red, and cyan circles).
-In this example, each curve has eight control points, although some of the points overlap.
-The duration for each B\'ezier curve $T^{K}_{i,j}$ is adjusted according to the path length; for example, the duration of the segment with the red control points ($T_{i,3}^K$) is approximately twice as long as the duration of the segment with the green control points ($T_{i,2}^K$).
+We find the earliest time $\tau'$ such that $R(\vo_g(\psi+\tau'))$ does not intersect with the obstacle and the blue robot where $g$ is the green robot. % such that the green robot re-joins its original trajectory after the obstacle.
+The discrete planner is then used to find a path  (green dotted line) that avoids both the static obstacle and the other (blue) robot, with a total of six path segments.
+The first four segments ($l=4$) are used to place new guesses of B\'ezier control points (blue, green, red, and cyan circles).
+Notice that since $d=7$, each curve has eight control points, while some of the points are overlapping.
+The duration $T^{K}_{i,j}$ for each B\'ezier curve is adjusted linearly according to its segment length; for example, the duration of the segment with the red control points ($T_{i,3}^K$) is approximately twice as long as the duration of the segment with the green control points ($T_{i,2}^K$).
 
 \begin{figure}
 \centering
@@ -544,45 +589,45 @@ Continuous trajectory split into four pieces and respective hyperspaces (b).
 % fig showing discrete plan and initial control points, color-coded by piece [might be just one figure]
 
 \subsection{Continuous Optimization}\label{continuousOptimization}
-We compute a new trajectory by formulating a quadratic optimization problem where the decision variables are the control points of the pieces concatenated together.
+We compute a new trajectory by formulating a quadratic optimization problem where the decision variables are the concatenated control points of the pieces.
+The parameters $d$ and $l$ of the pieces (see Section~\ref{bezierCurves}) are provided by the user.
 If discrete planning is not performed, initial guesses of the decision variables are copied from the previous iteration, and the durations $T^{K}_{i,j}$ are set uniformly to $\frac{\min(\tau,T_i-\psi)}{l}$.
 If discrete planning is performed, initial variables and durations are calculated from the discrete path as explained in Section~\ref{discretePlanning}.
 The objective that we minimize is defined as
 \begin{align}
-    \sum_{e=1}^{\cE} \lambda_e\int_{0}^{T^K_i} \left\|\frac{d^e\vf^{K}_i(t)}{dt^e}\right\|^2dt + \sum_{j=1}^{l} \theta_j \left\|\vP^{K}_{i,j,d} - \vchi_{j}\right\|^2 \label{costFunction}
+    \sum_{e=1}^{\cE} \lambda_e\int_{0}^{T^K_i} \left\|\frac{d^e\vf^{K}_i(t)}{dt^e}\right\|^2dt + \sum_{j=1}^{l} \theta_j \left\|\vP^{K}_{i,j,d} - \vchi_{j}\right\|^2, \label{costFunction}
 \end{align}
-where $\vchi_j$ is the point we want piece $j$ to end at.
+where $\vchi_j$ is the point  where we want piece $j$ to end.
 %Refer to Section~\ref{bezierCurves} for the B\'ezier curve notation we use.
-
-The first term of the objective is the combination of integrated squared derivatives up to degree $\cE$ with weights $\lambda_e$ \cite{crazyplanning-ieeetro}. It minimizes the energy through curve. %richterISRR
-The second term of the objective penalizes deviation from given end points for each piece of the trajectory with different weights $\theta_j$.
-In case discrete planning is performed, we attempt to get to the position of the last guessed control point, i.e., we set $\theta_l$ to a positive value, enforcing $\vP^K_{i,l,d} = \vchi_l$, and $\theta_j = 0, \forall j < l$.
+The first term of the objective minimizes the energy along the trajectory, and is the combination of integrated squared derivatives up to degree $\cE$ with weights $\lambda_e$ \cite{crazyplanning-ieeetro}. %richterISRR
+The second term of the objective penalizes deviation from the given end points for each piece of the trajectory with different weights $\theta_j$.
+In case discrete planning is performed, we attempt to get to the position of the last guessed control point, i.e., we set $\theta_l$ to a positive value, enforcing $\vP^K_{i,l,d} = \vchi_l$, and $\theta_j = 0,\,\forall j < l$.
 If discrete planning is not performed, we attempt to stay as close as possible to the original trajectory, i.e.,  we set $\theta_1 = 0$, and $\theta_j, \forall j \geq 2$ to positive values (increasing with $j$) and $\vchi_j = \vo_i(\psi + \sum_{u=1}^j T^{K}_{i,u})$.
 %If discrete planning is not performed, we require end points of each piece to get closer to the robot's position at corresponding times if it had followed the original trajectory, weighing each piece more than the previous one.
 %This is an approximation we make for the cost function defined in \eqref{eq:problem:opt}.
-Matrix $H$ (see Section~\ref{trajectoryOptimization}) can be constructed for the first term of our objective~\cite{crazyplanning-ieeetro}.
+The matrix $H$ (see Section~\ref{trajectoryOptimization}) for the first term of our objective can be constructed as in our previous work~\cite{crazyplanning-ieeetro}.
 %The construction of matrix $H$, as defined in Section~\ref{trajectoryOptimization}, for the first term of our objective function is explained in \cite{crazyplanning-ieeetro}.
 The second term is a quadratic function of the control points; hence it is straightforward to construct the $H$ matrix and the $\vg$ vector.
 
-For robot-to-robot collision avoidance, the buffered Voronoi hyperplanes are computed according to \eqref{voronoiAlphaBeta} and $m-1$ hyperspace constraints are added for the first piece.
+For robot-robot collision avoidance, the buffered Voronoi hyperplanes are computed according to \eqref{voronoiAlphaBeta} and $m-1$ hyperspace constraints are added for the first piece.
 % . For each control point of the first piece, we add $m-1$ hyperspace constraints as
 % \begin{align}
 %     \alpha_i^j \cdot \vP^{K}_{i,1,\rho} \leq \beta_i^j, \rho \in \{0,1,...,d\}, j \in \{1,2,...,m\}\setminus\{i\}.
 % \end{align}
 These constraints ensure that the first piece stays inside $\cV_i$ because of the convexity of $\cV_i$ and the convex hull property of B\'ezier curves.
-As long as $T^{K}_{i,1} \geq \delta t$ and all other robots stay inside their Voronoi cells up to time $\delta t$, we can be sure that no robot-to-robot collision will occur up to time $\delta t$.
+As long as $T^{K}_{i,1} \geq \delta t$ and all other robots stay inside their Voronoi cells up to time $\delta t$, we can be sure that no robot-robot collision will occur up to time $\delta t$.
 
-For robot-obstacle collision avoidance we compute separating hyperplanes between convex obstacles $\cO(\psi)$ for each curve piece $j$.
-Let $M_j^b$ be the separating hyperplane between the initially guessed control points of the $j^{th}$ piece from the $b^{th}$ obstacle obtained from $\cO(\psi)$. That can, for example, be computed using support vector machines~\cite{SVM}.
+For robot-obstacle collision avoidance we compute separating hyperplanes between convex obstacles $\cO_i$ for each curve piece $j$.
+Let $M_j^b$ be the separating hyperplane between the initially guessed control points of the $j\th$ piece from the $b\th$ obstacle obtained from $\cO_i$ (these can be computed, e.g., using support vector machines~\cite{SVM}).
 We shift each hyperplane towards its obstacle and than shift it back using the radius $r_s$ to account for the physical extent of the robot.
-We add hyperspace constraints as before requiring control points of the $j^{th}$ piece in the non-occupied side of each hyperplane $M_j^b$
-These constraints ensure that no robot-to-obstacle constraint will occur up to time $\tau'$.
+We add hyperspace constraints as before, requiring control points of the $j\th$ piece in the non-occupied side of each hyperplane $M_j^b$.
+These constraints ensure that no robot-obstacle constraint will occur up to time $\tau'$.
 In case discrete planning was executed, we additionally treat other robots as static obstacles.
-Fig.~\ref{fig:swap2_2} (b) shows the effective set of hyperspaces for our example.
+Fig.~\ref{fig:swap2_2}(b) shows the effective set of hyperspaces for our example.
 
-Moreover, we add continuity constraints that enforce continuity requirement between pieces. Then, we add initial point constraints that enforce continuity requirements in the beginning that ensures continuity between iterations.
+Moreover, we add continuity constraints that enforce the continuity requirement between pieces and initial point constraints that enforce continuity requirements between iterations.
 
-All constraints are linear and matrix $A$ and its bounds can be constructed as explained in Section~\ref{trajectoryOptimization}.
+All constraints are linear and matrix $A$ and its bounds can be constructed as in Section~\ref{trajectoryOptimization}.
 The number of decision variables in our QP is $l(d+1)n$.
 Let $\uptheta'$ describe the number of considered static obstacles, i.e., $\uptheta'$ is equal to $\uptheta + (m-1)$ if discrete planning was performed and $\uptheta$ otherwise.
 We add $(m-1)(d+1) + \uptheta' l(d+1) + (c+1)nl$ linear constraints, where the terms refer to the Voronoi hyperspace, obstacle hyperspace, and continuity constraints, respectively.
@@ -608,7 +653,7 @@ For our example in Fig.~\ref{fig:swap2_2}, we have $n=2$, $m=2$, $d=7$, $l=4$, a
 
 \subsection{Temporal Rescaling}  \label{temporalRescaling} % might be part of overview
 Since we use fixed durations of the pieces and do not account for the dynamic limits of the robot during optimization, the resulting trajectory may violate the dynamic limits of the robot.
-After trajectory optimization, we calculate the maximum magnitudes $\Gamma_j$ of $j^{th}$ derivatives of the curve, and check if there exists a $j$ such that $\Gamma_j > \gamma_j$, where $\gamma_j$ is the dynamic limit of the robot in $j^{th}$ derivation degree.
+After trajectory optimization, we calculate the maximum magnitudes $\Gamma_k$ of the $k\th$ derivatives of the curve, and check if there exists a $k$ such that $\Gamma_k > \gamma_k$, where $\gamma_k$ is the dynamic limit of the robot in the $k\th$ derivation degree.
 If that is the case, we uniformly scale the piece durations $T^K_{i,j}$, and re-run the trajectory optimization with the same exact constraints using the previous result as the initial guess.
 If the dynamic limits are not violated, no temporal rescaling is needed and the trajectory is feasible.
 
@@ -617,10 +662,10 @@ If the dynamic limits are not violated, no temporal rescaling is needed and the 
 
 \subsection{Theoretical Guarantees} %maybe
 
-For robot-robot collision avoidance our approach uses buffered Voronois cells and retains the same theoretical guarantee, that we first restate here:
-If robots start in a collision free configuration (that is, $\|\vp_i - \vp_j\| \geq 2r_s, \forall i\neq j$), then all future configurations are collision-free.
+For robot-robot collision avoidance our approach uses buffered Voronoi cells and retains the same theoretical guarantee, that we restate here:
+if robots start in a collision free configuration (that is, $\|\vp_i - \vp_j\| \geq 2r_s, \forall i\neq j$), then all future configurations are collision free.
 
-However, this has only been proven in the case of synchronous robot execution, if robots have first-order integrator dynamics ($c=0$), and if they execute their trajectories perfectly~\cite{bufferedVoronoiCells}.
+However, this guarantee has only been proven for the case of synchronous robot execution, if robots have first-order integrator dynamics ($c=0$), and if they execute their trajectories perfectly~\cite{bufferedVoronoiCells}.
 We cannot provide formal guarantees under arbitrary disturbances.
 However, our QP formulation allows us to easily detect failure cases because we model all safety-critical parts as hard constraints.
 
@@ -645,7 +690,7 @@ Nevertheless, our approach works in practice for robots with higher-order dynami
 
 % \begin{lemma}
 % \label{lemma:hyperplanes}
-% In each iteration $K$, there exist separating hyperplanes $M_j^b$ that separate the initially guessed control points of the $j^{th}$ piece from the $b^{th}$ obstacle.
+% In each iteration $K$, there exist separating hyperplanes $M_j^b$ that separate the initially guessed control points of the $j\th$ piece from the $b\th$ obstacle.
 % \end{lemma}
 % \begin{proof}
 % We consider two cases.
@@ -702,11 +747,11 @@ Nevertheless, our approach works in practice for robots with higher-order dynami
 % % see if we can formally get collision-free behavior (maybe only for synchronous execution) [see stanford paper]
 % % might be able to account for possible faceshift
 
-\section{Evaluation}
+\section{Evaluation} \label{evaluationSection}
 
 We implement our approach in C\texttt{++}.
 We use an occupancy grid as environment representation, because previous work has shown that such data structures can be updated in real-time on robots that are equipped with a LIDAR sensor or a RGB-D camera.
-In particular, OctoMap~\cite{octomap} is an octree-based 3D occupancy grid that can be run on UAVs at at least \SI{4}{Hz} update rate~\cite{replanning-eth}.
+In particular, OctoMap~\cite{octomap} is an octree-based 3D occupancy grid that can be run on UAVs with at least \SI{4}{Hz} update rate~\cite{replanning-eth}.
 OctoMaps are memory efficient, but update operations can show high execution time variance.
 For local replanning, occupancy grids using ring buffers as data structures have been shown to achieve near constant execution time~\cite{replanning-usenko}.
 Our implementation uses a simple pre-initialized 2D occupancy grid such that future implementations could leverage existing OctoMap or occupancy ring buffer libraries.
@@ -717,8 +762,8 @@ As QP solvers we test with qpOASES~\cite{qpOASES} and OSQP~\cite{osqp}; both are
 % TODO: figure out if there is some baseline (look at buffered vornoi paper)
 % different use-case examples (see README.md)
 
-\subsection{Simulation}
-We test our algorithm in a simulation running on a laptop computer (i7-4700MQ \SI{2.4}{GHz}, \SI{16}{GB}) with Ubuntu 16.04 operating system.
+\subsection{Simulation}\label{simulationSection}
+We test our algorithm in a simulation running on a laptop computer (i7-4700MQ \SI{2.4}{GHz}, \SI{16}{GB}) with Ubuntu 16.04 as operating system.
 
 % table1: scalability: #curves, #obstacles, #robots (voronoi constraint), qp-solver
 % (one example (16 case or generate larger w/ 32))
@@ -728,7 +773,7 @@ Our algorithm scales well with the number of robots.
 In terms of number of curves, our algorithm has almost the same performance up to $l=10$. For the simulations and physical experiments we did, we never needed more than $l=4$.
 The bottleneck of our algorithm is the number of occupied cells in the occupancy grid. However, as it can be seen in Table~\ref{tab:obstacleCountScalability}, our algorithm still has real-time capability when considering hundreds of occupied cells, assuming a \SI{10}{Hz} execution.
 When we use OSQP instead of qpOASES, our implementation takes significantly more time if we consider many obstacles.
-For example, when we do experiment $9$ using OSQP, it takes \SI{297}{ms} on average.
+For example, when we do experiment $7$ using OSQP, it takes \SI{297}{ms} on average.
 
 \begin{table}[!htb]% 
 \begin{minipage}{.3\textwidth}
@@ -737,11 +782,11 @@ For example, when we do experiment $9$ using OSQP, it takes \SI{297}{ms} on aver
         \hline
          \#&$l$&$\uptheta$ &$m$&$t_{avg}(ms)$  \\ \hline
          %1 & $1$ & $0$ & $4$ &$10$\\ \hline
-         2 & $4$ & $0$ & $4$ & $10$\\ \hline
-         3 & $8$ & $0$ & $4$ & $15$\\ \hline
-         4 & $10$ & $0$ & $4$ & $13$ \\ \hline
-         5 & $12$ & $0$ & $4$ & $27$ \\ \hline
-         6 & $16$ & $0$ & $4$ & $107$ \\ \hline
+         1 & $4$ & $0$ & $4$ & $10$\\ \hline
+         2 & $8$ & $0$ & $4$ & $15$\\ \hline
+         3 & $10$ & $0$ & $4$ & $13$ \\ \hline
+         4 & $12$ & $0$ & $4$ & $27$ \\ \hline
+         5 & $16$ & $0$ & $4$ & $107$ \\ \hline
          \multicolumn{5}{c}{}\\
     \end{tabular}
     \caption{Runtime with varying curve count $l$.}
@@ -754,11 +799,11 @@ For example, when we do experiment $9$ using OSQP, it takes \SI{297}{ms} on aver
         \hline
          \#&$l$&$\uptheta$ &$m$&$t_{avg}(ms)$  \\ \hline
          %7 & $4$ & $2$ & $4$ &$9$\\ \hline
-         8 & $4$ & $4$ & $4$ & $9$ \\ \hline
-         9 & $4$ & $62$ & $4$ & $28$ \\ \hline
-         10 & $4$ & $196$ & $4$ & $47$  \\ \hline
-         11 & $4$ & $213$ & $4$ & $69$  \\ \hline
-         12 & $4$ & $1250$ & $4$ & $253$  \\ \hline
+         6 & $4$ & $4$ & $4$ & $9$ \\ \hline
+         7 & $4$ & $62$ & $4$ & $28$ \\ \hline
+         8 & $4$ & $196$ & $4$ & $47$  \\ \hline
+         9 & $4$ & $213$ & $4$ & $69$  \\ \hline
+         10 & $4$ & $1250$ & $4$ & $253$  \\ \hline
          \multicolumn{5}{c}{}\\
     \end{tabular}
     \caption{Runtime with varying occupied cells $\uptheta$.}
@@ -771,11 +816,11 @@ For example, when we do experiment $9$ using OSQP, it takes \SI{297}{ms} on aver
         \hline
          \#&$l$&$\uptheta$ &$m$&$t_{avg}(ms)$  \\ \hline
          %13 & $4$ & $5$ & $2$ &$10$\\ \hline
-         14 & $4$ & $5$ & $4$ &$9$\\ \hline
-         15 & $4$ & $5$ & $8$ & $10$ \\ \hline
-         16 & $4$ & $5$ & $16$ & $13$ \\ \hline
-         17 & $4$ & $5$ & $32$ & $15$  \\ \hline
-         18 & $4$ & $5$ & $64$ & $14$  \\ \hline
+         11 & $4$ & $5$ & $4$ &$9$\\ \hline
+         12 & $4$ & $5$ & $8$ & $10$ \\ \hline
+         13 & $4$ & $5$ & $16$ & $13$ \\ \hline
+         14 & $4$ & $5$ & $32$ & $15$  \\ \hline
+         15 & $4$ & $5$ & $64$ & $14$  \\ \hline
          \multicolumn{5}{c}{}\\
     \end{tabular}
     \caption{Runtime with varying robot count $m$.}
@@ -783,34 +828,68 @@ For example, when we do experiment $9$ using OSQP, it takes \SI{297}{ms} on aver
 \end{minipage}
 \end{table}
 
+
+% experiments 17, 19 and physical
+\begin{figure}
+\centering
+%\subfloat[Discrete path around an obstacle and other robot back to the original trajectory.]{
+\includegraphics[width=0.18\textwidth]{images/ex_16.pdf}
+%\label{fig:swap2:discrete}
+%}
+\hfill
+%\subfloat[Continuous trajectory split into four pieces and respective hyperspaces.]{
+\includegraphics[width=0.4\textwidth]{images/ex_17.pdf}
+%\label{fig:swap2:cont}
+%}
+% \begin{subfigure}[t]{0.48\textwidth}
+% \centering
+% \includegraphics[width=1.0\textwidth]{images/swap2_discrete.pdf}
+% \caption{Discrete path around an obstacle and other robot back to the original trajectory.}
+% \label{fig:swap2:discrete}
+% \end{subfigure} \hfill
+% \begin{subfigure}[t]{0.48\textwidth}
+% \centering
+% \includegraphics[width=1.0\textwidth]{images/swap2_cont_red.pdf}
+% \caption{Continuous trajectory split into four pieces and respective hyperspaces.}
+% \label{fig:swap2:cont}
+% \end{subfigure}
+\hfill
+\includegraphics[width=0.40\textwidth]{images/ex_18.pdf}
+\hfill
+\includegraphics[width=0.40\textwidth]{images/ex_19.pdf}
+\caption{
+TODO
+}
+\label{fig:swap2_2}
+\end{figure}
+
 We also compare our method (RME) to two ORCA variants.
 We use the RVO2 library~\cite{orca} and set the preferred velocities at time $\psi$ to $\vo_i'(\psi)$ if $\vp(\psi)\approx \vo_i(\psi)$ or to $\frac{\vo_i(\psi) - \vp(\psi)}{\delta t}$ otherwise.
-In order to improve the behavior with obstacles, we combine ORCA in a different set of experiments with our discrete planning method (denoted as ORCA*).
-We use $l=4$ as the number of curves, and $d+1=8$ as the degree of B\'ezier curves.
+In order to improve the behavior with obstacles, we combine ORCA in a different set of experiments with our discrete planning method (denoted as DS+ORCA).
+We use $l=4$ as the number of curves, and $d=7$ as the degree of B\'ezier curves.
 For RME we use $\delta t = \SI{0.1}{s}$ and for the ORCA variants $\delta t = \SI{0.01}{s}$.
-All algorithms are given more time (no more than $20$ seconds in each case) than the original plans to complete because of the introduction of new obstacles to the environment.
+All algorithms are given more time than the original plans to complete because of the introduction of new obstacles to the environment.
 The results are summarized in Table~\ref{tab:rvo2Comparison}.
 Our method takes more time in computation, however is significantly better at avoiding collisions.
 All robots using RME reach their destinations, while robots using ORCA can get stuck as seen in all examples.
-Also, robots using ORCA are in invalid configurations (collisions) as much as 49\% of the time, while robots using RME are almost never in invalid configurations.
+Also, robots using ORCA appear in invalid configurations (collisions) as much as 49\% of the time, while robots using RME are almost never in invalid configurations.
 Invalid configurations in RME occur because of numerical problems particularly in seperating hyperplane calculations between robots and obstacles.
 We also note that ORCA does not provide the same smoothness guarantees ($c=0$, i.e., velocities can jump between iterations) and that it requires to sense the other robot's velocities instead of positions only.
 A video showing some examples is available at \url{TODO}.
-
 \begin{table}
     \centering
-    \begin{tabular}{ |l|  c|  c | c | c | c| c| c| c| c| c| r| }
-      \cline{4-12}
-       \multicolumn{3}{c|}{} & \multicolumn{3}{c| }{ORCA} & \multicolumn{3}{c| }{ORCA*} & \multicolumn{3}{c|}{RME}\\ \hline
-      \# & $m$ &  $\uptheta$ & $t_{avg}(ms)$ & $\text{v}_{min}(\%)$ & $s$ & $t_{avg}(ms)$ & $\text{v}_{min}(\%)$ & $s$ & $t_{avg}(ms)$ & $\text{v}_{min}(\%)$ & $s$ \\ \hline
-      $1$ & $4$ & $2$ & $<1$ & $62$ & $2$ & $<1$ & $99$ & $3$ & $9$ & $100$ & $4$\\ \hline
-      $2$ & $6$ & $5$ & $<1$ & $66$ & $5$ & $<1$ & $63$ & $5$ & $10$ & $100$ & $6$\\ \hline
-      $3$ & $8$ & $5$ & $<1$ & $59$ & $5$ & $<1$ & $71$ & $8$ & $10$ & $98$ & $8$\\ \hline
-      $4$ & $16$ & $2$ & $<1$ & $57$ & $14$ & $<1$ & $57$ & $13$ & $11$ & $100$ & $16$\\ \hline
-      $5$ & $16$ & $5$ & $<1$ & $51$ & $13$ & $<1$ & $57$ & $11$ & $14$ & $98$ & $16$\\ \hline
+    \begin{tabular}{ |l|  c|c|  p{30mm} | c | c | c| c| c| c| c| c| r| }
+      \cline{5-13}
+       \multicolumn{4}{c|}{} & \multicolumn{3}{c| }{ORCA} & \multicolumn{3}{c| }{DS+ORCA} & \multicolumn{3}{c|}{RME}\\ \hline
+      \# & $m$ &  $\uptheta$ & description&  $t_{avg}(ms)$ & ? & $s$ & $t_{avg}(ms)$ & ? & $s$ & $t_{avg}(ms)$ & ? & $s$ \\ \hline
+      $16$ & $2$ & $4$ & \noindent\parbox[c]{\hsize}{\vspace{.2\baselineskip}$2$ robots tries to swap  positions with an obstacle in the middle\vspace{.2\baselineskip}} & $<1$ & $ $ & $0$ & $<1$ & $ $ & $2$ & $8$ & $ $ & $2$\\ \hline
+      $17$ & $4$ & $12$ & \noindent\parbox[c]{\hsize}{\vspace{.2\baselineskip}$4$ robots tries to swap positions with a u-shaped obstacle in the middle\vspace{.2\baselineskip}} & $<1$ & $ $ & $0$ & $<1$ & $ $ & $4$ & $11$ & $ $ & $4$\\ \hline
+      $18$ & $16$ & $12$ &\noindent\parbox[c]{\hsize}{\vspace{.2\baselineskip}$16$ robots tries to swap positions with a u-shaped obstacle in the middle\vspace{.2\baselineskip}} & $<1$ & $ $ & $15$ & $<1$ & $ $ & $15$ & $14$ & $ $ & $16$\\ \hline
+      $19$ & $16$ & $9$ &\noindent\parbox[c]{\hsize}{\vspace{.2\baselineskip}$16$ robots tries to swap positions with $3$ obstacles in the middle\vspace{.2\baselineskip}}& $<1$ & $ $ & $13$ & $<1$ & $ $ & $14$ & $16$ & $ $ & $16$\\ \hline
+      $20$ & $16$ & $5$ &desc& $<1$ & $ $ & $13$ & $<1$ & $ $ & $12$ & $14$ & $ $ & $16$\\ \hline
       \multicolumn{12}{c}{} \\
     \end{tabular}
-    \caption{Comparison of RME with ORCA and ORCA* with respect to average computation time ($t_{avg}$), percentage of the worst-case robot being collision-free ($v_{min}$), and number of robots that reach their destinations eventually ($s$).
+    \caption{Comparison of RME with ORCA and DS+ORCA with respect to average computation time ($t_{avg}$), percentage of the worst-case robot being collision-free ($v_{min}$), and number of robots that reach their destinations eventually ($s$).
     %$m$ is the number of robots, $O$ is the number of occupied cells in the occupancy grid with grid size of $0.5$ meters.
     %$t_{avg}$ is the average time of computation in each iteration, $v_{min}$ is the minimum percentage of being in a collision-free (valid) configuration among all robots, and $s$ is the number of robots that reach to their destinations in the end.
     }
@@ -851,7 +930,7 @@ Many extensions of the RVO method have been proposed, see \cite{epsilonCCA} for 
 Buffered Voronoi Cells (BVC)~\cite{bufferedVoronoiCells} compute the safe configuration space for a robot by its Voronoi cell shifted by the physical extent of the robot. 
 Safety barrier certificates achieves collision-free operation by modifying a user-specified controller such that no collision can occur~\cite{barrierCertificates}.
 %The three approaches are decentralized and require only position (BVC and safety barrier certificates) or position and velocity estimates (RVO) of their neighbors.
-Our robust motion execution approach uses cooperative collision avoidance at its core (specifically BVC), while extending it to minimize the difference to the original trajectories (rather than just a preferred velocity as in \cite{epsilonCCA}, preferred control input as in \cite{barrierCertificates}, or difference over a fixed time horizon as in \cite{bufferedVoronoiCells}.
+Our robust motion execution approach uses cooperative collision avoidance at its core (specifically BVC), while extending it to minimize the difference to the original trajectories (rather than just a preferred velocity as in \cite{epsilonCCA}, preferred control input as in \cite{barrierCertificates}, or difference over a fixed time horizon as in \cite{bufferedVoronoiCells}.)
 
 %Our real-time planning is inspired by our previous work on offline planning for robotic teams~\cite{crazyplanning-ieeetro}.
 %Here, a map of the environment, the specification of the robots, and the robots' start and goal locations are given.
@@ -892,8 +971,8 @@ In contrast, our approach shifts the existing trajectory whenever possible, whil
 
 \section{Conclusion}
 
-We present robust motion execution, a framework that takes pre-planned trajectories as input and compensates for a variety of dynamic changes, including imperfect motion execution, newly appearing obstacles, robots breaking down, or external disturbances.
-Our approach does not require communication between the robots and provides formal collision guarantees for simple robot models.
+We present a method for robust motion execution that takes pre-planned trajectories as input and compensates for a variety of dynamic changes, including imperfect motion execution, newly appearing obstacles, robots breaking down, or external disturbances.
+Our approach does not require communication between the robots.
 We use a novel planning strategy employing both discrete planning and trajectory optimization with a dynamic receding horizon approach.
 We demonstrate in simulation and on physical robots that we can generate smooth trajectories in real-time, while avoiding collisions and deadlocks more successfully compared to ORCA.
 
