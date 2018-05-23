@@ -10,7 +10,7 @@ bezierfile = sys.argv[1]
 
 cpts = []
 
-with open(bezierfile, "r") as csvfile:
+with open(bezierfile, "rb") as csvfile:
     reader = csv.reader(csvfile, delimiter=",")
     first_row = True
     for row in reader:
@@ -60,6 +60,7 @@ for idx,curve in enumerate(cpts):
     (x,y) = gencurve(curve)
     plt.plot(x, y, color = colors[idx%len(colors)], lw=2)
     i = 0
+    print curve
     while i < len(curve):
         plt.plot(curve[i],curve[i+1], color=colors[idx%len(colors)], marker='o', alpha=0.5)
         i+=2

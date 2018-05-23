@@ -40,6 +40,7 @@ vectoreuc vectoreuc::operator/(const double& s) {
   return res;
 }
 
+
 vectoreuc vectoreuc::normalized() {
   vectoreuc res(crds.size());
   double length = 0;
@@ -53,7 +54,7 @@ vectoreuc vectoreuc::normalized() {
   return res;
 }
 
-double vectoreuc::dot(vectoreuc& rhs) {
+double vectoreuc::dot(vectoreuc& rhs) const {
   double res = 0;
   for(int i=0; i<crds.size(); i++) {
     res += crds[i] * rhs[i];
@@ -77,4 +78,18 @@ double vectoreuc::L2norm() {
     length += crds[i] * crds[i];
   }
   return sqrt(length);
+}
+
+void vectoreuc::zero() {
+  for(int i=0; i<crds.size(); i++)
+    crds[i] = 0;
+}
+
+
+vectoreuc vectoreuc::operator*(double rhs) {
+  vectoreuc res(crds.size());
+  for(int i=0; i<res.size(); i++) {
+    res[i] = rhs * crds[i];
+  }
+  return res;
 }

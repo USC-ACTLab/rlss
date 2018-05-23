@@ -4,6 +4,9 @@
 
 using namespace std;
 
+trajectory::trajectory() {
+
+}
 
 void trajectory::add_curve(curve& crv) {
   curves.push_back(crv);
@@ -44,6 +47,7 @@ vectoreuc trajectory::neval(double t, int n) {
   pair<int, double> cdata = curvedata(t);
   int i = cdata.first;
   t = cdata.second;
+
 
   return curves[i].neval(t, n);
 }
@@ -110,4 +114,13 @@ pair<int, double> trajectory::curvedata(double t) {
   }
 
   return make_pair(i, t);
+}
+
+double trajectory::duration() const
+{
+  double result = 0.0;
+  for (const auto& curve : curves) {
+    result += curve.duration;
+  }
+  return result;
 }

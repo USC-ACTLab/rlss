@@ -18,8 +18,9 @@ class obstacle2D {
     bool left_turn(int idx1, int idx2, int idx3);
     void print_current_hull();
     void convex_hull();
-    void ch_planes();
+    void ch_planes(double shift);
     bool point_inside(vectoreuc& pt);
+    bool point_inside(vectoreuc& pt, double shift);
     double closest_distance(vectoreuc& pt); // should be called only when point is inside
     double biggest_negative_distance(vectoreuc& pt); // should be called only when point is outside
 };

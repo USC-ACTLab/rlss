@@ -7,6 +7,8 @@ using namespace std;
 class trajectory {
   public:
       vector<curve> curves;
+
+      trajectory();
       void add_curve(curve& crv);
       curve& operator[](int idx);
       int size();
@@ -21,5 +23,7 @@ class trajectory {
       trajectory& operator-=(const trajectory& rhs);
       /*index of the curve and time on the curve for given time*/
       pair<int, double> curvedata(double t);
+
+      double duration() const;
 };
 #endif

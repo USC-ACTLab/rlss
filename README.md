@@ -3,7 +3,7 @@
 ### To build the project
 
 ```
-sudo apt install libnlopt-dev coinor-libipopt-dev
+sudo apt install libeigen3-dev
 mkdir build
 cd build
 cmake ..
@@ -89,12 +89,18 @@ https://www.jstage.jst.go.jp/article/jrsj/32/6/32_32_536/_pdf
 ### Standard cases
 
 * Obstacle appears for one (or multiple) robots
-* One robot breaks down (suddenly stobs on its trajectory)
+* One robot breaks down (suddenly stops on its trajectory)
 * One robot gets moved externally (e.g., temporary control issue, wind gust etc.)
 * Obstacle no longer present
+* U-shape obstacle example
 
 ### Hard cases
 
 * Moving obstacle
 * New robot participates that was unaware of other robots (e.g, head-to-head collision)
 
+## TODO
+
+* try osqp instead of cvxgen for numerical stability?
+* automatic test/movie generation?
+* add soft margin to objective to improve numerical stability?

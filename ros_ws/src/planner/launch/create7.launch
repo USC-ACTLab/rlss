@@ -1,0 +1,81 @@
+<?xml version="1.0"?>
+
+<launch>
+  <arg name="port" default="/dev/ttySAC0" />
+  <arg name="server" default="vicon"/>
+
+  <node name="driver" pkg="create2_driver" type="create2_driver_node" output="screen">
+    <param name="port" value="$(arg port)" />
+    <param name="brcPin" value="24" />
+    <param name="useBrcPin" value="true" />
+  </node>
+
+  <node name="controller" pkg="create2_controller" type="trajectory_controller" output="screen">
+    <param name="frame" value="create7" />
+    <param name="parentFrame" value="world" />
+    <param name="Kx" value="5.0" />
+    <param name="Ky" value="10.0" />
+    <param name="Ktheta" value="40.0" />
+  </node>
+
+  <node pkg="vrpn_client_ros" type="vrpn_client_node" name="vrpn_client_node" output="screen">
+    <rosparam subst_value="true">
+      server: $(arg server)
+      port: 3883
+
+      update_frequency: 100.0
+      frame_id: world
+
+      # Use the VRPN server's time, or the client's ROS time.
+      use_server_time: false
+      broadcast_tf: true
+
+      # Must either specify refresh frequency > 0.0, or a list of trackers to create
+      refresh_tracker_frequency: 2.0
+      #trackers:
+      #- FirstTracker
+      #- SecondTracker
+    </rosparam>
+  </node>
+
+  <node name="planner" pkg="planner" type="planner" output="screen">
+    <rosparam>
+      trajectory: "/home/odroid/robustMotionExecution/mr-trajectory-replanning/test_data/trajectories/swapCircle6/agent3_bezier.csv"
+      scale_traj: 1.2
+      obstacles: "/home/odroid/robustMotionExecution/mr-trajectory-replanning/test_data/obstacles/swapCircle6/"
+      robots: [
+        create7,
+        create1,
+        create2,
+        create4,
+        create5,
+        create9
+      ]
+      robot_id: 0
+      robot_radius: 0.22
+      cell_size: 0.25
+      v_max: 0.4
+      a_max: 1
+      replan_period: 0.1
+      set_max_time_as_replan_period: true
+      planning_horizon: 5
+      plan_for_curves: 3
+      problem_dimension: 2
+      points_per_curve: 8
+      continuity_upto_degree: 2
+      enable_voronoi: true
+      output_file: "res.json"
+      print_dt: 0.01
+      algorithm: "QPOASES"
+      lambda_hyperplanes: 0.00
+      lambda_min_der: 10.0
+      lambda_min_der_vel: 1.0
+      lambda_min_der_acc: 0.75
+      lambda_min_der_jerk: 0.0
+      lambda_min_der_snap: 0.0
+      scaling_multiplier: 2.0
+      outFile: "/home/odroid/robustMotionExecution/mr-trajectory-replanning/ros_ws/log.yaml"
+    </rosparam>
+  </node>
+
+</launch>

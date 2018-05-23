@@ -1,0 +1,15 @@
+[submodule "lib/libsvm"]
+	path = lib/libsvm
+	url = https://github.com/cjlin1/libsvm
+[submodule "lib/qpOASES"]
+	path = lib/qpOASES
+	url = https://github.com/whoenig/qpOASES.git
+[submodule "lib/osqp"]
+	path = lib/osqp
+	url = https://github.com/oxfordcontrol/osqp.git
+[submodule "lib/RVO2"]
+	path = lib/RVO2
+	url = https://github.com/snape/RVO2.git
+[submodule "ros_ws/src/create2_ros"]
+	path = ros_ws/src/create2_ros
+	url = https://github.com/USC-ACTLab/create2_ros.git
