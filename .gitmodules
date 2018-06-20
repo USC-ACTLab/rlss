@@ -13,3 +13,6 @@
 [submodule "ros_ws/src/create2_ros"]
 	path = ros_ws/src/create2_ros
 	url = https://github.com/USC-ACTLab/create2_ros.git
+[submodule "lib/splx"]
+	path = lib/splx
+	url = https://github.com/baskinburak/splx.git

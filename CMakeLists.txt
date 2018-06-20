@@ -9,6 +9,8 @@ add_subdirectory(lib/osqp)
 
 add_subdirectory(lib/RVO2)
 
+add_subdirectory(lib/splx)
+
 find_package (Eigen3 REQUIRED)
 find_package(stdc++fs)
 
