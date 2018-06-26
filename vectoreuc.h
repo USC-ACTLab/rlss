@@ -3,6 +3,7 @@
 #include <vector>
 #include <cmath>
 #include <ostream>
+#include <bspline.h>
 using namespace std;
 
 class vectoreuc {
@@ -13,6 +14,7 @@ class vectoreuc {
     int size();
     double& operator[](int idx);
     vectoreuc operator-(const vectoreuc& rhs);
+    vectoreuc operator-(const splx::Vec& rhs);
     vectoreuc operator+(const vectoreuc& rhs);
     vectoreuc operator/(const double& s);
     vectoreuc normalized();

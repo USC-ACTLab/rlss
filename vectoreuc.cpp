@@ -93,3 +93,11 @@ vectoreuc vectoreuc::operator*(double rhs) {
   }
   return res;
 }
+
+
+vectoreuc vectoreuc::operator-(const splx::Vec& rhs) {
+  vectoreuc res(crds.size());
+  for(int i = 0; i < res.size(); i++)
+    res[i] = crds[i] - rhs(i);
+  return res;
+}

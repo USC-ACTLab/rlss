@@ -4,20 +4,28 @@ using namespace std;
 
 #define PI 3.14159265
 
-vector<hyperplane> voronoi(vector<vectoreuc>& positions, int robotidx, double robot_radius) {
+vector<hyperplane> voronoi(vector<splx::Vec>& positions, int robotidx, double robot_radius) {
   static double COS = cos(15*PI/180);
   static double SIN = sin(15*PI/180);
 
+  vector<vectoreuc> poss;
+  for(unsigned int i = 0; i<positions.size(); i++) {
+    vectoreuc pos(2);
+    pos[0] = positions[i](0);
+    pos[1] = positions[i](1);
+    poss.push_back(pos);
+  }
+
   vector<hyperplane> res;
 
-  vectoreuc& robotpos = positions[robotidx];
+  vectoreuc& robotpos = poss[robotidx];
 
-  for(int i=0; i<positions.size(); i++) {
+  for(int i=0; i<poss.size(); i++) {
     if(i==robotidx)
       continue;
 
     hyperplane nplane;
-    vectoreuc seperation = positions[i] - robotpos;
+    vectoreuc seperation = poss[i] - robotpos;
     vectoreuc mid = robotpos + (seperation / 2);
     seperation = seperation.normalized();
 

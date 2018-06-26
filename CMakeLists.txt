@@ -17,6 +17,7 @@ find_package(stdc++fs)
 include_directories(
   ${EIGEN3_INCLUDE_DIR}
   lib/qpOASES/include
+  lib/splx/include
 )
 
 add_executable(main main.cpp)
@@ -91,6 +92,7 @@ target_link_libraries(main
   svm8pt4obs
   svm32pt4obs
   osqp
+  splx
 )
 
 add_executable(rvo2_main

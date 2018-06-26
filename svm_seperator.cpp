@@ -8,6 +8,8 @@
 #include "svmcvxwrapper_8pt_4obs.h"
 #include "svmcvxwrapper_32pt_4obs.h"
 #include <cassert>
+#include <qpOASES.hpp>
+#include <Eigen/Dense>
 
 using namespace std;
 
@@ -167,7 +169,7 @@ vector<hyperplane> SvmSeperator::_32_4_seperate() {
         std::stringstream sstr;
         sstr << "Couldn't find hyperplane (obs.pts) normal " << hp.normal << " dist: " << hp.distance << " pt: " << pt << " dot product: " << pt.dot(hp.normal);
         // throw runtime_error(sstr.str());
-        std::cerr << sstr.str() << std::endl;
+        std::cerr << sstr.str() << std::endl
       }
     }
 
@@ -189,111 +191,75 @@ vector<hyperplane> SvmSeperator::seperate() {
   vector<hyperplane> result;
   for(int i=0; i<obstacles->size(); i++) {
     obstacle2D& obs = (*obstacles)[i];
-    int l = obs.ch.size()-1 + pts.size();
-    double* y = (double*) malloc(sizeof(double) * l);
-    struct svm_node** x = (struct svm_node**)malloc(sizeof(struct svm_node*) * l);
-    int j;
-    vector<vectoreuc> all_vecs;
+    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> A(obs.pts.size() + pts.size(), 3);
+    Eigen::Matrix<double, Eigen::Dynamic, 1> lbA(obs.pts.size() + pts.size());
+    Eigen::Matrix<double, Eigen::Dynamic, 1> ubA(obs.pts.size() + pts.size());
+    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> H(3, 3);
+    Eigen::Matrix<double, Eigen::Dynamic, 1> lb(3);
+    Eigen::Matrix<double, Eigen::Dynamic, 1> ub(3);
+    Eigen::Matrix<double, Eigen::Dynamic, 1> g(3);
+    ub(0) = ub(1) = ub(2) = std::numeric_limits<double>::max();
+    lb(0) = lb(1) = lb(2) = std::numeric_limits<double>::min();
 
-    for(j = 0; j<pts.size(); j++) {
-      struct svm_node* data = (struct svm_node*)malloc(sizeof(struct svm_node)*3);
-      // cout << pts[j] << endl;
-      data[0].index = 1;
-      data[0].value = pts[j][0];
-      data[1].index = 2;
-      data[1].value = pts[j][1];
-      data[2].index = -1;
-      x[j] = data;
-      y[j] = 1;
-      all_vecs.push_back(pts[j]);
+    for(unsigned int i = 0; i < obs.pts.size(); i++) {
+      A(i, 0) = -obs.pts[i][0];
+      A(i, 1) = -obs.pts[i][1];
+      A(i, 2) = 1.0;
+      ubA(i) = -1.0;
+      lbA(i) = std::numeric_limits<double>::min();
     }
 
-    for(int k=0; k<obs.ch.size()-1; k++) {
-      struct svm_node* data = (struct svm_node*)malloc(sizeof(struct svm_node) * 3);
-      // cout << obs.pts[obs.ch[k]] << endl;
-      data[0].index = 1;
-      data[0].value = obs.pts[obs.ch[k]][0];
-      data[1].index = 2;
-      data[1].value = obs.pts[obs.ch[k]][1];
-      data[2].index = -1;
-      x[j+k] = data;
-      y[j+k] = 0;
-      all_vecs.push_back(obs.pts[obs.ch[k]]);
+    for(unsigned int i = 0; i < pts.size(); i++) {
+      A(i + obs.pts.size(), 0) = pts[i][0];
+      A(i + obs.pts.size(), 1) = pts[i][1];
+      A(i + obs.pts.size(), 2) = -1.0;
+      ubA(i) = -1.0;
+      lbA(i) = std::numeric_limits<double>::min();
     }
+    for(unsigned i = 0; i < 3; i++)
+      for(unsigned j = 0; j < 3; j++)
+        H(i, j) = (i == j ? 2.0 : 0.0);
+    H(2, 2) = 0.0;
+    g(0) = g(1) = g(2) = 0.0;
 
+    Eigen::Matrix<double, Eigen::Dynamic, 1> y(3);
+    y(0) = y(1) = y(2) = 0.0;
 
-    struct svm_problem problem;
-    problem.l = l;
-    problem.y = y;
-    problem.x = x;
+    qpOASES::QProblem qp(3, pts.size() + obs.pts.size());
+    qpOASES::Options options;
+    options.setToDefault();
+    options.printLevel = qpOASES::PL_LOW;
+    qp.setOptions(options);
+    qpOASES::int_t nWSR = 10000;
 
-    struct svm_parameter parameter;
-    parameter.svm_type = C_SVC;
-    parameter.kernel_type = LINEAR;
-    parameter.cache_size = 64; // dont have any idea
-    parameter.eps = 0.01;
-    parameter.C = 10000; // dunno
-    //parameter.nu = 0.5;
-    parameter.nr_weight = 0; // completely dunno
+    // std::cout << "H: " << ob.H() << std::endl;
+    // std::cout << "A: " << cb.A() << std::endl;
 
+    // auto t0 = Time::now();
+    qpOASES::returnValue status = qp.init(
+      H.data(),
+      g.data(),
+      A.data(),
+      lb.data(),
+      ub.data(),
+      lbA.data(),
+      ubA.data(),
+      nWSR,
+      NULL,
+      y.data());
 
-    struct svm_model* model = svm_train(&problem, &parameter);
+    qpOASES::int_t simpleStatus = qpOASES::getSimpleStatus(status);
 
-
-    double* coefs = model->sv_coef[0];
-
-    int totalsvcount = model->l;
-
-    int idxs[totalsvcount];
-    svm_get_sv_indices(model, idxs);
-
-    vectoreuc normal(2);
-    normal.zero();
-
-    for(int i=0; i<totalsvcount; i++) {
-      // cout << "SV " << i << ": " << all_vecs[idxs[i]-1] << endl;
-      normal[0] += coefs[i] * all_vecs[idxs[i]-1][0];
-      normal[1] += coefs[i] * all_vecs[idxs[i]-1][1];
+    if(simpleStatus != 0) {
+      hyperplane pl;
+      pl.normal[0] = y(0);
+      pl.normal[1] = y(1);
+      pl.distance = y(2) / pl.normal.L2norm();
+      pl.normal = pl.normal.normalized();
+      result.push_back(pl);
+    } else {
+      cout << "svm failed" << endl;
     }
-
-    double length = normal.L2norm();
-    double distance = model->rho[0] / length;
-    normal = normal.normalized();
-
-    hyperplane hp;
-    hp.normal = normal;
-    hp.distance = distance;
-
-
-
-    double closest_obs_sv = -1*numeric_limits<double>::infinity();
-    for(int i=0; i<obs.ch.size()-1; i++) {
-      double dst = hp.dist(obs.pts[obs.ch[i]]);
-
-      closest_obs_sv = max(closest_obs_sv, hp.dist(obs.pts[obs.ch[i]]));
-
-    }
-
-    hp.distance += closest_obs_sv;
-
-    hp.normal = hp.normal * -1;
-    hp.distance = hp.distance * -1;
-
-    // hp.distance -= 0.05;
-
-    // safety check...
-    for (auto& pt : pts) {
-      if (pt.dot(hp.normal) - 1e-4 > hp.distance) {
-        std::stringstream sstr;
-        sstr << "Couldn't find hyperplane normal " << hp.normal << " dist: " << hp.distance << " pt: " << pt << " dot product: " << pt.dot(hp.normal);
-        // throw runtime_error(sstr.str());
-        //std::cerr << sstr.str() << std::endl;
-      }
-    }
-
-
-    result.push_back(hp);
-    // std::cout << "normal: " << hp.normal << " dist: " << hp.distance << std::endl;
   }
 
   return result;

@@ -1,7 +1,7 @@
 {
-  "trajectories": "../test_data/trajectories/swapCircle16",
+  "trajectories": "../test_data/trajectories/swap2",
   "scale_traj": 1.0,
-  "obstacles": "../test_data/obstacles/3obstacles/",
+  "obstacles": "../test_data/obstacles/noobs/",
   "robot_radius": 0.23,
   "cell_size": 0.5,
   "v_max": 2,
@@ -16,7 +16,7 @@
   "enable_voronoi": true,
   "output_file": "res.json",
   "print_dt": 0.01,
-  "algorithm": "OSQP",
+  "algorithm": "QPOASES",
   "lambda_hyperplanes": 0.00,
   "lambda_min_der": 0.1,
   "lambda_min_der_vel": 1.0,
