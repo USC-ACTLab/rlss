@@ -10,6 +10,14 @@
 #include <cassert>
 #include <qpOASES.hpp>
 #include <Eigen/Dense>
+#include "osqp.h"
+
+
+
+#define QPOASES_SVM 1
+#define OSQP_SVM 0
+
+#define SVM_SOLVER OSQP_SVM
 
 using namespace std;
 
@@ -191,15 +199,20 @@ vector<hyperplane> SvmSeperator::seperate() {
   vector<hyperplane> result;
   for(int i=0; i<obstacles->size(); i++) {
     obstacle2D& obs = (*obstacles)[i];
+#if SVM_SOLVER
     Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> A(obs.pts.size() + pts.size(), 3);
+    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> H(3, 3);
+#else
+    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor> A(obs.pts.size() + pts.size(), 3);
+    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor> H(3, 3);
+#endif
     Eigen::Matrix<double, Eigen::Dynamic, 1> lbA(obs.pts.size() + pts.size());
     Eigen::Matrix<double, Eigen::Dynamic, 1> ubA(obs.pts.size() + pts.size());
-    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> H(3, 3);
     Eigen::Matrix<double, Eigen::Dynamic, 1> lb(3);
     Eigen::Matrix<double, Eigen::Dynamic, 1> ub(3);
     Eigen::Matrix<double, Eigen::Dynamic, 1> g(3);
-    ub(0) = ub(1) = ub(2) = std::numeric_limits<double>::max();
-    lb(0) = lb(1) = lb(2) = std::numeric_limits<double>::lowest();
+    ub(0) = ub(1) = ub(2) = std::numeric_limits<double>::infinity();
+    lb(0) = lb(1) = lb(2) = -std::numeric_limits<double>::infinity();
 
     for(unsigned int i = 0; i < obs.pts.size(); i++) {
       A(i, 0) = obs.pts[i][0];
@@ -222,14 +235,15 @@ vector<hyperplane> SvmSeperator::seperate() {
     g(0) = g(1) = g(2) = 0.0;
 
     Eigen::Matrix<double, Eigen::Dynamic, 1> y(3);
-    y(0) = y(1) = y(2) = 1.0;
+    y(0) = y(1) = y(2) = 0.0;
 
+#if SVM_SOLVER
     qpOASES::QProblem qp(3, pts.size() + obs.pts.size(), qpOASES::HST_SEMIDEF);
     qpOASES::Options options;
     options.setToMPC();
     options.printLevel = qpOASES::PL_LOW;
     qp.setOptions(options);
-    qpOASES::int_t nWSR = 1000000;
+    qpOASES::int_t nWSR = 10000;
 
     // std::cout << "H: " << ob.H() << std::endl;
     // std::cout << "A: " << cb.A() << std::endl;
@@ -244,20 +258,104 @@ vector<hyperplane> SvmSeperator::seperate() {
       lbA.data(),
       ubA.data(),
       nWSR,
-      NULL,
-      y.data());
+      NULL);
 
     qpOASES::int_t simpleStatus = qpOASES::getSimpleStatus(status);
 
     if(simpleStatus != 0) {
       cout << "svm failed" << endl;
+      for(unsigned int i = 0; i < obs.pts.size(); i++) {
+        cout << obs.pts[i] << endl;
+      }
+      cout << "--" << endl;
+      for(unsigned int i = 0; i < pts.size(); i++) {
+        cout << pts[i] << endl;
+      }
+      int a; cin >> a;
+      cout << A << endl;
+      cout << g << endl;
+      cout << "lb" << endl << lbA << endl;
+      cout << "ub" << endl << ubA << endl;
+      cin >> a;
       continue;
     } else {
-      //cout << "svm success" << endl;
+
     }
 
     qp.getPrimalSolution(y.data());
 
+#else
+
+    OSQPSettings settings;
+    osqp_set_default_settings(&settings);
+
+    settings.max_iter = 20000;
+    int numVars = 3;
+    int numConstraints = A.rows();
+
+    std::vector<c_int> rowIndicesH(numVars * numVars);
+    std::vector<c_int> columnIndicesH(numVars + 1);
+    for (size_t c = 0; c < numVars; ++c) {
+      for (size_t r = 0; r < numVars; ++r) {
+        rowIndicesH[c * numVars + r] = r;
+      }
+      columnIndicesH[c] = c * numVars;
+    }
+    columnIndicesH[numVars] = numVars * numVars;
+
+    std::vector<c_int> rowIndicesA(numConstraints * numVars);
+    std::vector<c_int> columnIndicesA(numVars + 1);
+    for (size_t c = 0; c < numVars; ++c) {
+      for (size_t r = 0; r < numConstraints; ++r) {
+        rowIndicesA[c * numConstraints + r] = r;
+      }
+      columnIndicesA[c] = c * numConstraints;
+    }
+    columnIndicesA[numVars] = numConstraints * numVars;
+
+
+    OSQPData data;
+    data.n = numVars;
+    data.m = numConstraints;
+    data.P = csc_matrix(numVars, numVars, numVars * numVars, H.data(), rowIndicesH.data(), columnIndicesH.data());
+    data.q = const_cast<double*>(g.data());
+    data.A = csc_matrix(numConstraints, numVars, numConstraints * numVars, A.data(), rowIndicesA.data(), columnIndicesA.data());
+    data.l = const_cast<double*>(lbA.data());
+    data.u = const_cast<double*>(ubA.data());
+
+    OSQPWorkspace* work = osqp_setup(&data, &settings);
+
+    // Solve Problem
+    osqp_warm_start_x(work, y.data());
+    osqp_solve(work);
+
+    if (work->info->status_val != OSQP_SOLVED) {
+      cout << "svm failed" << endl;
+      for(unsigned int i = 0; i < obs.pts.size(); i++) {
+        cout << obs.pts[i] << endl;
+      }
+      cout << "--" << endl;
+      for(unsigned int i = 0; i < pts.size(); i++) {
+        cout << pts[i] << endl;
+      }
+      int a;
+      cin >> a;
+      cout << A << endl;
+      cout << g << endl;
+      cout << "lb" << endl << lbA << endl;
+      cout << "ub" << endl << ubA << endl;
+      cin >> a;
+      continue;
+    } else {
+
+    }
+
+    // work->solution->x
+    for (size_t i = 0; i < numVars; ++i) {
+      y(i) = work->solution->x[i];
+    }
+    osqp_cleanup(work);
+#endif
     hyperplane pl;
     pl.normal = vectoreuc(2);
     pl.normal[0] = y(0);
@@ -265,6 +363,20 @@ vector<hyperplane> SvmSeperator::seperate() {
     pl.distance = y(2) / pl.normal.L2norm();
     pl.normal = pl.normal.normalized();
     result.push_back(pl);
+
+    cout << "svm success" << endl;
+    for(unsigned int i = 0; i < obs.pts.size(); i++) {
+      cout << obs.pts[i] << endl;
+    }
+    cout << "--" << endl;
+    for(unsigned int i = 0; i < pts.size(); i++) {
+      cout << pts[i] << endl;
+    }
+    cout << "---" << endl << pl.normal << " " << pl.distance << endl;
+    if(rand() % 1000 == 10001) {
+      int  a;
+      cin >> a;
+    }
   }
 
 

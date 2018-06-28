@@ -141,7 +141,7 @@ int main(int argc, char** argv) {
         cpts.push_back(cpt);
       }
     }
-    trajectories.push_back(splx::BSpline(max_continuity+3, problem_dimension, 0, hor, cpts));
+    trajectories.push_back(splx::BSpline(max_continuity+1, problem_dimension, 0, hor, cpts));
   }
 
   /*vector<vectoreuc> pos_diffs(trajectories.size());*/
@@ -317,6 +317,7 @@ int main(int argc, char** argv) {
 
     for(int i=0; i<original_trajectories.size(); i++ ) {
       cerr << "traj " << i << " start " << ct << " / " << total_times[i] << endl;
+      trajectories[i].m_b = hor;
       t_start = Time::now();
 
       // if (ct > 7 && i == 0) {
@@ -627,7 +628,7 @@ int main(int argc, char** argv) {
               tovec(0) = corners[j+1].first;
               tovec(1) = corners[j+1].second;
               std::pair<unsigned int, unsigned int> effectrange = trajectories[i]
-                    .interpolateEndAtTo(fromvec, tovec, ppc - trajectories[i].m_degree);
+                    .interpolateEndAtTo(fromvec, tovec, max(5, ppc - (int)trajectories[i].m_degree));
             }
 
             trajectories[i].generateUniformKnotVector();
@@ -649,6 +650,7 @@ int main(int argc, char** argv) {
                 vec[1] = trajectories[i].m_controlPoints[k](1) + robot_radius;
                 svm.add_pt(vec);
               }
+              cout << "discrete svm" << endl;
               vector<hyperplane> sep = svm.seperate();
               for(unsigned int k = 0; k < sep.size(); k++) {
                 auto& plane = sep[k];
@@ -715,6 +717,7 @@ int main(int argc, char** argv) {
             svm.add_pt(pt);
           }
 
+          cout << "continuous svm" << endl;
           vector<hyperplane> hyperplanes = svm.seperate();
 
           for (auto& plane : hyperplanes) {
@@ -752,6 +755,7 @@ int main(int argc, char** argv) {
       }
 
       t_start_qp = Time::now();
+
 
       do { // loop for temporal scaling
 
@@ -842,6 +846,7 @@ int main(int argc, char** argv) {
 
         // auto t0 = Time::now();
         Eigen::LLT<Eigen::MatrixXd> lltofH(qpm.H);
+        // cout << qpm.H << endl;
         if(lltofH.info() == Eigen::NumericalIssue) {
           cout << "non psd" << endl;
         } else

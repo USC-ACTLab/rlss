@@ -18,6 +18,7 @@ include_directories(
   ${EIGEN3_INCLUDE_DIR}
   lib/qpOASES/include
   lib/splx/include
+  lib/osqp/include
 )
 
 add_executable(main main.cpp)
