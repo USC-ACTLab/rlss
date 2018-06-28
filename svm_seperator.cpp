@@ -191,30 +191,29 @@ vector<hyperplane> SvmSeperator::seperate() {
   vector<hyperplane> result;
   for(int i=0; i<obstacles->size(); i++) {
     obstacle2D& obs = (*obstacles)[i];
-    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> A(obs.pts.size() + pts.size(), 3);
+    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> A(obs.pts.size() + pts.size(), 3);
     Eigen::Matrix<double, Eigen::Dynamic, 1> lbA(obs.pts.size() + pts.size());
     Eigen::Matrix<double, Eigen::Dynamic, 1> ubA(obs.pts.size() + pts.size());
-    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> H(3, 3);
+    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> H(3, 3);
     Eigen::Matrix<double, Eigen::Dynamic, 1> lb(3);
     Eigen::Matrix<double, Eigen::Dynamic, 1> ub(3);
     Eigen::Matrix<double, Eigen::Dynamic, 1> g(3);
     ub(0) = ub(1) = ub(2) = std::numeric_limits<double>::max();
-    lb(0) = lb(1) = lb(2) = std::numeric_limits<double>::min();
+    lb(0) = lb(1) = lb(2) = std::numeric_limits<double>::lowest();
 
     for(unsigned int i = 0; i < obs.pts.size(); i++) {
-      A(i, 0) = -obs.pts[i][0];
-      A(i, 1) = -obs.pts[i][1];
-      A(i, 2) = 1.0;
-      ubA(i) = -1.0;
-      lbA(i) = std::numeric_limits<double>::min();
+      A(i, 0) = obs.pts[i][0];
+      A(i, 1) = obs.pts[i][1];
+      A(i, 2) = -1.0;
+      ubA(i) = std::numeric_limits<double>::max();
+      lbA(i) = 1.0;
     }
-
     for(unsigned int i = 0; i < pts.size(); i++) {
       A(i + obs.pts.size(), 0) = pts[i][0];
       A(i + obs.pts.size(), 1) = pts[i][1];
       A(i + obs.pts.size(), 2) = -1.0;
-      ubA(i) = -1.0;
-      lbA(i) = std::numeric_limits<double>::min();
+      ubA(i + obs.pts.size()) = -1.0;
+      lbA(i + obs.pts.size()) = std::numeric_limits<double>::lowest();
     }
     for(unsigned i = 0; i < 3; i++)
       for(unsigned j = 0; j < 3; j++)
@@ -223,14 +222,14 @@ vector<hyperplane> SvmSeperator::seperate() {
     g(0) = g(1) = g(2) = 0.0;
 
     Eigen::Matrix<double, Eigen::Dynamic, 1> y(3);
-    y(0) = y(1) = y(2) = 0.0;
+    y(0) = y(1) = y(2) = 1.0;
 
-    qpOASES::QProblem qp(3, pts.size() + obs.pts.size());
+    qpOASES::QProblem qp(3, pts.size() + obs.pts.size(), qpOASES::HST_SEMIDEF);
     qpOASES::Options options;
-    options.setToDefault();
+    options.setToMPC();
     options.printLevel = qpOASES::PL_LOW;
     qp.setOptions(options);
-    qpOASES::int_t nWSR = 10000;
+    qpOASES::int_t nWSR = 1000000;
 
     // std::cout << "H: " << ob.H() << std::endl;
     // std::cout << "A: " << cb.A() << std::endl;
@@ -251,16 +250,23 @@ vector<hyperplane> SvmSeperator::seperate() {
     qpOASES::int_t simpleStatus = qpOASES::getSimpleStatus(status);
 
     if(simpleStatus != 0) {
-      hyperplane pl;
-      pl.normal[0] = y(0);
-      pl.normal[1] = y(1);
-      pl.distance = y(2) / pl.normal.L2norm();
-      pl.normal = pl.normal.normalized();
-      result.push_back(pl);
-    } else {
       cout << "svm failed" << endl;
+      continue;
+    } else {
+      //cout << "svm success" << endl;
     }
+
+    qp.getPrimalSolution(y.data());
+
+    hyperplane pl;
+    pl.normal = vectoreuc(2);
+    pl.normal[0] = y(0);
+    pl.normal[1] = y(1);
+    pl.distance = y(2) / pl.normal.L2norm();
+    pl.normal = pl.normal.normalized();
+    result.push_back(pl);
   }
+
 
   return result;
 }

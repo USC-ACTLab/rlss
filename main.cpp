@@ -133,16 +133,15 @@ int main(int argc, char** argv) {
 
   for(int i=0; i<original_trajectories.size(); i++) {
     std::vector<splx::Vec> cpts;
+    splx::Vec cpt(problem_dimension);
+    cpt(0) = original_trajectories[i][0][0][0];
+    cpt(1) = original_trajectories[i][0][0][1];
     for(int j=0; j<curve_count; j++) {
       for(int k = 0; k < original_trajectories[i][j].size(); k++) {
-        splx::Vec cpt(problem_dimension);
-        for(int d = 0; d<problem_dimension; d++) {
-          cpt(d) = original_trajectories[i][j][k][d];
-        }
         cpts.push_back(cpt);
       }
     }
-    trajectories.push_back(splx::BSpline(max_continuity+1, problem_dimension, 0, hor, cpts));
+    trajectories.push_back(splx::BSpline(max_continuity+3, problem_dimension, 0, hor, cpts));
   }
 
   /*vector<vectoreuc> pos_diffs(trajectories.size());*/
@@ -529,7 +528,6 @@ int main(int argc, char** argv) {
           t_end_a_star = Time::now();
 
           if (success) {
-            trajectories[i].clearControlPoints();
             std::cout << "discrete planning successful! Total cost: " << solution.cost << std::endl;
             // for (size_t i = 0; i < solution.actions.size(); ++i) {
             //   std::cout << solution.states[i].second << ": " << solution.states[i].first << "->" << solution.actions[i].first << "(cost: " << solution.actions[i].second << ")" << std::endl;
@@ -614,7 +612,12 @@ int main(int argc, char** argv) {
             //   corners.push_back(corners[corners.size() - 2]);
             // }
 
+
             t_start_svm = Time::now();
+
+
+            trajectories[i].clearControlPoints();
+
             size_t hpidx = 0;
             for (size_t j = 0; j < discrete_curve_count && j < curve_count; ++j) {
               splx::Vec fromvec(2);
@@ -625,120 +628,42 @@ int main(int argc, char** argv) {
               tovec(1) = corners[j+1].second;
               std::pair<unsigned int, unsigned int> effectrange = trajectories[i]
                     .interpolateEndAtTo(fromvec, tovec, ppc - trajectories[i].m_degree);
-
-              if(j != 0)
-                effectrange.first -= trajectories[i].m_degree;
-
-              svm.reset_pts();
-              vectoreuc pt(2);
-              pt[0] = corners[j].first - robot_radius;
-              pt[1] = corners[j].second - robot_radius;
-              svm.add_pt(pt);
-              pt[0] = corners[j].first - robot_radius;
-              pt[1] = corners[j].second + robot_radius;
-              svm.add_pt(pt);
-              pt[0] = corners[j].first + robot_radius;
-              pt[1] = corners[j].second + robot_radius;
-              svm.add_pt(pt);
-              pt[0] = corners[j].first + robot_radius;
-              pt[1] = corners[j].second - robot_radius;
-              svm.add_pt(pt);
-
-              pt[0] = corners[j+1].first - robot_radius;
-              pt[1] = corners[j+1].second - robot_radius;
-              svm.add_pt(pt);
-              pt[0] = corners[j+1].first - robot_radius;
-              pt[1] = corners[j+1].second + robot_radius;
-              svm.add_pt(pt);
-              pt[0] = corners[j+1].first + robot_radius;
-              pt[1] = corners[j+1].second + robot_radius;
-              svm.add_pt(pt);
-              pt[0] = corners[j+1].first + robot_radius;
-              pt[1] = corners[j+1].second - robot_radius;
-              svm.add_pt(pt);
-
-              // gives us one hyperplane per obstacle
-              vector<hyperplane> hyperplanes = svm._8_4_seperate();
-              /*std::cout << "hyperplanes: " << hyperplanes.size() << std::endl;
-
-              for (auto& hp : hyperplanes) {
-                for (const auto& pt : svm.getPts()) {
-                  if (pt.dot(hp.normal) > hp.distance) {
-                    std::stringstream sstr;
-                    sstr << "Couldn't shift hyperplane; curve: " << j
-                         << " robot: " << i
-                         << " dist: " << pt.dot(hp.normal) - (hp.distance - robot_radius);
-                    // throw runtime_error(sstr.str());
-                    //std::cerr << sstr.str() << std::endl;
-                  }
-                }
-              }*/
-
-              do {
-                // add hyperplane constraints
-                // for (auto& plane : hyperplanes) {
-                for (size_t hidx = 0; hidx < hyperplanes.size(); ++hidx) {
-                  auto& plane = hyperplanes[hidx];
-
-                  Vector normal(problem_dimension);
-                  normal << plane.normal[0], plane.normal[1];
-
-                  hyperplaneConstraints.push_back({effectrange.first, effectrange.second, normal, plane.distance - robot_radius});
-
-                  // cb.addHyperplane(j, normal, plane.distance);
-                  // if (hidx > hyperplanes.size() - original_trajectories.size() - 1) {
-                  //   hyperplaneConstraints.push_back({j, normal, plane.distance -robot_radius/*- 2 * robot_radius*/});
-                  // } else {
-                  //   hyperplaneConstraints.push_back({j, normal, plane.distance - robot_radius});
-                  // }
-
-                  // if (hidx > hyperplanes.size() - original_trajectories.size() - 1) {
-                    output_json["hyperplanes"][output_iter][i][hpidx].push_back(plane.normal[0]); //normal first
-                    output_json["hyperplanes"][output_iter][i][hpidx].push_back(plane.normal[1]);//normal seconds
-                    output_json["hyperplanes"][output_iter][i][hpidx].push_back(plane.distance - robot_radius); //distance
-                    output_json["hyperplanes"][output_iter][i][hpidx].push_back(j);
-                    ++hpidx;
-                  // }
-                }
-                if (j >= discrete_curve_count - 1) {
-                  ++j;
-                }
-              } while (j >= discrete_curve_count && j < curve_count);
             }
+
             trajectories[i].generateUniformKnotVector();
+
+            for(unsigned int j = 0; j < trajectories[i].m_controlPoints.size() - trajectories[i].m_degree; j++) {
+              svm.reset_pts();
+              vectoreuc vec(2);
+              for(unsigned int k = j; k <= j+trajectories[i].m_degree; k++) {
+                vec[0] = trajectories[i].m_controlPoints[k](0) - robot_radius;
+                vec[1] = trajectories[i].m_controlPoints[k](1) - robot_radius;
+                svm.add_pt(vec);
+                vec[0] = trajectories[i].m_controlPoints[k](0) - robot_radius;
+                vec[1] = trajectories[i].m_controlPoints[k](1) + robot_radius;
+                svm.add_pt(vec);
+                vec[0] = trajectories[i].m_controlPoints[k](0) + robot_radius;
+                vec[1] = trajectories[i].m_controlPoints[k](1) - robot_radius;
+                svm.add_pt(vec);
+                vec[0] = trajectories[i].m_controlPoints[k](0) + robot_radius;
+                vec[1] = trajectories[i].m_controlPoints[k](1) + robot_radius;
+                svm.add_pt(vec);
+              }
+              vector<hyperplane> sep = svm.seperate();
+              for(unsigned int k = 0; k < sep.size(); k++) {
+                auto& plane = sep[k];
+                Vector normal(problem_dimension);
+                normal << plane.normal[0], plane.normal[1];
+                output_json["hyperplanes"][output_iter][i][hpidx] = vector<double>();
+                output_json["hyperplanes"][output_iter][i][hpidx].push_back(plane.normal[0]);
+                output_json["hyperplanes"][output_iter][i][hpidx].push_back(plane.normal[1]);
+                output_json["hyperplanes"][output_iter][i][hpidx].push_back(plane.distance - robot_radius);
+                hpidx++;
+                hyperplaneConstraints.push_back({j, j+trajectories[i].m_degree, normal, plane.distance - robot_radius});
+              }
+            }
             t_end_svm = Time::now();
 
-            // uniformily distribute the control points on the line segments as initial guess
-
-            // e.g., if curve_count = 3 and discrete_curve_count = 1, then last_discrete_curve_occupancy = 3,
-            //       because the discrete curve is shared between 3 continuous curves
-            /*int last_discrete_curve_occupancy = curve_count - std::min(discrete_curve_count, curve_count) + 1;
-            for (size_t j = 0; j < curve_count; ++j) {
-              if (j < discrete_curve_count - 1) {
-                // single occupation
-                for(int k=0; k<ppc; k++) {
-                  y(0, j * ppc + k) = linearInterpolation(corners[j].first, corners[j+1].first, k, ppc);
-                  y(1, j * ppc + k) = linearInterpolation(corners[j].second, corners[j+1].second, k, ppc);
-                }
-                double curve_length = sqrt(pow(corners[j].first - corners[j+1].first, 2) +
-                                           pow(corners[j].second - corners[j+1].second, 2));
-                pieceDurations[j] = std::max(curve_length / total_discrete_path_length * discrete_horizon, 1.1 * dt);
-              } else {
-                // double occupation
-                int cornersIdx = discrete_curve_count - 1;
-                int idx = j - discrete_curve_count + 1;
-                for(int k=0; k<ppc; k++) {
-                  y(0, j * ppc + k) = linearInterpolation(corners[cornersIdx].first, corners[cornersIdx+1].first, k + idx * ppc, ppc * last_discrete_curve_occupancy);
-                  y(1, j * ppc + k) = linearInterpolation(corners[cornersIdx].second, corners[cornersIdx+1].second, k + idx * ppc, ppc * last_discrete_curve_occupancy);
-                }
-                double curve_length = sqrt(pow(corners[cornersIdx].first - corners[cornersIdx+1].first, 2) +
-                                           pow(corners[cornersIdx].second - corners[cornersIdx+1].second, 2)) / last_discrete_curve_occupancy;
-                pieceDurations[j] = std::max(curve_length / total_discrete_path_length * discrete_horizon, 1.1 * dt);
-              }
-            }*/
-
-            // force end of trajectory to be at discrete end point
-            // TODO: factor?
 
             Vector crnr(2);
             crnr <<corners[min((int)corners.size()-1, curve_count)].first, corners[min((int)corners.size()-1, curve_count)].second;
@@ -767,21 +692,15 @@ int main(int argc, char** argv) {
         // TODO 3: * Split last trajectory up to horizon into uniform pieces (curve_count pieces)
         //         * find separating hyperplanes between those trajectories and all obstacles
         //         * add hyperplanes as constraints (per piece)
-#if 1
         t_start_a_star = t_end_a_star = Time::now();
 
         t_start_svm = Time::now();
         size_t hpidx = 0;
-        double step_u = (trajectories[i].m_b - trajectories[i].m_a) / curve_count;
-        for (size_t j = 0; j < curve_count ; ++j) {
-          double start_u = max(trajectories[i].m_a + step_u*j, trajectories[i].m_a);
-          double end_u = min(trajectories[i].m_a + step_u*(j+1), trajectories[i].m_b);
+        for (size_t j = 0; j < trajectories[i].m_controlPoints.size() - trajectories[i].m_degree ; ++j) {
           svm.reset_pts();
 
-          std::pair<unsigned int, unsigned int> affectedIdxs = trajectories[i].affectingPoints(start_u, end_u);
-
           vectoreuc pt(2);
-          for(int k=affectedIdxs.first; k<=affectedIdxs.second; k++) {
+          for(int k=j; k<=j+trajectories[i].m_degree; k++) {
             pt[0] = trajectories[i].getCP(k)(0) - robot_radius;
             pt[1] = trajectories[i].getCP(k)(1) - robot_radius;
             svm.add_pt(pt);
@@ -797,32 +716,29 @@ int main(int argc, char** argv) {
           }
 
           vector<hyperplane> hyperplanes = svm.seperate();
-          std::cout << "hyperplanes2: " << hyperplanes.size() << std::endl;
 
           for (auto& plane : hyperplanes) {
             Vector normal(problem_dimension);
             normal << plane.normal[0], plane.normal[1];
-            hyperplaneConstraints.push_back({affectedIdxs.first, affectedIdxs.second, normal, plane.distance - robot_radius});
+            output_json["hyperplanes"][output_iter][i][hpidx] = vector<double>();
+            output_json["hyperplanes"][output_iter][i][hpidx].push_back(plane.normal[0]);
+            output_json["hyperplanes"][output_iter][i][hpidx].push_back(plane.normal[1]);
+            output_json["hyperplanes"][output_iter][i][hpidx].push_back(plane.distance - robot_radius);
+            hpidx++;
+            hyperplaneConstraints.push_back({j, j+trajectories[i].m_degree, normal, plane.distance - robot_radius});
             // cb.addHyperplane(j, normal, plane.distance);
-
-            output_json["hyperplanes"][output_iter][i][hpidx].clear();
-            output_json["hyperplanes"][output_iter][i][hpidx].push_back(plane.normal[0]); //normal first
-            output_json["hyperplanes"][output_iter][i][hpidx].push_back(plane.normal[1]);//normal seconds
-            output_json["hyperplanes"][output_iter][i][hpidx].push_back(plane.distance - robot_radius); //distance
-            output_json["hyperplanes"][output_iter][i][hpidx].push_back(j);
-            ++hpidx;
           }
         }
         t_end_svm = Time::now();
-#endif
 
+        const double step_u = (trajectories[i].m_b - trajectories[i].m_a) / curve_count;
         double factor = 0.5f / curve_count;
-        for (size_t j = 1; j < curve_count; ++j) {
-          vectoreuc OBJPOS = original_trajectories[i].neval(min(ct+planning_horizon * (j+1)/(double)curve_count, total_times[i]), 0);
+        for (size_t j = 1; j <= curve_count; ++j) {
+          vectoreuc OBJPOS = original_trajectories[i].neval(min(ct+j*step_u, total_times[i]), 0);
           Vector targetPosition(problem_dimension);
           targetPosition << OBJPOS[0], OBJPOS[1];
           // ob.endCloseTo(j, factor * (j+1), targetPosition);
-          endCloseToObjectives.push_back({j*step_u, factor * (j+1), targetPosition});
+          endCloseToObjectives.push_back({trajectories[i].m_a + j*step_u, factor * (j+1), targetPosition});
         }
 
       }
@@ -856,31 +772,8 @@ int main(int argc, char** argv) {
         trajectories[i].extendQPPositionAt(qpm, o.time, o.value, o.lambda);
       }
 
-      // const double magic = 0.0001;
-      // voronoi (for the first curve only)
-      /*for(int j=0; j<voronoi_hyperplanes.size(); j++) {
-        hyperplane& plane = voronoi_hyperplanes[j];
-
-        Vector normal(problem_dimension);
-        normal << plane.normal[0], plane.normal[1];
-
-        ob.maxHyperplaneDist(0, lambda_hyperplanes, normal, plane.distance);
-      }*/
-
-      // hyperplane
-
-      /*for (const auto& hpc : hyperplaneConstraints) {
-        ob.maxHyperplaneDist(hpc.piece, lambda_hyperplanes, hpc.normal, hpc.dist);
-      }*/
 
 
-
-      // constraint matrix A
-      //ConstraintBuilder cb(problem_dimension, pieceDurations);
-
-      // initial point constraints
-
-        // position (with added noise)
       if(max_continuity >= 0) {
         Vector value(problem_dimension);
         value << positions[i](0) + distribution(generator), positions[i](1) + distribution(generator);
@@ -899,41 +792,6 @@ int main(int argc, char** argv) {
         value << accelerations[i](0), accelerations[i](1);
         trajectories[i].extendQPBeginningConstraint(qpm, 2, value);
       }
-
-      // if(max_continuity >= 3) {
-      //   Vector value(problem_dimension);
-      //   value << jerks[i][0], jerks[i][1];
-      //   cb.addConstraintBeginning(0, 3, value); // jerk
-      // }
-
-      // if(max_continuity >= 4) {
-      //   Vector value(problem_dimension);
-      //   value << snaps[i][0], snaps[i][1];
-      //   cb.addConstraintBeginning(0, 4, value); // snap
-      // }
-
-      // for (size_t d = 1; d <= max_initial_point_degree; ++d) {
-      //   vectoreuc val = trajectories[i].neval(dt, d);
-      //   Vector value(problem_dimension);
-      //   value << val[0], val[1];
-      //   cb.addConstraintBeginning(0, d, value);
-      // }
-
-      // continuity constraints
-      /*for (size_t i = 0; i < curve_count - 1; ++i) {
-        for (size_t c = 0; c <= max_continuity; ++c) {
-          cb.addContinuity(i, c);
-        }
-      }*/
-
-      // if time is nearly up, make sure we stop at the end
-      // if (ct + hor >= total_times[i]) {
-      //   Vector zeroVec(problem_dimension);
-      //   zeroVec.setZero();
-      //   for (size_t c = 1; c <= max_continuity; ++c) {
-      //     cb.addConstraintEnd(curve_count - 1, c, zeroVec);
-      //   }
-      // }
 
       // voronoi constraints (for the first curve only)
       std::pair<unsigned int, unsigned int> voronoipoints = trajectories[i].affectingPoints(0, dt);
@@ -958,23 +816,6 @@ int main(int argc, char** argv) {
         trajectories[i].extendQPHyperplaneConstraint(qpm, hpc.from_pt, hpc.to_pt, hplane);
       }
 
-      // lower and upper bound for decision variables (i.e., workspace)
-      /*const double margin = 0.5;
-      for(int j=0; j<trajectories[i].size(); j++) {
-        Vector minVec(2);
-        minVec << std::numeric_limits<double>::max(), std::numeric_limits<double>::max();
-        Vector maxVec(2);
-        maxVec << std::numeric_limits<double>::lowest(), std::numeric_limits<double>::lowest();
-        for(int p=0; p<problem_dimension; p++) {
-          for(int k=0; k<ppc; k++) {
-            minVec(p) = std::min(y(p, j * ppc + k), minVec(p));
-            maxVec(p) = std::max(y(p, j * ppc + k), maxVec(p));
-          }
-          minVec(p) -= margin;
-          maxVec(p) += margin;
-        }
-        cb.addBounds(j, minVec, maxVec);
-      }*/
 
       const size_t numConstraints = qpm.A.rows();
       const size_t numVars = qpm.x.rows();
@@ -1000,6 +841,11 @@ int main(int argc, char** argv) {
         // std::cout << "A: " << cb.A() << std::endl;
 
         // auto t0 = Time::now();
+        Eigen::LLT<Eigen::MatrixXd> lltofH(qpm.H);
+        if(lltofH.info() == Eigen::NumericalIssue) {
+          cout << "non psd" << endl;
+        } else
+          cout << "psd" << endl;
       qpOASES::real_t cputime = dt;
         qpOASES::returnValue status = qp.init(
           qpm.H.data(),
@@ -1120,7 +966,7 @@ int main(int argc, char** argv) {
 #endif
     }
     //cout << "------" << endl;
-    vectoreuc vec;
+    vectoreuc vec(2);
     for(int v = 0; v < steps_per_cycle; v++) {
       for(int i=0; i<trajectories.size(); i++) {
         splx::Vec vecc = trajectories[i].eval(v*printdt, 0);

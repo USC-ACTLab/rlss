@@ -71,7 +71,10 @@ def genvoroxy(voronoi):
     yc = []
     for xx in xc:
       if b != 0.0:
-        yc.append((c-a*xx)/b)
+        try:
+            yc.append((c-a*xx)/b)
+        except Exception:
+            return ([], [])
       else:
         yc.append(0.0)
     return (xc,yc)
@@ -80,11 +83,14 @@ def genvoronormal(voronoi):
     a = voronoi[0]
     b = voronoi[1]
     c = voronoi[2]
-    xstart = a*c
-    ystart = b*c
-    xend = a*(c+0.1)
-    yend = b*(c+0.1)
-    return ([xstart,xend], [ystart,yend])
+    try:
+        xstart = a*c
+        ystart = b*c
+        xend = a*(c+0.1)
+        yend = b*(c+0.1)
+        return ([xstart,xend], [ystart,yend])
+    except Exception:
+        return ([], [])
 
 def init():
     global trajectories
@@ -206,24 +212,25 @@ def animate(frame):
     hpIdx = 0
     robot = 0
     if args.hyperplanes and "hyperplanes" in jsn and frame < len(jsn["hyperplanes"]) and jsn["hyperplanes"][frame] and robot < len(jsn["hyperplanes"][frame]) and jsn["hyperplanes"][frame][robot]:
+      print len(jsn["hyperplanes"][frame][robot])
       for hp in jsn["hyperplanes"][frame][robot]:
         if hp: # and hp[3] == 0:
           (hpx,hpy) = genvoroxy(hp)
           (hpnx, hpny) = genvoronormal(hp)
           if hpIdx >= len(hyperplanes):
-            v = ax.plot(hpx, hpy, lw=2, zorder=7, color=colors[hp[3]])[0] # color=colors[0])[0]
+            v = ax.plot(hpx, hpy, lw=2, zorder=7, color=colors[robot])[0] # color=colors[0])[0]
             hyperplanes.append(v)
             to_animate.append(v)
-            v = ax.plot(hpnx, hpny, lw=2, zorder=7, color=colors[hp[3]])[0] # color=colors[0])[0]
+            v = ax.plot(hpnx, hpny, lw=2, zorder=7, color=colors[robot])[0] # color=colors[0])[0]
             hyperplanenormals.append(v)
             to_animate.append(v)
 
             # print(frame, hpIdx)
           else:
             hyperplanes[hpIdx].set_data(hpx, hpy)
-            hyperplanes[hpIdx].set_color(colors[hp[3]])
+            hyperplanes[hpIdx].set_color(colors[robot])
             hyperplanenormals[hpIdx].set_data(hpnx, hpny)
-            hyperplanenormals[hpIdx].set_color(colors[hp[3]])
+            hyperplanenormals[hpIdx].set_color(colors[robot])
           hpIdx += 1
     for idx in range(hpIdx, len(hyperplanes)):
       hyperplanes[idx].set_data([], [])
@@ -365,7 +372,7 @@ if __name__ == "__main__":
         cpts = []
         # print(len(pts))
         for idx, pt in enumerate(pts):
-            ptd = ax.plot([pt[0]], [pt[1]], zorder = 20, color=colors[int(idx/8.0)], alpha = 0.8, marker='o')[0]
+            ptd = ax.plot([pt[0]], [pt[1]], zorder = 20, color=colors[i%len(colors)], alpha = 0.8, marker='o')[0]
             cpts.append(ptd)
             to_animate.append(ptd)
         controlpoints[i] = cpts
@@ -376,7 +383,7 @@ if __name__ == "__main__":
         cpts = []
         # print(len(pts))
         for idx, pt in enumerate(pts):
-            ptd = ax.plot([pt[0]], [pt[1]], zorder = 20, color=colors[int(idx/8.0)], alpha = 0.8, marker='o')[0]
+            ptd = ax.plot([pt[0]], [pt[1]], zorder = 20, color=colors[i%len(colors)], alpha = 0.8, marker='o')[0]
             cpts.append(ptd)
             to_animate.append(ptd)
         controlpoints_guessed[i] = cpts
