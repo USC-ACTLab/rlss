@@ -1,0 +1,28 @@
+# Produced by CVXGEN, 2018-07-02 18:28:37 -0400.
+# CVXGEN is Copyright (C) 2006-2017 Jacob Mattingley, jem@cvxgen.com.
+# The code in this file is Copyright (C) 2006-2017 Jacob Mattingley.
+# CVXGEN, or solvers produced by CVXGEN, cannot be used for commercial
+# applications without prior written permission from Jacob Mattingley.
+
+# Filename: description.cvxgen.
+# Description: A description of the CVXGEN problem.
+
+dimensions
+  n = 3 # 3 numbers for an hyperplane
+  p = 20 # number of points (16 curve, 4 obstacle)
+end
+
+parameters
+  A(p,n) # constraint matrix
+  H(n,n) diagonal psd # cost matrix
+end
+
+variables
+  w(n) # weight vector for hyperplane
+end
+
+minimize
+  quad(w, H)
+subject to
+  A*w <= -1
+end

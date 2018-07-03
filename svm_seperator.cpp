@@ -7,6 +7,7 @@
 #include "svmcvxwrapper_2pt_4obs.h"
 #include "svmcvxwrapper_8pt_4obs.h"
 #include "svmcvxwrapper_32pt_4obs.h"
+#include "svmcvxwrapper_16pt_4obs.h"
 #include <cassert>
 #include <qpOASES.hpp>
 #include <Eigen/Dense>
@@ -17,7 +18,7 @@
 #define QPOASES_SVM 1
 #define OSQP_SVM 0
 
-#define SVM_SOLVER OSQP_SVM
+#define SVM_SOLVER QPOASES_SVM
 
 using namespace std;
 
@@ -195,9 +196,29 @@ vector<hyperplane> SvmSeperator::_32_4_seperate() {
   return result;
 }
 
+vector<hyperplane> SvmSeperator::soft_seperate() {
+  vector<hyperplane> result;
+  for(int i=0; i<obstacles->size(); i++) {
+    obstacle2D& obs = (*obstacles)[i];
+    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> A(obs.pts.size() + pts.size(), 3);
+    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> H(3, 3);
+    Eigen::Matrix<double, Eigen::Dynamic, 1> lbA(obs.pts.size() + pts.size());
+    Eigen::Matrix<double, Eigen::Dynamic, 1> ubA(obs.pts.size() + pts.size());
+    Eigen::Matrix<double, Eigen::Dynamic, 1> lb(3);
+    Eigen::Matrix<double, Eigen::Dynamic, 1> ub(3);
+    Eigen::Matrix<double, Eigen::Dynamic, 1> g(3);
+    ub(0) = ub(1) = ub(2) = std::numeric_limits<double>::infinity();
+    lb(0) = lb(1) = lb(2) = -std::numeric_limits<double>::infinity();
+  }
+
+  return result;
+}
+
 vector<hyperplane> SvmSeperator::seperate() {
   vector<hyperplane> result;
   for(int i=0; i<obstacles->size(); i++) {
+
+    bool fail = false;
     obstacle2D& obs = (*obstacles)[i];
 #if SVM_SOLVER
     Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> A(obs.pts.size() + pts.size(), 3);
@@ -211,8 +232,10 @@ vector<hyperplane> SvmSeperator::seperate() {
     Eigen::Matrix<double, Eigen::Dynamic, 1> lb(3);
     Eigen::Matrix<double, Eigen::Dynamic, 1> ub(3);
     Eigen::Matrix<double, Eigen::Dynamic, 1> g(3);
-    ub(0) = ub(1) = ub(2) = std::numeric_limits<double>::infinity();
-    lb(0) = lb(1) = lb(2) = -std::numeric_limits<double>::infinity();
+    ub(0) = ub(1) = 1.0; // std::numeric_limits<double>::infinity();
+    lb(0) = lb(1) = -1.0; //-std::numeric_limits<double>::infinity();
+    ub(2) = std::numeric_limits<double>::infinity();
+    lb(2) = -std::numeric_limits<double>::infinity();
 
     for(unsigned int i = 0; i < obs.pts.size(); i++) {
       A(i, 0) = obs.pts[i][0];
@@ -277,7 +300,7 @@ vector<hyperplane> SvmSeperator::seperate() {
       cout << "lb" << endl << lbA << endl;
       cout << "ub" << endl << ubA << endl;
       cin >> a;
-      continue;
+      fail = true;
     } else {
 
     }
@@ -289,7 +312,7 @@ vector<hyperplane> SvmSeperator::seperate() {
     OSQPSettings settings;
     osqp_set_default_settings(&settings);
 
-    settings.max_iter = 20000;
+    settings.max_iter = 200000;
     int numVars = 3;
     int numConstraints = A.rows();
 
@@ -328,7 +351,6 @@ vector<hyperplane> SvmSeperator::seperate() {
     // Solve Problem
     osqp_warm_start_x(work, y.data());
     osqp_solve(work);
-
     if (work->info->status_val != OSQP_SOLVED) {
       cout << "svm failed" << endl;
       for(unsigned int i = 0; i < obs.pts.size(); i++) {
@@ -345,7 +367,7 @@ vector<hyperplane> SvmSeperator::seperate() {
       cout << "lb" << endl << lbA << endl;
       cout << "ub" << endl << ubA << endl;
       cin >> a;
-      continue;
+      fail = true;
     } else {
 
     }
@@ -373,12 +395,50 @@ vector<hyperplane> SvmSeperator::seperate() {
       cout << pts[i] << endl;
     }
     cout << "---" << endl << pl.normal << " " << pl.distance << endl;
-    if(rand() % 1000 == 10001) {
+    if(fail) {
       int  a;
       cin >> a;
     }
   }
 
+
+  return result;
+}
+
+vector<hyperplane> SvmSeperator::_16_4_seperate() {
+  assert(pts.size() == 16);
+  vector<hyperplane> result;
+  vectoreuc& pt1 = pts[0];
+  vectoreuc& pt2 = pts[1];
+  vectoreuc& pt3 = pts[2];
+  vectoreuc& pt4 = pts[3];
+  vectoreuc& pt5 = pts[4];
+  vectoreuc& pt6 = pts[5];
+  vectoreuc& pt7 = pts[6];
+  vectoreuc& pt8 = pts[7];
+  vectoreuc& pt9 = pts[8];
+  vectoreuc& pt10 = pts[9];
+  vectoreuc& pt11 = pts[10];
+  vectoreuc& pt12 = pts[11];
+  vectoreuc& pt13 = pts[12];
+  vectoreuc& pt14 = pts[13];
+  vectoreuc& pt15 = pts[14];
+  vectoreuc& pt16 = pts[15];
+
+  for(int i=0; i<obstacles->size(); i++) {
+    obstacle2D& obs = (*obstacles)[i];
+    assert(obs.pts.size() == 4);
+    vectoreuc& obs1 = obs.pts[0];
+    vectoreuc& obs2 = obs.pts[1];
+    vectoreuc& obs3 = obs.pts[2];
+    vectoreuc& obs4 = obs.pts[3];
+
+    result.push_back(_16pt4obspt_svm(pt1, pt2, pt3, pt4, pt5, pt6, pt7, pt8,
+                                    pt9, pt10, pt11, pt12, pt13, pt14, pt15, pt16,
+                                    obs1, obs2, obs3, obs4));
+
+
+  }
 
   return result;
 }

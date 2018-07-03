@@ -20,9 +20,11 @@ class SvmSeperator {
     SvmSeperator(vector<obstacle2D>* obs);
     void reset_pts();
     void add_pt(const vectoreuc& vec);
+    vector<hyperplane> soft_seperate();
     vector<hyperplane> seperate();
     vector<hyperplane> _2_4_seperate();
     vector<hyperplane> _8_4_seperate();
+    vector<hyperplane> _16_4_seperate();
     vector<hyperplane> _32_4_seperate();
     const vector<vectoreuc>& getPts() const {
       return pts;

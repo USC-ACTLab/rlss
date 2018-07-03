@@ -94,6 +94,7 @@ int main(int argc, char** argv) {
   const double scaling_multiplier = jsn["scaling_multiplier"];
   const double additional_time = jsn["additional_time"];
 
+
   bool enable_voronoi = jsn["enable_voronoi"];
 
   string alg = jsn["algorithm"];
@@ -318,6 +319,7 @@ int main(int argc, char** argv) {
     for(int i=0; i<original_trajectories.size(); i++ ) {
       cerr << "traj " << i << " start " << ct << " / " << total_times[i] << endl;
       trajectories[i].m_b = hor;
+      trajectories[i].generateUniformKnotVector();
       t_start = Time::now();
 
       // if (ct > 7 && i == 0) {
@@ -651,10 +653,20 @@ int main(int argc, char** argv) {
                 svm.add_pt(vec);
               }
               cout << "discrete svm" << endl;
-              vector<hyperplane> sep = svm.seperate();
+              vector<hyperplane> sep = svm._16_4_seperate();
               for(unsigned int k = 0; k < sep.size(); k++) {
                 auto& plane = sep[k];
                 Vector normal(problem_dimension);
+                double min_dist = std::numeric_limits<double>::infinity();
+                for(unsigned int p = j; p <= j + trajectories[i].m_degree; p++) {
+                  vectoreuc vv(2);
+                  vv[0] = trajectories[i].getCP(p)(0);
+                  vv[1] = trajectories[i].getCP(p)(1);
+                  min_dist = min(min_dist, plane.dist(vv));
+                }
+
+                double shift_amount = min(robot_radius * sqrt(2), min_dist - 0.00001);
+
                 normal << plane.normal[0], plane.normal[1];
                 output_json["hyperplanes"][output_iter][i][hpidx] = vector<double>();
                 output_json["hyperplanes"][output_iter][i][hpidx].push_back(plane.normal[0]);
@@ -718,17 +730,28 @@ int main(int argc, char** argv) {
           }
 
           cout << "continuous svm" << endl;
-          vector<hyperplane> hyperplanes = svm.seperate();
+          vector<hyperplane> hyperplanes = svm._16_4_seperate();
 
           for (auto& plane : hyperplanes) {
             Vector normal(problem_dimension);
+
+            double min_dist = std::numeric_limits<double>::infinity();
+            for(unsigned int p = j; p <= j + trajectories[i].m_degree; p++) {
+              vectoreuc vv(2);
+              vv[0] = trajectories[i].getCP(p)(0);
+              vv[1] = trajectories[i].getCP(p)(1);
+              min_dist = min(min_dist, plane.dist(vv));
+            }
+
+            double shift_amount = min(robot_radius * sqrt(2), min_dist - 0.01);
+
             normal << plane.normal[0], plane.normal[1];
             output_json["hyperplanes"][output_iter][i][hpidx] = vector<double>();
             output_json["hyperplanes"][output_iter][i][hpidx].push_back(plane.normal[0]);
             output_json["hyperplanes"][output_iter][i][hpidx].push_back(plane.normal[1]);
-            output_json["hyperplanes"][output_iter][i][hpidx].push_back(plane.distance - robot_radius);
+            output_json["hyperplanes"][output_iter][i][hpidx].push_back(plane.distance - shift_amount);
             hpidx++;
-            hyperplaneConstraints.push_back({j, j+trajectories[i].m_degree, normal, plane.distance - robot_radius});
+            hyperplaneConstraints.push_back({j, j+trajectories[i].m_degree, normal, plane.distance - shift_amount});
             // cb.addHyperplane(j, normal, plane.distance);
           }
         }
@@ -767,6 +790,7 @@ int main(int argc, char** argv) {
 
       double remaining_time = std::max(total_times[i] - ct, curve_count * dt * 10.1);
       double factor = lambda_min_der / remaining_time;
+      cout << factor*lambda_min_der_vel << endl;
       trajectories[i].extendQPIntegratedSquaredDerivative(qpm, 1, factor*lambda_min_der_vel);
       trajectories[i].extendQPIntegratedSquaredDerivative(qpm, 2, factor*lambda_min_der_acc);
       trajectories[i].extendQPIntegratedSquaredDerivative(qpm, 3, factor*lambda_min_der_jerk);
@@ -798,7 +822,7 @@ int main(int argc, char** argv) {
       }
 
       // voronoi constraints (for the first curve only)
-      std::pair<unsigned int, unsigned int> voronoipoints = trajectories[i].affectingPoints(0, dt);
+      std::pair<unsigned int, unsigned int> voronoipoints = trajectories[i].affectingPoints(0, 2 * dt);
       for(int j=0; j<voronoi_hyperplanes.size(); j++) {
         hyperplane& plane = voronoi_hyperplanes[j];
 
@@ -818,6 +842,7 @@ int main(int argc, char** argv) {
         hplane.normal() = hpc.normal;
         hplane.offset() = hpc.dist;
         trajectories[i].extendQPHyperplaneConstraint(qpm, hpc.from_pt, hpc.to_pt, hplane);
+        //trajectories[i].extendQPHyperplanePenalty(qpm, hpc.from_pt, hpc.to_pt, hplane, 0.00001);
       }
 
 
@@ -880,6 +905,78 @@ int main(int argc, char** argv) {
         std::cout << "status: " << status << std::endl;
         std::cout << "objective: " << qp.getObjVal() << std::endl;
         // std::cout << "y: " << y << std::endl;
+      } else if (alg == "OSQP") {
+        ////
+        // Problem settings
+        OSQPSettings settings;
+        osqp_set_default_settings(&settings);
+        // settings.polish = 1;
+        // settings.eps_abs = 1.0e-4;
+        // settings.eps_rel = 1.0e-4;
+        // settings.max_iter = 20000;
+        // settings.verbose = false;
+
+        // Structures
+        typedef Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor> MatrixCM;
+        MatrixCM H_CM = qpm.H;
+        std::vector<c_int> rowIndicesH(numVars * numVars);
+        std::vector<c_int> columnIndicesH(numVars + 1);
+        for (size_t c = 0; c < numVars; ++c) {
+          for (size_t r = 0; r < numVars; ++r) {
+            rowIndicesH[c * numVars + r] = r;
+          }
+          columnIndicesH[c] = c * numVars;
+        }
+        columnIndicesH[numVars] = numVars * numVars;
+
+        MatrixCM A_CM = qpm.A;
+        std::vector<c_int> rowIndicesA(numConstraints * numVars);
+        std::vector<c_int> columnIndicesA(numVars + 1);
+        for (size_t c = 0; c < numVars; ++c) {
+          for (size_t r = 0; r < numConstraints; ++r) {
+            rowIndicesA[c * numConstraints + r] = r;
+          }
+          columnIndicesA[c] = c * numConstraints;
+        }
+        columnIndicesA[numVars] = numConstraints * numVars;
+
+
+        OSQPData data;
+        data.n = numVars;
+        data.m = numConstraints;
+        data.P = csc_matrix(numVars, numVars, numVars * numVars, H_CM.data(), rowIndicesH.data(), columnIndicesH.data());
+        data.q = const_cast<double*>(qpm.g.data());
+        data.A = csc_matrix(numConstraints, numVars, numConstraints * numVars, A_CM.data(), rowIndicesA.data(), columnIndicesA.data());
+        data.l = const_cast<double*>(qpm.lbA.data());
+        data.u = const_cast<double*>(qpm.ubA.data());
+
+        OSQPWorkspace* work = osqp_setup(&data, &settings);
+
+        // Solve Problem
+        osqp_warm_start_x(work, qpm.x.data());
+        osqp_solve(work);
+
+        if (work->info->status_val != OSQP_SOLVED) {
+          std::stringstream sstr;
+          sstr << "Couldn't solve QP! @ " << ct << " robot " << i;
+          // throw std::runtime_error(sstr.str());
+          std::cerr << sstr.str() << std::endl;
+        }
+
+        // work->solution->x
+        for (size_t i = 0; i < numVars; ++i) {
+          qpm.x(i) = work->solution->x[i];
+        }
+        // for(int j=0; j<trajectories[i].size(); j++) {
+        //   for(int k=0; k<ppc; k++) {
+        //     for(int p=0; p<problem_dimension; p++) {
+        //       trajectories[i][j][k][p] = work->solution->x[p * numVars + j * ppc + k];
+        //     }
+        //   }
+        // }
+
+        // Clean workspace
+        osqp_cleanup(work);
       } else {
         throw std::runtime_error("Unknown algorithms!");
       }
