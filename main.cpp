@@ -652,7 +652,6 @@ int main(int argc, char** argv) {
                 vec[1] = trajectories[i].m_controlPoints[k](1) + robot_radius;
                 svm.add_pt(vec);
               }
-              cout << "discrete svm" << endl;
               vector<hyperplane> sep = svm._16_4_seperate();
               for(unsigned int k = 0; k < sep.size(); k++) {
                 auto& plane = sep[k];
@@ -662,7 +661,7 @@ int main(int argc, char** argv) {
                   vectoreuc vv(2);
                   vv[0] = trajectories[i].getCP(p)(0);
                   vv[1] = trajectories[i].getCP(p)(1);
-                  min_dist = min(min_dist, plane.dist(vv));
+                  min_dist = min(min_dist, std::abs(plane.dist(vv)));
                 }
 
                 double shift_amount = min(robot_radius * sqrt(2), min_dist - 0.00001);
@@ -728,8 +727,6 @@ int main(int argc, char** argv) {
             pt[1] = trajectories[i].getCP(k)(1) + robot_radius;
             svm.add_pt(pt);
           }
-
-          cout << "continuous svm" << endl;
           vector<hyperplane> hyperplanes = svm._16_4_seperate();
 
           for (auto& plane : hyperplanes) {
@@ -740,7 +737,7 @@ int main(int argc, char** argv) {
               vectoreuc vv(2);
               vv[0] = trajectories[i].getCP(p)(0);
               vv[1] = trajectories[i].getCP(p)(1);
-              min_dist = min(min_dist, plane.dist(vv));
+              min_dist = min(min_dist, std::abs(plane.dist(vv)));
             }
 
             double shift_amount = min(robot_radius * sqrt(2), min_dist - 0.01);
@@ -842,7 +839,7 @@ int main(int argc, char** argv) {
         hplane.normal() = hpc.normal;
         hplane.offset() = hpc.dist;
         trajectories[i].extendQPHyperplaneConstraint(qpm, hpc.from_pt, hpc.to_pt, hplane);
-        //trajectories[i].extendQPHyperplanePenalty(qpm, hpc.from_pt, hpc.to_pt, hplane, 0.00001);
+        //trajectories[i].extendQPHyperplanePenalty(qpm, hpc.from_pt, hpc.to_pt, hplane, 0.1);
       }
 
 

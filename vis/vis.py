@@ -183,7 +183,11 @@ def animate(frame):
                 k = 0
                 # print(len(pts))
                 while k < len(pts):
-                    cpts[k].set_data([pts[k][0]], [pts[k][1]])
+                    if pts[k]:
+                        try:
+                            cpts[k].set_data([pts[k][0]], [pts[k][1]])
+                        except Exception:
+                            print pts[k]
                     k+=1
 
     if args.controlpoints_guessed and frame < len(jsn["controlpoints_guessed"]) and jsn["controlpoints_guessed"][frame] != None:
@@ -250,6 +254,7 @@ def animate(frame):
             fig.savefig("images/"+str(frame)+".png")
 
     if step:
+      print "step"
       anim.event_source.stop()
       anim_running = False
 
