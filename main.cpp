@@ -117,7 +117,7 @@ int main(int argc, char** argv) {
     for(int i=0; i<file.rowCount(); i++) {
       double duration = stod(file[i][0]);
       curve crv(duration * scale_traj, problem_dimension);
-      for(int j=1; j<=problem_dimension * ppc; j+=problem_dimension) {
+      for(int j=1; j<=problem_dimension * 8; j+=problem_dimension) {
         vectoreuc cp(problem_dimension);
         for(int u=0; u<problem_dimension; u++) {
           cp[u] = stod(file[i][j+u]);
@@ -371,8 +371,6 @@ int main(int argc, char** argv) {
       //   continue;
       // }
 
-
-      unsigned varcount = curve_count * ppc * problem_dimension;
 
       // shift last trajectories
       // for(int p=0; p<problem_dimension; p++) {
@@ -630,7 +628,7 @@ int main(int argc, char** argv) {
               tovec(0) = corners[j+1].first;
               tovec(1) = corners[j+1].second;
               std::pair<unsigned int, unsigned int> effectrange = trajectories[i]
-                    .interpolateEndAtTo(fromvec, tovec, max(5, ppc - (int)trajectories[i].m_degree));
+                    .interpolateEndAtTo(fromvec, tovec, ppc - (int)trajectories[i].m_degree);
             }
 
             trajectories[i].generateUniformKnotVector();
@@ -652,7 +650,7 @@ int main(int argc, char** argv) {
                 vec[1] = trajectories[i].m_controlPoints[k](1) + robot_radius;
                 svm.add_pt(vec);
               }
-              vector<hyperplane> sep = svm._16_4_seperate();
+              vector<hyperplane> sep = svm.soft_seperate();
               for(unsigned int k = 0; k < sep.size(); k++) {
                 auto& plane = sep[k];
                 Vector normal(problem_dimension);
@@ -665,7 +663,6 @@ int main(int argc, char** argv) {
                 }
 
                 double shift_amount = min(robot_radius * sqrt(2), min_dist - 0.00001);
-
                 normal << plane.normal[0], plane.normal[1];
                 output_json["hyperplanes"][output_iter][i][hpidx] = vector<double>();
                 output_json["hyperplanes"][output_iter][i][hpidx].push_back(plane.normal[0]);
@@ -727,7 +724,7 @@ int main(int argc, char** argv) {
             pt[1] = trajectories[i].getCP(k)(1) + robot_radius;
             svm.add_pt(pt);
           }
-          vector<hyperplane> hyperplanes = svm._16_4_seperate();
+          vector<hyperplane> hyperplanes = svm.soft_seperate();
 
           for (auto& plane : hyperplanes) {
             Vector normal(problem_dimension);

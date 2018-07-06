@@ -196,23 +196,6 @@ vector<hyperplane> SvmSeperator::_32_4_seperate() {
   return result;
 }
 
-vector<hyperplane> SvmSeperator::soft_seperate() {
-  vector<hyperplane> result;
-  for(int i=0; i<obstacles->size(); i++) {
-    obstacle2D& obs = (*obstacles)[i];
-    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> A(obs.pts.size() + pts.size(), 3);
-    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> H(3, 3);
-    Eigen::Matrix<double, Eigen::Dynamic, 1> lbA(obs.pts.size() + pts.size());
-    Eigen::Matrix<double, Eigen::Dynamic, 1> ubA(obs.pts.size() + pts.size());
-    Eigen::Matrix<double, Eigen::Dynamic, 1> lb(3);
-    Eigen::Matrix<double, Eigen::Dynamic, 1> ub(3);
-    Eigen::Matrix<double, Eigen::Dynamic, 1> g(3);
-    ub(0) = ub(1) = ub(2) = std::numeric_limits<double>::infinity();
-    lb(0) = lb(1) = lb(2) = -std::numeric_limits<double>::infinity();
-  }
-
-  return result;
-}
 
 vector<hyperplane> SvmSeperator::seperate() {
   vector<hyperplane> result;
@@ -294,12 +277,12 @@ vector<hyperplane> SvmSeperator::seperate() {
       for(unsigned int i = 0; i < pts.size(); i++) {
         cout << pts[i] << endl;
       }
-      int a; cin >> a;
+      //int a; cin >> a;
       cout << A << endl;
       cout << g << endl;
       cout << "lb" << endl << lbA << endl;
       cout << "ub" << endl << ubA << endl;
-      cin >> a;
+      //cin >> a;
       fail = true;
     } else {
 
@@ -361,12 +344,12 @@ vector<hyperplane> SvmSeperator::seperate() {
         cout << pts[i] << endl;
       }
       int a;
-      cin >> a;
+      //cin >> a;
       cout << A << endl;
       cout << g << endl;
       cout << "lb" << endl << lbA << endl;
       cout << "ub" << endl << ubA << endl;
-      cin >> a;
+      //cin >> a;
       fail = true;
     } else {
 
@@ -397,7 +380,7 @@ vector<hyperplane> SvmSeperator::seperate() {
     cout << "---" << endl << pl.normal << " " << pl.distance << endl;
     if(fail) {
       int  a;
-      cin >> a;
+      //cin >> a;
     }
   }
 
@@ -440,5 +423,215 @@ vector<hyperplane> SvmSeperator::_16_4_seperate() {
 
   }
 
+  return result;
+}
+
+vector<hyperplane> SvmSeperator::soft_seperate() {
+  vector<hyperplane> result;
+  for(size_t i = 0; i < obstacles->size(); i++) {
+    obstacle2D& obs = (*obstacles)[i];
+
+    unsigned int numVars = 3 + obs.pts.size();
+    unsigned int numConstraints = obs.pts.size() + pts.size();
+
+    double C = 100.0;
+
+#if SVM_SOLVER
+    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> A(numConstraints, numVars);
+    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> H(numVars, numVars);
+#else
+    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor> A(numConstraints, numVars);
+    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor> H(numVars, numVars);
+#endif
+    Eigen::Matrix<double, Eigen::Dynamic, 1> lbA(numConstraints);
+    Eigen::Matrix<double, Eigen::Dynamic, 1> ubA(numConstraints);
+    Eigen::Matrix<double, Eigen::Dynamic, 1> lb(numVars);
+    Eigen::Matrix<double, Eigen::Dynamic, 1> ub(numVars);
+    Eigen::Matrix<double, Eigen::Dynamic, 1> g(numVars);
+    Eigen::Matrix<double, Eigen::Dynamic, 1> y(numVars);
+
+
+    for(unsigned int m = 0; m < numVars; m++) {
+      for(unsigned int n = 0; n < numVars; n++) {
+        if(m == n) {
+          if(m == 2)
+            H(m, n) = 0.0;
+          else if(m < 2)
+            H(m, n) = 1.0;
+          else
+            H(m, n) = 0.0;
+        } else {
+          H(m, n) = 0.0;
+        }
+      }
+      if(m > 2) {
+        g(m) = C;
+        lb(m) = 0;
+        ub(m) = std::numeric_limits<double>::infinity();
+      } else {
+        g(m) = 0.0;
+        lb(m) = -std::numeric_limits<double>::infinity();
+        ub(m) = std::numeric_limits<double>::infinity();
+      }
+      y(m) = 0.0;
+    }
+
+    for(unsigned int m = 0; m < obs.pts.size(); m++) {
+      for(unsigned int n = 0; n < numVars; n++) {
+        A(m, n) = 0.0;
+      }
+      A(m, 0) = obs.pts[m][0];
+      A(m, 1) = obs.pts[m][1];
+      A(m, 2) = -1.0;
+      A(m, 3 + m) = 1.0;
+      lbA(m) = 1.0;
+      ubA(m) = std::numeric_limits<double>::infinity();
+    }
+
+    for(unsigned int m = 0; m < pts.size(); m++) {
+      for(unsigned int n = 0; n < numVars; n++) {
+        A(m + obs.pts.size(), n) = 0.0;
+      }
+      A(m + obs.pts.size(), 0) = pts[m][0];
+      A(m + obs.pts.size(), 1) = pts[m][1];
+      A(m + obs.pts.size(), 2) = -1.0;
+      lbA(m + obs.pts.size()) = -std::numeric_limits<double>::infinity();
+      ubA(m + obs.pts.size()) = -1.0;
+    }
+
+#if SVM_SOLVER
+    qpOASES::QProblem qp(numVars, numConstraints, qpOASES::HST_SEMIDEF);
+    qpOASES::Options options;
+    options.setToDefault();
+    options.printLevel = qpOASES::PL_LOW;
+    qp.setOptions(options);
+    qpOASES::int_t nWSR = 10000;
+
+    // std::cout << "H: " << ob.H() << std::endl;
+    // std::cout << "A: " << cb.A() << std::endl;
+
+    // auto t0 = Time::now();
+    qpOASES::returnValue status = qp.init(
+      H.data(),
+      g.data(),
+      A.data(),
+      lb.data(),
+      ub.data(),
+      lbA.data(),
+      ubA.data(),
+      nWSR,
+      NULL);
+
+    qpOASES::int_t simpleStatus = qpOASES::getSimpleStatus(status);
+
+    if(simpleStatus != 0) {
+      cout << "svm failed" << endl;
+      for(unsigned int i = 0; i < obs.pts.size(); i++) {
+        cout << obs.pts[i] << endl;
+      }
+      cout << "--" << endl;
+      for(unsigned int i = 0; i < pts.size(); i++) {
+        cout << pts[i] << endl;
+      }
+      int a; cin >> a;
+      cout << A << endl;
+      cout << g << endl;
+      cout << "lb" << endl << lbA << endl;
+      cout << "ub" << endl << ubA << endl;
+      cin >> a;
+    } else {
+
+    }
+
+    qp.getPrimalSolution(y.data());
+
+#else
+
+    OSQPSettings settings;
+    osqp_set_default_settings(&settings);
+
+    settings.max_iter = 200000;
+
+    std::vector<c_int> rowIndicesH(numVars * numVars);
+    std::vector<c_int> columnIndicesH(numVars + 1);
+    for (size_t c = 0; c < numVars; ++c) {
+      for (size_t r = 0; r < numVars; ++r) {
+        rowIndicesH[c * numVars + r] = r;
+      }
+      columnIndicesH[c] = c * numVars;
+    }
+    columnIndicesH[numVars] = numVars * numVars;
+
+    std::vector<c_int> rowIndicesA(numConstraints * numVars);
+    std::vector<c_int> columnIndicesA(numVars + 1);
+    for (size_t c = 0; c < numVars; ++c) {
+      for (size_t r = 0; r < numConstraints; ++r) {
+        rowIndicesA[c * numConstraints + r] = r;
+      }
+      columnIndicesA[c] = c * numConstraints;
+    }
+    columnIndicesA[numVars] = numConstraints * numVars;
+
+
+    OSQPData data;
+    data.n = numVars;
+    data.m = numConstraints;
+    data.P = csc_matrix(numVars, numVars, numVars * numVars, H.data(), rowIndicesH.data(), columnIndicesH.data());
+    data.q = const_cast<double*>(g.data());
+    data.A = csc_matrix(numConstraints, numVars, numConstraints * numVars, A.data(), rowIndicesA.data(), columnIndicesA.data());
+    data.l = const_cast<double*>(lbA.data());
+    data.u = const_cast<double*>(ubA.data());
+
+    OSQPWorkspace* work = osqp_setup(&data, &settings);
+
+    // Solve Problem
+    osqp_warm_start_x(work, y.data());
+    osqp_solve(work);
+    if (work->info->status_val != OSQP_SOLVED) {
+      cout << "svm failed" << endl;
+      for(unsigned int i = 0; i < obs.pts.size(); i++) {
+        cout << obs.pts[i] << endl;
+      }
+      cout << "--" << endl;
+      for(unsigned int i = 0; i < pts.size(); i++) {
+        cout << pts[i] << endl;
+      }
+      int a;
+      cin >> a;
+      cout << A << endl;
+      cout << g << endl;
+      cout << "lb" << endl << lbA << endl;
+      cout << "ub" << endl << ubA << endl;
+      cin >> a;
+    } else {
+
+    }
+
+    // work->solution->x
+    for (size_t i = 0; i < numVars; ++i) {
+      y(i) = work->solution->x[i];
+    }
+    osqp_cleanup(work);
+#endif
+    hyperplane pl;
+    pl.normal = vectoreuc(2);
+    pl.normal[0] = y(0);
+    pl.normal[1] = y(1);
+    pl.distance = y(2) / pl.normal.L2norm();
+    pl.normal = pl.normal.normalized();
+    result.push_back(pl);
+
+    /*cout << "svm success" << endl;
+    for(unsigned int i = 0; i < obs.pts.size(); i++) {
+      cout << obs.pts[i] << endl;
+    }
+    cout << "--" << endl;
+    for(unsigned int i = 0; i < pts.size(); i++) {
+      cout << pts[i] << endl;
+    }
+    cout << "---" << endl << pl.normal << " " << pl.distance << endl;
+    /*if(rand() % 1000 == 0) {
+    int a; cin >> a;}*/
+  }
   return result;
 }
