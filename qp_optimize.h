@@ -11,6 +11,23 @@
 typedef Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> Matrix;
 typedef Eigen::VectorXd Vector;
 
+
+
+struct hyperplaneData
+{
+  unsigned int from_pt;
+  unsigned int to_pt;
+  Vector normal;
+  double dist;
+};
+
+struct endCloseToData
+{
+  double time;
+  double lambda;
+  Vector value;
+};
+
 class ObjectiveBuilder
 {
 public:

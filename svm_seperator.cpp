@@ -18,7 +18,7 @@
 #define QPOASES_SVM 1
 #define OSQP_SVM 0
 
-#define SVM_SOLVER QPOASES_SVM
+#define SVM_SOLVER OSQP_SVM
 
 using namespace std;
 

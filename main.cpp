@@ -142,7 +142,7 @@ int main(int argc, char** argv) {
         cpts.push_back(cpt);
       }
     }
-    trajectories.push_back(splx::BSpline(max_continuity+1, problem_dimension, 0, hor, cpts));
+    trajectories.push_back(splx::BSpline(std::max(max_continuity+1, 4), problem_dimension, 0, hor, cpts));
   }
 
   /*vector<vectoreuc> pos_diffs(trajectories.size());*/
@@ -242,9 +242,9 @@ int main(int argc, char** argv) {
   }
 
 
-  vector<splx::Vec> positions(trajectories.size());
-  vector<splx::Vec> velocities(trajectories.size());
-  vector<splx::Vec> accelerations(trajectories.size());
+  vector<splx::Vec> positions(trajectories.size(), splx::Vec(2));
+  vector<splx::Vec> velocities(trajectories.size(), splx::Vec(2));
+  vector<splx::Vec> accelerations(trajectories.size(), splx::Vec(2));
   // vector<vectoreuc> jerks(trajectories.size());
   // vector<vectoreuc> snaps(trajectories.size());
 
@@ -262,13 +262,19 @@ int main(int argc, char** argv) {
   int total_count_for_opt = 0;
 
 
-
+  vectoreuc vvv(2);
   for(int i=0; i<trajectories.size(); i++) {
-    positions[i] = trajectories[i].eval(0, 0);
+    vvv = original_trajectories[i].neval(0.0, 0);
+    positions[i](0) = vvv[0];
+    positions[i](1) = vvv[1];
     cout << "init pos: " << positions[i]<< endl;
-    velocities[i] = trajectories[i].eval(0, 1);
+    vvv = original_trajectories[i].neval(0.0, 1);
+    velocities[i](0) = vvv[0];
+    velocities[i](1) = vvv[1];
     cout << "init vel: " << velocities[i]<< endl;
-    accelerations[i] = trajectories[i].eval(0, 2);
+    vvv = original_trajectories[i].neval(0.0, 2);
+    accelerations[i][0] = vvv[0];
+    accelerations[i][1] = vvv[1];
     cout << "init acc: " << accelerations[i]<< endl;
     // jerks[i] = trajectories[i].neval(0, 3);
     // cout << "init jerk: " << jerks[i]<< endl;
@@ -310,6 +316,12 @@ int main(int argc, char** argv) {
   vector<int> robot_crash_counts(original_trajectories.size(), 0);
   vector<int> robot_no_crash_counts(original_trajectories.size(), 0);
 
+
+  cout << "here2" << endl;
+  vector<bool> lastKnotVectorUniform(original_trajectories.size(), true);
+  vector<vector<double> > lastNonUniformSegmentLenghts(original_trajectories.size());
+  cout << "here" << endl;
+
   for(double ct = 0; ct <= total_t + additional_time/*+ 5*/ && !everyone_reached ; ct+=dt) {
 
     outStats << ct;
@@ -319,7 +331,12 @@ int main(int argc, char** argv) {
     for(int i=0; i<original_trajectories.size(); i++ ) {
       cerr << "traj " << i << " start " << ct << " / " << total_times[i] << endl;
       trajectories[i].m_b = hor;
-      trajectories[i].generateUniformKnotVector();
+      if(lastKnotVectorUniform[i])
+        trajectories[i].generateClampedUniformKnotVector();
+      else {
+        cout << "else" << endl;
+        trajectories[i].generateClampedNonuniformKnotVector(lastNonUniformSegmentLenghts[i]);
+      }
       t_start = Time::now();
 
       // if (ct > 7 && i == 0) {
@@ -390,21 +407,7 @@ int main(int argc, char** argv) {
       // Vector y(numVars);
 
 
-      struct endCloseToData
-      {
-        double time;
-        double lambda;
-        Vector value;
-      };
       std::vector<endCloseToData> endCloseToObjectives;
-
-      struct hyperplaneData
-      {
-        unsigned int from_pt;
-        unsigned int to_pt;
-        Vector normal;
-        double dist;
-      };
       std::vector<hyperplaneData> hyperplaneConstraints;
 
 
@@ -620,6 +623,20 @@ int main(int argc, char** argv) {
             trajectories[i].clearControlPoints();
 
             size_t hpidx = 0;
+            // give 2 + m_degree points to the shortest segment.
+            // others get scaled amount according to len / shortestlen
+
+            std::vector<double> segment_lengths;
+            for(size_t j = 0; j < discrete_curve_count && j < curve_count; j++) {
+              splx::Vec fromvec(2);
+              fromvec(0) = corners[j].first;
+              fromvec(1) = corners[j].second;
+              splx::Vec tovec(2);
+              tovec(0) = corners[j+1].first;
+              tovec(1) = corners[j+1].second;
+              segment_lengths.push_back((fromvec - tovec).norm());
+            }
+
             for (size_t j = 0; j < discrete_curve_count && j < curve_count; ++j) {
               splx::Vec fromvec(2);
               fromvec(0) = corners[j].first;
@@ -630,8 +647,11 @@ int main(int argc, char** argv) {
               std::pair<unsigned int, unsigned int> effectrange = trajectories[i]
                     .interpolateEndAtTo(fromvec, tovec, ppc - (int)trajectories[i].m_degree);
             }
-
-            trajectories[i].generateUniformKnotVector();
+            cout << "beore" << endl;
+            trajectories[i].generateClampedNonuniformKnotVector(segment_lengths);
+            cout << "after" << endl;
+            lastNonUniformSegmentLenghts[i] = segment_lengths;
+            lastKnotVectorUniform[i] = true;
 
             for(unsigned int j = 0; j < trajectories[i].m_controlPoints.size() - trajectories[i].m_degree; j++) {
               svm.reset_pts();
@@ -650,7 +670,7 @@ int main(int argc, char** argv) {
                 vec[1] = trajectories[i].m_controlPoints[k](1) + robot_radius;
                 svm.add_pt(vec);
               }
-              vector<hyperplane> sep = svm.soft_seperate();
+              vector<hyperplane> sep = svm.seperate();
               for(unsigned int k = 0; k < sep.size(); k++) {
                 auto& plane = sep[k];
                 Vector normal(problem_dimension);
@@ -724,7 +744,7 @@ int main(int argc, char** argv) {
             pt[1] = trajectories[i].getCP(k)(1) + robot_radius;
             svm.add_pt(pt);
           }
-          vector<hyperplane> hyperplanes = svm.soft_seperate();
+          vector<hyperplane> hyperplanes = svm.seperate();
 
           for (auto& plane : hyperplanes) {
             Vector normal(problem_dimension);
@@ -831,6 +851,9 @@ int main(int argc, char** argv) {
 
       // hyperplane constraints
 
+      // calculate working set by hand
+
+
       for (const auto& hpc : hyperplaneConstraints) {
         splx::Hyperplane hplane(2);
         hplane.normal() = hpc.normal;
@@ -840,8 +863,11 @@ int main(int argc, char** argv) {
       }
 
 
+
       const size_t numConstraints = qpm.A.rows();
       const size_t numVars = qpm.x.rows();
+      cout << "numVars: " << numVars << endl;
+      cout << "numConstraints: " << numConstraints << endl;
       if (alg == "QPOASES") {
         // const size_t numVars = cb.A().columns();
 
@@ -1006,7 +1032,10 @@ int main(int argc, char** argv) {
       if (   max_velocity > v_max
           || max_acceleration > a_max) {
             trajectories[i].m_b*=scaling_multiplier;
-            trajectories[i].generateUniformKnotVector();
+            if(lastKnotVectorUniform[i])
+              trajectories[i].generateClampedUniformKnotVector();
+            else
+              trajectories[i].generateClampedNonuniformKnotVector(lastNonUniformSegmentLenghts[i]);
             for (auto& o : endCloseToObjectives) {
               o.time *= scaling_multiplier;
             }
