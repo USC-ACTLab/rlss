@@ -6,6 +6,7 @@
 
 #include <iostream>
 #include <vector>
+#include "spline.h"
 
 // qpOASES assumes row-major!
 typedef Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> Matrix;
@@ -17,7 +18,7 @@ struct hyperplaneData
 {
   unsigned int from_pt;
   unsigned int to_pt;
-  Vector normal;
+  splx::Vec normal;
   double dist;
 };
 
@@ -25,7 +26,7 @@ struct endCloseToData
 {
   double time;
   double lambda;
-  Vector value;
+  splx::Vec value;
 };
 
 class ObjectiveBuilder

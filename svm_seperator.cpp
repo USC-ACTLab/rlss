@@ -8,6 +8,7 @@
 #include "svmcvxwrapper_8pt_4obs.h"
 #include "svmcvxwrapper_32pt_4obs.h"
 #include "svmcvxwrapper_16pt_4obs.h"
+#include "svmcvxwrapper_20pt_4obs.h"
 #include <cassert>
 #include <qpOASES.hpp>
 #include <Eigen/Dense>
@@ -123,6 +124,68 @@ vector<hyperplane> SvmSeperator::_8_4_seperate() {
   return result;
 }
 
+
+vector<hyperplane> SvmSeperator::_20_4_seperate() {
+  assert(pts.size() == 20);
+  vector<hyperplane> result;
+  vectoreuc& pt1 = pts[0];
+  vectoreuc& pt2 = pts[1];
+  vectoreuc& pt3 = pts[2];
+  vectoreuc& pt4 = pts[3];
+  vectoreuc& pt5 = pts[4];
+  vectoreuc& pt6 = pts[5];
+  vectoreuc& pt7 = pts[6];
+  vectoreuc& pt8 = pts[7];
+  vectoreuc& pt9 = pts[8];
+  vectoreuc& pt10 = pts[9];
+  vectoreuc& pt11 = pts[10];
+  vectoreuc& pt12 = pts[11];
+  vectoreuc& pt13 = pts[12];
+  vectoreuc& pt14 = pts[13];
+  vectoreuc& pt15 = pts[14];
+  vectoreuc& pt16 = pts[15];
+  vectoreuc& pt17 = pts[16];
+  vectoreuc& pt18 = pts[17];
+  vectoreuc& pt19 = pts[18];
+  vectoreuc& pt20 = pts[19];
+  for(int i=0; i<obstacles->size(); i++) {
+    obstacle2D& obs = (*obstacles)[i];
+    assert(obs.pts.size() == 4);
+    vectoreuc& obs1 = obs.pts[0];
+    vectoreuc& obs2 = obs.pts[1];
+    vectoreuc& obs3 = obs.pts[2];
+    vectoreuc& obs4 = obs.pts[3];
+
+    result.push_back(_20pt4obspt_svm(pt1, pt2, pt3, pt4, pt5, pt6, pt7, pt8,
+                                    pt9, pt10, pt11, pt12, pt13, pt14, pt15, pt16,
+                                    pt17, pt18, pt19, pt20,
+                                    obs1, obs2, obs3, obs4));
+
+    auto& hp = result.back();
+    for (auto& pt : obs.pts) {
+      if (pt.dot(hp.normal) < hp.distance) {
+        std::stringstream sstr;
+        sstr << "Couldn't find hyperplane (obs.pts) normal " << hp.normal << " dist: " << hp.distance << " pt: " << pt << " dot product: " << pt.dot(hp.normal);
+        // throw runtime_error(sstr.str());
+        std::cerr << sstr.str() << std::endl;
+      }
+    }
+
+    for (auto& pt : pts) {
+      if (pt.dot(hp.normal) > hp.distance) {
+        std::stringstream sstr;
+        sstr << "Couldn't find hyperplane (pts) normal " << hp.normal << " dist: " << hp.distance << " pt: " << pt << " dot product: " << pt.dot(hp.normal);
+        // throw runtime_error(sstr.str());
+        std::cerr << sstr.str() << std::endl;
+      }
+    }
+
+  }
+
+  return result;
+}
+
+
 vector<hyperplane> SvmSeperator::_32_4_seperate() {
   assert(pts.size() == 32);
   vector<hyperplane> result;
@@ -172,13 +235,13 @@ vector<hyperplane> SvmSeperator::_32_4_seperate() {
                                     pt25, pt26, pt27, pt28, pt29, pt30, pt31, pt32,
                                     obs1, obs2, obs3, obs4));
 
-    /*auto& hp = result.back();
+    auto& hp = result.back();
     for (auto& pt : obs.pts) {
       if (pt.dot(hp.normal) < hp.distance) {
         std::stringstream sstr;
         sstr << "Couldn't find hyperplane (obs.pts) normal " << hp.normal << " dist: " << hp.distance << " pt: " << pt << " dot product: " << pt.dot(hp.normal);
         // throw runtime_error(sstr.str());
-        std::cerr << sstr.str() << std::endl
+        std::cerr << sstr.str() << std::endl;
       }
     }
 
@@ -189,7 +252,7 @@ vector<hyperplane> SvmSeperator::_32_4_seperate() {
         // throw runtime_error(sstr.str());
         std::cerr << sstr.str() << std::endl;
       }
-    }*/
+    }
 
   }
 
@@ -632,6 +695,103 @@ vector<hyperplane> SvmSeperator::soft_seperate() {
     cout << "---" << endl << pl.normal << " " << pl.distance << endl;
     /*if(rand() % 1000 == 0) {
     int a; cin >> a;}*/
+  }
+  return result;
+}
+
+vector<hyperplane> SvmSeperator::libsvm_seperate() {
+  vector<hyperplane> result;
+  for(auto& obs : (*obstacles)) {
+    struct svm_problem* prob = new svm_problem;
+    prob->l = obs.size() + pts.size();
+    prob->y = new double[prob->l];
+    prob->x = new svm_node*[prob->l];
+    for(size_t i = 0; i < obs.size(); i++) {
+      struct svm_node* n = new svm_node[3];
+      n[0].index = 1;
+      n[0].value = obs[i][0];
+      n[1].index = 2;
+      n[1].value = obs[i][1];
+      n[2].index = -1;
+      prob->y[i] = 1;
+      prob->x[i] = n;
+    }
+
+    for(size_t i = 0; i < pts.size(); i++) {
+      struct svm_node* n = new svm_node[3];
+      n[0].index = 1;
+      n[0].value = pts[i][0];
+      n[1].index = 2;
+      n[1].value = pts[i][1];
+      n[2].index = -1;
+      prob->y[obs.size() + i] = -1;
+      prob->x[obs.size() + i] = n;
+    }
+
+    struct svm_parameter* param = new svm_parameter;
+    param->svm_type = C_SVC;
+    param->kernel_type = LINEAR;
+    param->cache_size = 64;
+    param->eps = 0.001;
+    param->C = 100;
+    param->nr_weight = 0;
+
+    struct svm_model* model = svm_train(prob, param);
+
+    /*cout << "support vectors from SV" << endl;
+    for(unsigned int i = 0; i < model->l; i++) {
+      int cur = 0;
+      while((model->SV)[i][cur].index  != -1) {
+        cout << (model->SV)[i][cur].value << ", ";
+        cur++;
+      }
+      cout << endl;
+    }
+
+    cout << endl << "support vectors from training set" << endl;
+    for(unsigned i = 0; i < model->l; i++) {
+      int idx = model->sv_indices[i] - 1;
+      if(idx >= obs.size()) {
+        cout << pts[idx - obs.size()][0] << ", " << pts[idx - obs.size()][1] << endl;
+      } else {
+        cout << obs[idx][0] << ", " << obs[idx][1] << endl;
+      }
+    }
+    */
+    vectoreuc normal(2);
+    normal.zero();
+    double distance = model->rho[0];
+
+    for(unsigned int i = 0; i < model->l; i++) {
+      int idx = model->sv_indices[i] - 1;
+      vectoreuc sv;
+      if(idx >= obs.size()) {
+        sv = pts[idx - obs.size()];
+      } else {
+        sv = obs[idx];
+      }
+      normal = normal + sv * model->sv_coef[0][i];
+    }
+
+    distance /= normal.L2norm();
+    normal = normal.normalized();
+
+    hyperplane hp;
+    hp.normal = normal;
+    hp.distance = distance;
+
+    /*cout << "testing svm" << endl;
+    for(size_t i = 0; i < obs.size(); i++) {
+      cout << "obs " << hp.dist(obs[i]) << endl;
+    }
+    for(size_t i = 0; i < pts.size(); i++) {
+      cout << "pts " << hp.dist(pts[i]) << endl;
+    }*/
+
+
+    result.push_back(hp);
+
+
   }
   return result;
 }

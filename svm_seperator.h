@@ -22,9 +22,11 @@ class SvmSeperator {
     void add_pt(const vectoreuc& vec);
     vector<hyperplane> seperate();
     vector<hyperplane> soft_seperate();
+    vector<hyperplane> libsvm_seperate();
     vector<hyperplane> _2_4_seperate();
     vector<hyperplane> _8_4_seperate();
     vector<hyperplane> _16_4_seperate();
+    vector<hyperplane> _20_4_seperate();
     vector<hyperplane> _32_4_seperate();
     const vector<vectoreuc>& getPts() const {
       return pts;

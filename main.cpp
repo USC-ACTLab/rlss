@@ -142,7 +142,7 @@ int main(int argc, char** argv) {
         cpts.push_back(cpt);
       }
     }
-    trajectories.push_back(splx::BSpline(std::max(max_continuity+1, 4), problem_dimension, 0, hor, cpts));
+    trajectories.push_back(splx::BSpline(std::max(max_continuity+1, 3), problem_dimension, 0, hor, cpts));
   }
 
   /*vector<vectoreuc> pos_diffs(trajectories.size());*/
@@ -329,8 +329,9 @@ int main(int argc, char** argv) {
     cerr << ct << " / " << total_t << endl;
 
     for(int i=0; i<original_trajectories.size(); i++ ) {
+      cout << endl;
       cerr << "traj " << i << " start " << ct << " / " << total_times[i] << endl;
-      trajectories[i].m_b = hor;
+      trajectories[i].m_b = std::max(hor, curve_count * dt * 1.5);
       if(lastKnotVectorUniform[i])
         trajectories[i].generateClampedUniformKnotVector();
       else {
@@ -645,13 +646,11 @@ int main(int argc, char** argv) {
               tovec(0) = corners[j+1].first;
               tovec(1) = corners[j+1].second;
               std::pair<unsigned int, unsigned int> effectrange = trajectories[i]
-                    .interpolateEndAtTo(fromvec, tovec, ppc - (int)trajectories[i].m_degree);
+                    .interpolateEndAtTo(fromvec, tovec, std::max(ppc - (int)trajectories[i].m_degree, 2));
             }
-            cout << "beore" << endl;
             trajectories[i].generateClampedNonuniformKnotVector(segment_lengths);
-            cout << "after" << endl;
             lastNonUniformSegmentLenghts[i] = segment_lengths;
-            lastKnotVectorUniform[i] = true;
+            lastKnotVectorUniform[i] = false;
 
             for(unsigned int j = 0; j < trajectories[i].m_controlPoints.size() - trajectories[i].m_degree; j++) {
               svm.reset_pts();
@@ -670,10 +669,10 @@ int main(int argc, char** argv) {
                 vec[1] = trajectories[i].m_controlPoints[k](1) + robot_radius;
                 svm.add_pt(vec);
               }
-              vector<hyperplane> sep = svm.seperate();
+              vector<hyperplane> sep = svm._16_4_seperate();
               for(unsigned int k = 0; k < sep.size(); k++) {
                 auto& plane = sep[k];
-                Vector normal(problem_dimension);
+                splx::Vec normal(problem_dimension);
                 double min_dist = std::numeric_limits<double>::infinity();
                 for(unsigned int p = j; p <= j + trajectories[i].m_degree; p++) {
                   vectoreuc vv(2);
@@ -687,15 +686,15 @@ int main(int argc, char** argv) {
                 output_json["hyperplanes"][output_iter][i][hpidx] = vector<double>();
                 output_json["hyperplanes"][output_iter][i][hpidx].push_back(plane.normal[0]);
                 output_json["hyperplanes"][output_iter][i][hpidx].push_back(plane.normal[1]);
-                output_json["hyperplanes"][output_iter][i][hpidx].push_back(plane.distance - robot_radius);
+                output_json["hyperplanes"][output_iter][i][hpidx].push_back(plane.distance - shift_amount);
                 hpidx++;
-                hyperplaneConstraints.push_back({j, j+trajectories[i].m_degree, normal, plane.distance - robot_radius});
+                hyperplaneConstraints.push_back({j, j+trajectories[i].m_degree, normal, plane.distance - shift_amount});
               }
             }
             t_end_svm = Time::now();
 
 
-            Vector crnr(2);
+            splx::Vec crnr(2);
             crnr <<corners[min((int)corners.size()-1, curve_count)].first, corners[min((int)corners.size()-1, curve_count)].second;
             endCloseToObjectives.push_back({trajectories[i].m_b, 100, crnr});
             // ob.endCloseTo(curve_count - 1, 100, endPosition);
@@ -744,10 +743,10 @@ int main(int argc, char** argv) {
             pt[1] = trajectories[i].getCP(k)(1) + robot_radius;
             svm.add_pt(pt);
           }
-          vector<hyperplane> hyperplanes = svm.seperate();
+          vector<hyperplane> hyperplanes = svm._16_4_seperate();
 
           for (auto& plane : hyperplanes) {
-            Vector normal(problem_dimension);
+            splx::Vec normal(problem_dimension);
 
             double min_dist = std::numeric_limits<double>::infinity();
             for(unsigned int p = j; p <= j + trajectories[i].m_degree; p++) {
@@ -775,7 +774,7 @@ int main(int argc, char** argv) {
         double factor = 0.5f / curve_count;
         for (size_t j = 1; j <= curve_count; ++j) {
           vectoreuc OBJPOS = original_trajectories[i].neval(min(ct+j*step_u, total_times[i]), 0);
-          Vector targetPosition(problem_dimension);
+          splx::Vec targetPosition(problem_dimension);
           targetPosition << OBJPOS[0], OBJPOS[1];
           // ob.endCloseTo(j, factor * (j+1), targetPosition);
           endCloseToObjectives.push_back({trajectories[i].m_a + j*step_u, factor * (j+1), targetPosition});
@@ -817,20 +816,20 @@ int main(int argc, char** argv) {
 
 
       if(max_continuity >= 0) {
-        Vector value(problem_dimension);
+        splx::Vec value(problem_dimension);
         value << positions[i](0) + distribution(generator), positions[i](1) + distribution(generator);
         trajectories[i].extendQPBeginningConstraint(qpm, 0, value);
       }
 
         // higher order constraints
       if(max_continuity >= 1) {
-        Vector value(problem_dimension);
+        splx::Vec value(problem_dimension);
         value << velocities[i](0), velocities[i](1);
         trajectories[i].extendQPBeginningConstraint(qpm, 1, value);
       }
 
       if(max_continuity >= 2) {
-        Vector value(problem_dimension);
+        splx::Vec value(problem_dimension);
         value << accelerations[i](0), accelerations[i](1);
         trajectories[i].extendQPBeginningConstraint(qpm, 2, value);
       }
@@ -840,7 +839,7 @@ int main(int argc, char** argv) {
       for(int j=0; j<voronoi_hyperplanes.size(); j++) {
         hyperplane& plane = voronoi_hyperplanes[j];
 
-        Vector normal(problem_dimension);
+        splx::Vec normal(problem_dimension);
         normal << plane.normal[0], plane.normal[1];
         splx::Hyperplane hplane(2);
         hplane.normal() = normal;
@@ -868,7 +867,17 @@ int main(int argc, char** argv) {
       const size_t numVars = qpm.x.rows();
       cout << "numVars: " << numVars << endl;
       cout << "numConstraints: " << numConstraints << endl;
-      if (alg == "QPOASES") {
+
+      Eigen::LLT<splx::Matrix> lltofH(qpm.H);
+      // cout << qpm.H << endl;
+      bool psd = true;
+      if(lltofH.info() == Eigen::NumericalIssue) {
+        psd = false;
+        cout << "non psd " << endl;
+      } else
+        cout << "psd" << endl;
+
+      if (alg == "QPOASES" || psd) {
         // const size_t numVars = cb.A().columns();
 
         qpOASES::QProblem qp(numVars, numConstraints, qpOASES::HST_SEMIDEF);
@@ -890,42 +899,53 @@ int main(int argc, char** argv) {
         // std::cout << "A: " << cb.A() << std::endl;
 
         // auto t0 = Time::now();
-        Eigen::LLT<Eigen::MatrixXd> lltofH(qpm.H);
-        // cout << qpm.H << endl;
-        if(lltofH.info() == Eigen::NumericalIssue) {
-          cout << "non psd" << endl;
-        } else
-          cout << "psd" << endl;
+      Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> H = qpm.H.cast<double>();
+      Eigen::Matrix<double, Eigen::Dynamic, 1> g = qpm.g.cast<double>();
+      Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> A = qpm.A.cast<double>();
+      Eigen::Matrix<double, Eigen::Dynamic, 1> lbX = qpm.lbX.cast<double>();
+      Eigen::Matrix<double, Eigen::Dynamic, 1> ubX = qpm.ubX.cast<double>();
+      Eigen::Matrix<double, Eigen::Dynamic, 1> lbA = qpm.lbA.cast<double>();
+      Eigen::Matrix<double, Eigen::Dynamic, 1> ubA = qpm.ubA.cast<double>();
+      Eigen::Matrix<double, Eigen::Dynamic, 1> x = qpm.x.cast<double>();
       qpOASES::real_t cputime = dt;
         qpOASES::returnValue status = qp.init(
-          qpm.H.data(),
-          qpm.g.data(),
-          qpm.A.data(),
-          qpm.lbX.data(),
-          qpm.ubX.data(),
-          qpm.lbA.data(),
-          qpm.ubA.data(),
+          H.data(),
+          g.data(),
+          A.data(),
+          lbX.data(),
+          ubX.data(),
+          lbA.data(),
+          ubA.data(),
           nWSR,
           set_max_time ? &cputime : NULL,
-          qpm.x.data());
+          x.data());
 
           qpOASES::int_t simpleStatus = qpOASES::getSimpleStatus(status);
         if(simpleStatus != 0) {
           std::stringstream sstr;
           sstr << "Couldn't solve QP! @ " << ct << " robot " << i << " status: " << simpleStatus;
+
           //std::cerr << "reliable falied" << endl;
           // throw std::runtime_error(sstr.str());
           std::cerr << sstr.str() << std::endl;
+          /*cout << qpm.H << endl;
+          int a; cin >> a;*/
 
         }
+        /*for(size_t i = 0; i < qpm.H.rows(); i++) {
+          for(size_t j = 0; j < qpm.H.cols(); j++) {
+            cout << (qpm.H(i, j) == 0.0 ? "o" : "s");
+          }
+          cout << endl;
+        }
+        int a; cin >> a;*/
 
-
-        qp.getPrimalSolution(qpm.x.data());
-
+        qp.getPrimalSolution(x.data());
+        qpm.x = x;
         std::cout << "status: " << status << std::endl;
         std::cout << "objective: " << qp.getObjVal() << std::endl;
         // std::cout << "y: " << y << std::endl;
-      } else if (alg == "OSQP") {
+      } /*else if (!psd || alg == "OSQP") {
         ////
         // Problem settings
         OSQPSettings settings;
@@ -997,7 +1017,7 @@ int main(int argc, char** argv) {
 
         // Clean workspace
         osqp_cleanup(work);
-      } else {
+      }*/ else {
         throw std::runtime_error("Unknown algorithms!");
       }
 
