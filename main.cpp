@@ -849,6 +849,8 @@ int main(int argc, char** argv) {
 
       const size_t numVars = problem_dimension * 8 * curve_count;
 
+
+
       // constraint matrix A
       ConstraintBuilder cb(problem_dimension, pieceDurations);
 
