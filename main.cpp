@@ -46,6 +46,17 @@ double linearInterpolation(double start, double end, size_t idx, size_t count)
 
 int main(int argc, char** argv) {
 
+
+  PointCloud<double, 3> obs;
+  for(int i = 0; i < 4; i++) {
+    PointCloud<double, 3>::Vector vec;
+    vec(0) = vec(1) = vec(2) = i;
+    obs._pts.push_back(vec);
+  }
+
+  obs.convexHull();
+  return 0;
+
   string config_path;
   cxxopts::Options options("Trajectory Replanner", "trajectory replanner");
   options.add_options()
@@ -138,7 +149,7 @@ int main(int argc, char** argv) {
   }
 
   vector<vectoreuc> pos_diffs(trajectories.size());
-  vectoreuc zerovec(2);
+  vectoreuc zerovec(problem_dimension);
   zerovec.zero();
   for(int i=0; i<trajectories.size(); i++) {
     pos_diffs[i] = zerovec;
