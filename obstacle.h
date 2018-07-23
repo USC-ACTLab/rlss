@@ -36,13 +36,29 @@ template <typename T, unsigned int DIM>
 class PointCloud {
 
   public:
-    typedef Eigen::Matrix<T, DIM, 1> Vector;
-    typedef Eigen::Hyperplane<T, DIM> Hyperplane;
+    using Vector = Eigen::Matrix<T, DIM, 1>;
+    using Hyperplane = Eigen::Hyperplane<T, DIM>;
+    using MatrixDIM = Eigen::Matrix<T, DIM, DIM>;
+
+
+
+    class LinearDependenceException : public std::runtime_error {
+      public:
+        LinearDependenceException(const char * msg) : std::runtime_error(msg) {
+
+        }
+    };
 
     /*
      * Point cloud
     */
     std::vector<Vector> _pts;
+
+
+    /*
+     * Hyperplanes of the convex hull where normals are pointing inside the convex hull.
+    */
+    std::vector<Hyperplane> _convexhull;
 
     /*
      * Check if point is inside of the convex hull of the point cloud
@@ -69,10 +85,41 @@ class PointCloud {
      * can implement https://en.wikipedia.org/wiki/Quickhull
     */
     void convexHull() {
+      _convexhull.clear();
       CombinationGenerator generator(_pts.size());
-      int i = 0;
-      for(auto comb = generator.begin(); !generator.end(); comb = generator.next(), i++) {
-        
+      for(auto comb = generator.begin(); !generator.end(); comb = generator.next()) {
+        Hyperplane hp;
+        try {
+          hp = hyperplaneThroughPoints(comb);
+        } catch(LinearDependenceException& exp) {
+          continue;
+        }
+
+        bool everythingNegative = true;
+        bool everythingPositive = true;
+        for(typename std::vector<Vector>::size_type i = 0; i < _pts.size(); i++) {
+          if(std::find(comb.begin(), comb.end(), i) == comb.end()) {
+            T dist = hp.signedDistance(_pts[i]);
+            if(dist < 0) {
+              everythingPositive = false;
+            } else if(dist > 0) {
+              everythingNegative = false;
+            }
+          }
+        }
+
+        /*
+          Normals should point inside of the obstacle
+        */
+        if(everythingNegative) {
+          hp.normal() = -1 * hp.normal();
+          hp.offset() = -1 * hp.offset();
+        } else if(everythingPositive) {
+
+        } else {
+          continue;
+        }
+        _convexhull.push_back(hp);
       }
 
     }
@@ -80,22 +127,58 @@ class PointCloud {
     /*
      * Getter for point
     */
-    Vector& operator[](typename std::vector<Vector>::size_type i) const {
+    Vector& operator[](typename std::vector<Vector>::size_type i) {
+      return _pts[i];
+    }
+
+    /*
+     * Const getter for point
+    */
+    const Vector& operator[](typename std::vector<Vector>::size_type i) const {
       return _pts[i];
     }
 
     /*
      * Getter for convex hull hyperplane
     */
-    Hyperplane& operator()(typename std::vector<Hyperplane>::size_type i) const {
+    Hyperplane& operator()(typename std::vector<Hyperplane>::size_type i) {
+      return _convexhull[i];
+    }
+
+    /*
+     * Const getter for convex hull hyperplane
+    */
+    const Hyperplane& operator()(typename std::vector<Hyperplane>::size_type i) const {
       return _convexhull[i];
     }
 
   private:
+
     /*
-     * Hyperplanes of the convex hull where normals are pointing inside the convex hull.
+     * Find the hyperplane that goes through given points
     */
-    std::vector<Hyperplane> _convexhull;
+    Hyperplane hyperplaneThroughPoints(const std::vector<typename std::vector<Vector>::size_type>& indexArray) {
+      assert(indexArray.size() == DIM);
+      MatrixDIM A;
+      Vector b;
+      for(unsigned int i = 0; i < DIM; i++) {
+        A.block(i, 0, 1, DIM) = _pts[indexArray[i]].transpose();
+        b(i) = 1.0;
+      }
+
+/*
+      Eigen::ColPivHouseholderQR<MatrixDIM> decomp(A);
+      if(decomp.rank() != DIM) {
+        throw LinearDependenceException("points are not linearly independent.");
+      }
+*/
+      Vector normal = A.inverse() * b;
+      T distance = -1.0 / normal.norm();
+      normal.normalize();
+
+      return Hyperplane(normal, distance);
+    }
+
 
     /*
      * Generates combinations of size DIM
@@ -109,13 +192,13 @@ class PointCloud {
       /**
        * Element type of combinations
       */
-      typedef typename std::vector<Vector>::size_type ElementType;
+      using ElementType = typename std::vector<Vector>::size_type;
 
 
       /**
        * Size type for combination indexes and size.
       */
-      typedef typename std::vector<ElementType>::size_type SizeType;
+      using SizeType = typename std::vector<ElementType>::size_type;
 
       public:
         /*
