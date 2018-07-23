@@ -843,7 +843,7 @@ int main(int argc, char** argv) {
         normal << plane.normal[0], plane.normal[1];
         splx::Hyperplane hplane(2);
         hplane.normal() = normal;
-        hplane.offset() = plane.distance;
+        hplane.offset() = -plane.distance;
 
         trajectories[i].extendQPHyperplaneConstraint(qpm, voronoipoints.first, voronoipoints.second, hplane);
       }
@@ -856,7 +856,7 @@ int main(int argc, char** argv) {
       for (const auto& hpc : hyperplaneConstraints) {
         splx::Hyperplane hplane(2);
         hplane.normal() = hpc.normal;
-        hplane.offset() = hpc.dist;
+        hplane.offset() = -hpc.dist;
         trajectories[i].extendQPHyperplaneConstraint(qpm, hpc.from_pt, hpc.to_pt, hplane);
         //trajectories[i].extendQPHyperplanePenalty(qpm, hpc.from_pt, hpc.to_pt, hplane, 0.1);
       }
