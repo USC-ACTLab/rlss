@@ -64,15 +64,25 @@ class PointCloud {
      * Check if point is inside of the convex hull of the point cloud
     */
     bool pointInside(const Vector& pt) const {
+      for(auto hp : _convexhull) {
+        if(hp.signedDistance(pt) < 0) {
+          return false;
+        }
+      }
       return true;
     }
 
     /*
      * Check if point is inside of the convex hull of the point cloud
      * where hyperplanes of the convex hull are shifted by shift so that
-     * convex hull grows
+     * convex hull grows shift is positive
     */
-    bool pointInside(const Vector& pt, double shift) const {
+    bool pointInside(const Vector& pt, T shift) const {
+      for(auto hp : _convexhull) {
+        if(hp.signedDistance(pt) < -shift) {
+          return false;
+        }
+      }
       return true;
     }
 
@@ -166,12 +176,12 @@ class PointCloud {
         b(i) = 1.0;
       }
 
-/*
-      Eigen::ColPivHouseholderQR<MatrixDIM> decomp(A);
-      if(decomp.rank() != DIM) {
+
+      Eigen::FullPivLU<MatrixDIM> decomp(A);
+      if(!decomp.isInvertible()) {
         throw LinearDependenceException("points are not linearly independent.");
       }
-*/
+
       Vector normal = A.inverse() * b;
       T distance = -1.0 / normal.norm();
       normal.normalize();
