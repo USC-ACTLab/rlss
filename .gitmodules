@@ -13,3 +13,6 @@
 [submodule "ros_ws/src/create2_ros"]
 	path = ros_ws/src/create2_ros
 	url = https://github.com/USC-ACTLab/create2_ros.git
+[submodule "test/googletest"]
+	path = test/googletest
+	url = https://github.com/google/googletest.git

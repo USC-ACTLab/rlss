@@ -22,6 +22,7 @@
 #include "occupancy_grid.h"
 #include "svm_seperator.h"
 #include "discrete_search.hpp"
+#include "PointCloud.h"
 
 #include "qp_optimize.h"
 
