@@ -1,8 +1,15 @@
-#ifndef _POINTCLOUD_H
-#define _POINTCLOUD_H
+#ifndef ACT_POINTCLOUD_H
+#define ACT_POINTCLOUD_H
 
 #include <Eigen/Dense>
 #include <Eigen/Geometry>
+#include <vector>
+#include <limits>
+
+#include <iostream>
+
+namespace ACT {
+
 /**
  * T will be float, double or long double presumably.
  *
@@ -53,6 +60,8 @@ class PointCloudBase {
 
     /*
      * Check if point is inside of the convex hull of the point cloud
+     *
+     * @test_needed for 2D_D, 3D_F, 3D_D
     */
     bool pointInside(const Vector& pt) const {
       for(auto hp : _convexhull) {
@@ -67,6 +76,9 @@ class PointCloudBase {
      * Check if point is inside of the convex hull of the point cloud
      * where hyperplanes of the convex hull are shifted by shift so that
      * convex hull grows shift is positive
+     *
+     * @test_needed for 2D_D, 3D_F, 3D_D
+     *
     */
     bool pointInside(const Vector& pt, T shift) const {
       for(auto hp : _convexhull) {
@@ -84,8 +96,12 @@ class PointCloudBase {
      *
      * currently looking at every tuple of size DIM, which is highly inefficient.
      * can implement https://en.wikipedia.org/wiki/Quickhull
+     *
+     * @test_needed for 2D_D, 3D_F, 3D_D
+     *
     */
     void convexHull() {
+      assert(_pts.size() >= DIM);
       _convexhull.clear();
       _convexhullpts.clear();
       CombinationGenerator generator(_pts.size());
@@ -314,6 +330,8 @@ class PointCloud<T, 2U> : public PointCloudBase<T, 2U> {
      * Look at p. 74 of Graphics Gems IV by Heckbert for better implementation
      * This is implemented just to save the day
      *
+     * @test_needed for F and D
+     *
     */
     bool convexHullIntersects(const AlignedBox& box) const override {
       unsigned int samplesPerDimension = 5;
@@ -364,6 +382,9 @@ class PointCloud<T, 3U> : public PointCloudBase<T, 3U> {
      * Look at p. 74 of Graphics Gems IV by Heckbert for better implementation
      * This is implemented just to save the day
      *
+     *
+     * @test_needed for F and D
+     *
     */
     bool convexHullIntersects(const AlignedBox& box) const override {
       unsigned int samplesPerDimension = 5;
@@ -412,4 +433,5 @@ class PointCloud<T, 3U> : public PointCloudBase<T, 3U> {
     }
 };
 
+}
 #endif

@@ -64,6 +64,9 @@ class OG {
     double ss2; // step size / 2
 };
 
+
+namespace ACT {
+
 /**
  * Coordinates are assumed to be type T
  * T: float, double or long double
@@ -102,7 +105,7 @@ class OccupancyGrid3D {
         }
     };
 
-    OccupancyGrid3D(const std::vector<PointCloud<T, 3> >& obstacles, T stepsize,
+    OccupancyGrid3D(const std::vector<ACT::PointCloud<T, 3> >& obstacles, T stepsize,
       T xmin = -10.0, T xmax = 10.0, T ymin = -10.0, T ymax = 10.0, T zmin = -10.0, T zmax = 10.0):
       _stepsize(stepsize), _xmin(xmin), _xmax(xmax), _ymin(ymin), _ymax(ymax), _zmin(zmin), _zmax(zmax) {
         _grid.resize(std::ceil((_xmax - _xmin) / _stepsize));
@@ -114,12 +117,12 @@ class OccupancyGrid3D {
             _grid[xidx][yidx].resize(std::ceil((_zmax - _zmin) / _stepsize), false);
             unsigned int zidx = 0;
             for(T z = _zmin; z < _zmax; z += _stepsize, zidx++) {
-              typename PointCloud<T, 3>::Vector cubemin, cubemax;
+              typename ACT::PointCloud<T, 3>::Vector cubemin, cubemax;
               cubemin(0) = x;
               cubemin(1) = y;
               cubemin(2) = z;
               cubemax = cubemin + _stepsize;
-              typename PointCloud<T, 3>::AlignedBox cube(cubemin, cubemax);
+              typename ACT::PointCloud<T, 3>::AlignedBox cube(cubemin, cubemax);
               for(auto obs : obstacles) {
                 if(obs.convexHullIntersects(cube)) {
                   _grid[xidx][yidx][zidx] = true;
@@ -150,4 +153,5 @@ class OccupancyGrid3D {
     T _stepsize;
 };
 
+}
 #endif

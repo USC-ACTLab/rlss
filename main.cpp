@@ -51,23 +51,23 @@ int main(int argc, char** argv) {
   std::uniform_real_distribution<double> distributionReal(-10, 10);
   auto randreal = std::bind(distributionReal, generatorReal);
 
-  PointCloud<double, 3> obs;
+  ACT::PointCloud<double, 3> obs;
   for(int i = 0; i < 100; i++) {
-    PointCloud<double, 3>::Vector vec;
+    ACT::PointCloud<double, 3>::Vector vec;
     vec(0) = randreal();
     vec(1) = randreal();
     vec(2) = randreal();
     obs._pts.push_back(vec);
   }
 
-  for(std::vector<PointCloud<double, 3> >::size_type i = 0; i < obs._pts.size(); i++) {
+  for(std::vector<ACT::PointCloud<double, 3> >::size_type i = 0; i < obs._pts.size(); i++) {
     std::cout << "pt " << obs[i](0) << " " << obs[i](1) << " " << obs[i](2) << std::endl;
   }
 
   obs.convexHull();
 
   for(unsigned int i = 0; i < obs._convexhull.size(); i++) {
-    PointCloud<double, 3>::Hyperplane& hp = obs(i);
+    ACT::PointCloud<double, 3>::Hyperplane& hp = obs(i);
     std::cout << "hp " << hp.normal()(0) << " " << hp.normal()(1) << " " << hp.normal()(2) << " " << hp.offset() << std::endl;
   }
   return 0;
