@@ -19,3 +19,6 @@
 [submodule "lib/cgal"]
 	path = lib/cgal
 	url = https://github.com/CGAL/cgal.git
+[submodule "lib/splx"]
+	path = lib/splx
+	url = https://github.com/baskinburak/splx.git
