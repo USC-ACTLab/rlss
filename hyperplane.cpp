@@ -1,10 +1,11 @@
 #include "hyperplane.h"
 #include <cmath>
+#include <Eigen/Dense>
 using namespace std;
 
 #define PI 3.14159265
 
-vector<hyperplane> voronoi(vector<splx::Vec>& positions, int robotidx, double robot_radius) {
+vector<hyperplane> voronoi(vector<Eigen::Matrix<double, 2, 1> >& positions, int robotidx, double robot_radius) {
   static double COS = cos(15*PI/180);
   static double SIN = sin(15*PI/180);
 

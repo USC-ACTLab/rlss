@@ -47,7 +47,7 @@ class OG {
     /*checks whether given trajectory passes through an obstacle*/
     bool occupied(trajectory& traj, double robot_radius, double start_time = 0, double end_time = -1);
 
-    bool occupied(splx::BSpline& spl, double robot_radius, double start_time = 0, double end_time = -1);
+    bool occupied(splx::BSpline<double, 2>& spl, double robot_radius, double start_time = 0, double end_time = -1);
 
     void set_occupied(double x, double y);
     void set_free(double x, double y);

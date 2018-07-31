@@ -95,7 +95,7 @@ vectoreuc vectoreuc::operator*(double rhs) {
 }
 
 
-vectoreuc vectoreuc::operator-(const splx::Vec& rhs) {
+vectoreuc vectoreuc::operator-(const Eigen::Matrix<double, Eigen::Dynamic, 1>& rhs) {
   vectoreuc res(crds.size());
   for(int i = 0; i < res.size(); i++)
     res[i] = crds[i] - rhs(i);

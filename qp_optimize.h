@@ -18,7 +18,7 @@ struct hyperplaneData
 {
   unsigned int from_pt;
   unsigned int to_pt;
-  splx::Vec normal;
+  Vector normal;
   double dist;
 };
 
@@ -26,7 +26,7 @@ struct endCloseToData
 {
   double time;
   double lambda;
-  splx::Vec value;
+  Vector value;
 };
 
 class ObjectiveBuilder

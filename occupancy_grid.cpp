@@ -127,14 +127,14 @@ bool OG::occupied(trajectory& traj, double robot_radius, double start_time, doub
   return false;
 }
 
-bool OG::occupied(splx::BSpline& spl, double robot_radius, double start_time, double end_time) {
+bool OG::occupied(splx::BSpline<double, 2>& spl, double robot_radius, double start_time, double end_time) {
   if(end_time < 0) {
     end_time = spl.m_b;
   }
   const double dt = 0.01;
 
   for(double t = start_time; t<=end_time; t+=dt) {
-    splx::Vec pos = spl.eval(t, 0);
+    auto pos = spl.eval(t, 0);
     if(occupied(pos(0), pos(1), robot_radius)) {
       return true;
     }

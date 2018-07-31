@@ -130,11 +130,11 @@ int main(int argc, char** argv) {
   }
 
 
-  vector<splx::BSpline> trajectories;
+  vector<splx::BSpline<double, 2> > trajectories;
 
   for(int i=0; i<original_trajectories.size(); i++) {
-    std::vector<splx::Vec> cpts;
-    splx::Vec cpt(problem_dimension);
+    std::vector<splx::BSpline<double, 2>::VectorDIM> cpts;
+    splx::BSpline<double, 2>::VectorDIM cpt;
     cpt(0) = original_trajectories[i][0][0][0];
     cpt(1) = original_trajectories[i][0][0][1];
     for(int j=0; j<curve_count; j++) {
@@ -142,7 +142,7 @@ int main(int argc, char** argv) {
         cpts.push_back(cpt);
       }
     }
-    trajectories.push_back(splx::BSpline(std::max(max_continuity+1, 3), problem_dimension, 0, hor, cpts));
+    trajectories.push_back(splx::BSpline<double, 2>(std::max(max_continuity+1, 3), 0, hor, cpts));
   }
 
   /*vector<vectoreuc> pos_diffs(trajectories.size());*/
@@ -242,9 +242,9 @@ int main(int argc, char** argv) {
   }
 
 
-  vector<splx::Vec> positions(trajectories.size(), splx::Vec(2));
-  vector<splx::Vec> velocities(trajectories.size(), splx::Vec(2));
-  vector<splx::Vec> accelerations(trajectories.size(), splx::Vec(2));
+  vector<splx::BSpline<double, 2>::VectorDIM> positions(trajectories.size());
+  vector<splx::BSpline<double, 2>::VectorDIM> velocities(trajectories.size());
+  vector<splx::BSpline<double, 2>::VectorDIM> accelerations(trajectories.size());
   // vector<vectoreuc> jerks(trajectories.size());
   // vector<vectoreuc> snaps(trajectories.size());
 
@@ -431,7 +431,7 @@ int main(int argc, char** argv) {
         normal << plane.normal[0], plane.normal[1];
 
         for(int k=jl; k<=jr; k++) {
-          const splx::Vec& vec = trajectories[i].getCP(k);
+          auto& vec = trajectories[i].getCP(k);
           vectoreuc pt(2);
           pt[0] = vec(0);
           pt[1] = vec(1);
@@ -629,20 +629,20 @@ int main(int argc, char** argv) {
 
             std::vector<double> segment_lengths;
             for(size_t j = 0; j < discrete_curve_count && j < curve_count; j++) {
-              splx::Vec fromvec(2);
+              splx::BSpline<double, 2>::VectorDIM fromvec;
               fromvec(0) = corners[j].first;
               fromvec(1) = corners[j].second;
-              splx::Vec tovec(2);
+              splx::BSpline<double, 2>::VectorDIM tovec;
               tovec(0) = corners[j+1].first;
               tovec(1) = corners[j+1].second;
               segment_lengths.push_back((fromvec - tovec).norm());
             }
 
             for (size_t j = 0; j < discrete_curve_count && j < curve_count; ++j) {
-              splx::Vec fromvec(2);
+              splx::BSpline<double, 2>::VectorDIM fromvec;
               fromvec(0) = corners[j].first;
               fromvec(1) = corners[j].second;
-              splx::Vec tovec(2);
+              splx::BSpline<double, 2>::VectorDIM tovec;
               tovec(0) = corners[j+1].first;
               tovec(1) = corners[j+1].second;
               std::pair<unsigned int, unsigned int> effectrange = trajectories[i]
@@ -672,7 +672,7 @@ int main(int argc, char** argv) {
               vector<hyperplane> sep = svm._16_4_seperate();
               for(unsigned int k = 0; k < sep.size(); k++) {
                 auto& plane = sep[k];
-                splx::Vec normal(problem_dimension);
+                splx::BSpline<double, 2>::VectorDIM normal;
                 double min_dist = std::numeric_limits<double>::infinity();
                 for(unsigned int p = j; p <= j + trajectories[i].m_degree; p++) {
                   vectoreuc vv(2);
@@ -694,7 +694,7 @@ int main(int argc, char** argv) {
             t_end_svm = Time::now();
 
 
-            splx::Vec crnr(2);
+            splx::BSpline<double, 2>::VectorDIM crnr;
             crnr <<corners[min((int)corners.size()-1, curve_count)].first, corners[min((int)corners.size()-1, curve_count)].second;
             endCloseToObjectives.push_back({trajectories[i].m_b, 100, crnr});
             // ob.endCloseTo(curve_count - 1, 100, endPosition);
@@ -746,7 +746,7 @@ int main(int argc, char** argv) {
           vector<hyperplane> hyperplanes = svm._16_4_seperate();
 
           for (auto& plane : hyperplanes) {
-            splx::Vec normal(problem_dimension);
+            splx::BSpline<double, 2>::VectorDIM normal;
 
             double min_dist = std::numeric_limits<double>::infinity();
             for(unsigned int p = j; p <= j + trajectories[i].m_degree; p++) {
@@ -774,7 +774,7 @@ int main(int argc, char** argv) {
         double factor = 0.5f / curve_count;
         for (size_t j = 1; j <= curve_count; ++j) {
           vectoreuc OBJPOS = original_trajectories[i].neval(min(ct+j*step_u, total_times[i]), 0);
-          splx::Vec targetPosition(problem_dimension);
+          splx::BSpline<double, 2>::VectorDIM targetPosition;
           targetPosition << OBJPOS[0], OBJPOS[1];
           // ob.endCloseTo(j, factor * (j+1), targetPosition);
           endCloseToObjectives.push_back({trajectories[i].m_a + j*step_u, factor * (j+1), targetPosition});
@@ -797,7 +797,7 @@ int main(int argc, char** argv) {
 
       // construct QP matrices
 
-      splx::QPMatrices qpm = trajectories[i].getQPMatrices();
+      splx::BSpline<double, 2>::QPMatrices qpm = trajectories[i].getQPMatrices();
 
       trajectories[i].extendQPDecisionConstraint(qpm, -10, 10);
 
@@ -816,20 +816,20 @@ int main(int argc, char** argv) {
 
 
       if(max_continuity >= 0) {
-        splx::Vec value(problem_dimension);
+        splx::BSpline<double, 2>::VectorDIM value;
         value << positions[i](0) + distribution(generator), positions[i](1) + distribution(generator);
         trajectories[i].extendQPBeginningConstraint(qpm, 0, value);
       }
 
         // higher order constraints
       if(max_continuity >= 1) {
-        splx::Vec value(problem_dimension);
+        splx::BSpline<double, 2>::VectorDIM value;
         value << velocities[i](0), velocities[i](1);
         trajectories[i].extendQPBeginningConstraint(qpm, 1, value);
       }
 
       if(max_continuity >= 2) {
-        splx::Vec value(problem_dimension);
+        splx::BSpline<double, 2>::VectorDIM value;
         value << accelerations[i](0), accelerations[i](1);
         trajectories[i].extendQPBeginningConstraint(qpm, 2, value);
       }
@@ -839,9 +839,9 @@ int main(int argc, char** argv) {
       for(int j=0; j<voronoi_hyperplanes.size(); j++) {
         hyperplane& plane = voronoi_hyperplanes[j];
 
-        splx::Vec normal(problem_dimension);
+        splx::BSpline<double, 2>::VectorDIM normal;
         normal << plane.normal[0], plane.normal[1];
-        splx::Hyperplane hplane(2);
+        splx::BSpline<double, 2>::Hyperplane hplane;
         hplane.normal() = normal;
         hplane.offset() = -plane.distance;
 
@@ -854,7 +854,7 @@ int main(int argc, char** argv) {
 
 
       for (const auto& hpc : hyperplaneConstraints) {
-        splx::Hyperplane hplane(2);
+        splx::BSpline<double, 2>::Hyperplane hplane;
         hplane.normal() = hpc.normal;
         hplane.offset() = -hpc.dist;
         trajectories[i].extendQPHyperplaneConstraint(qpm, hpc.from_pt, hpc.to_pt, hplane);
@@ -868,7 +868,7 @@ int main(int argc, char** argv) {
       cout << "numVars: " << numVars << endl;
       cout << "numConstraints: " << numConstraints << endl;
 
-      Eigen::LLT<splx::Matrix> lltofH(qpm.H);
+      Eigen::LLT<splx::BSpline<double, 2>::Matrix> lltofH(qpm.H);
       // cout << qpm.H << endl;
       bool psd = true;
       if(lltofH.info() == Eigen::NumericalIssue) {
@@ -1089,7 +1089,7 @@ int main(int argc, char** argv) {
                << "," << chrono::duration_cast<ms>(t_end_qp - t_start_qp).count();
 
       for(double t = trajectories[i].m_a; t<=trajectories[i].m_b; t+=printdt) {
-        splx::Vec ev = trajectories[i].eval(t, 0);
+        auto ev = trajectories[i].eval(t, 0);
         //cout << ev << endl;
         output_json["planned_trajs"][output_iter][i]["x"].push_back(ev(0));
         output_json["planned_trajs"][output_iter][i]["y"].push_back(ev(1));
@@ -1114,7 +1114,7 @@ int main(int argc, char** argv) {
     vectoreuc vec(2);
     for(int v = 0; v < steps_per_cycle; v++) {
       for(int i=0; i<trajectories.size(); i++) {
-        splx::Vec vecc = trajectories[i].eval(v*printdt, 0);
+        auto vecc = trajectories[i].eval(v*printdt, 0);
         vec[0] = vecc(0);
         vec[1] = vecc(1);
 
@@ -1136,7 +1136,7 @@ int main(int argc, char** argv) {
         crashed = false;
         for(int p = 0; p<trajectories.size(); p++) {
           if(p==i) continue;
-          splx::Vec vecc2 = trajectories[p].eval(v*printdt, 0);
+          auto vecc2 = trajectories[p].eval(v*printdt, 0);
           vectoreuc vec2(2);
           vec2[0] = vecc2(0);
           vec2[1] = vecc2(1);
@@ -1154,8 +1154,7 @@ int main(int argc, char** argv) {
         //cout << vec << endl;
         output_json["points"][output_iter].push_back(vec.crds);
 
-        splx::Vec huehue;
-        huehue = trajectories[i].eval(v*printdt, 1);
+        auto huehue = trajectories[i].eval(v*printdt, 1);
         std::vector<double> crds(2);
         crds[0] = huehue(0);
         crds[1] = huehue(1);

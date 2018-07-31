@@ -3,6 +3,7 @@
 #include <vector>
 #include "vectoreuc.h"
 #include "bspline.h"
+#include <Eigen/Dense>
 using namespace std;
 class hyperplane {
   public:
@@ -10,5 +11,5 @@ class hyperplane {
     double distance;
     double dist(vectoreuc& pt);
 };
-vector<hyperplane> voronoi(vector<splx::Vec>& positions, int robotidx, double robot_radius);
+vector<hyperplane> voronoi(vector<Eigen::Matrix<double, 2, 1> >& positions, int robotidx, double robot_radius);
 #endif
