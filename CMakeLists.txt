@@ -8,13 +8,16 @@ set(UNITTESTS OFF CACHE BOOL "disable osqp unittests")
 add_subdirectory(lib/osqp)
 
 add_subdirectory(lib/RVO2)
+add_subdirectory(lib/splx)
 
-find_package (Eigen3 REQUIRED)
+
+find_package(Eigen3 REQUIRED)
 find_package(stdc++fs)
 
 include_directories(
   ${EIGEN3_INCLUDE_DIR}
   lib/qpOASES/include
+  lib/splx/include
 )
 
 add_executable(main main.cpp)

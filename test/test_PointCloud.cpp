@@ -12,7 +12,7 @@ protected:
 
   void SetUp() override {
     using namespace ACT;
-    PointCloud<float, 2>::Vector vec;
+    PointCloud<float, 2>::VectorDIM vec;
     vec(0) = 3; vec(1) = -1; // 0
     pc._pts.push_back(vec);
     vec(0) = 4.5; vec(1) = 2; // 1
@@ -53,7 +53,7 @@ protected:
 
   }
 
-  bool ptOut(const ACT::PointCloud<float, 2>::Vector& vec) const {
+  bool ptOut(const ACT::PointCloud<float, 2>::VectorDIM& vec) const {
     float x = vec(0);
     float y = vec(1);
     if(x < -11.5)
@@ -273,7 +273,7 @@ protected:
     assert(1==2);
   }
 
-  bool ptOutShifted(const ACT::PointCloud<float, 2>::Vector& vec) const {
+  bool ptOutShifted(const ACT::PointCloud<float, 2>::VectorDIM& vec) const {
     float x = vec(0), y = vec(1);
     if (y > 1.5) {
       return true;
@@ -299,9 +299,9 @@ TEST_F(PointCloudFloat2D, ConvexHullComputedHyperplanesTest) {
     ASSERT_TRUE(pc._convexhullpts[i].size() == 2) << "pc._convexhullpts[" << i <<"] should have 2 points but instead it has " << pc._convexhullpts[i].size();;
   }
 
-  std::vector<std::vector<std::vector<PointCloud<float, 2>::Vector>::size_type> > chpts;
+  std::vector<std::vector<std::vector<PointCloud<float, 2>::VectorDIM>::size_type> > chpts;
 
-  std::vector<std::vector<PointCloud<float, 2>::Vector>::size_type> pt;
+  std::vector<std::vector<PointCloud<float, 2>::VectorDIM>::size_type> pt;
   pt.push_back(9); pt.push_back(10); chpts.push_back(pt); pt.clear();
   pt.push_back(10); pt.push_back(6); chpts.push_back(pt); pt.clear();
   pt.push_back(6); pt.push_back(7); chpts.push_back(pt); pt.clear();
@@ -336,7 +336,7 @@ TEST_F(PointCloudFloat2D, ConvexHullComputedHyperplanesTest) {
 TEST_F(PointCloudFloat2D, ConvexHullPointsInsideTest) {
   using namespace ACT;
 
-  PointCloud<float, 2>::Vector vec;
+  PointCloud<float, 2>::VectorDIM vec;
   for(float x = -25.0; x <= 25.0; x += 1.0) {
     for(float y = -25.0; y <= 25.0; y += 1.0) {
       vec(0) = x; vec(1) = y;
@@ -370,7 +370,7 @@ TEST_F(PointCloudFloat2D, ConvexHullPointsInsideShiftedTest) {
 
 
 
-  PointCloud<float, 2>::Vector vec;
+  PointCloud<float, 2>::VectorDIM vec;
   for(float x = -2.0; x <= 2.0; x += 1.0) {
     for(float y = -2.0; y <= 2.0; y += 1.0) {
       vec(0) = x; vec(1) = y;

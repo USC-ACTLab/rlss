@@ -3,7 +3,8 @@
 
 #include <vector>
 #include <iostream>
-#inclide <tuple>
+#include <tuple>
+#include "spline.h"
 
 namespace ACT {
 
@@ -56,42 +57,7 @@ class OccupancyGrid3D {
           }
         }
 
-    }
-
-
-    enum Direction {
-      NONE,
-      XP, // x++
-      XM, // x--
-      YP, // y++
-      YM, // y--
-      ZP, // z++
-      ZM  // z--
     };
-    /*
-     * Encodes a direction information with an index
-     * Used for neighbors calculations to indicate which way the neighbors is
-     * w.r.t. previous cell
-    */
-    class DirectionalIndex {
-      public:
-        Index index;
-        Direction d;
-
-        DirectionalIndex(GridSizeType x, GridSizeType y, GridSizeType z, Direction dir): index(x, y, z), d(dir) {
-
-        }
-
-
-        DirectionalIndex(const Index& idx, Direction dir): index(idx), d(dir) {
-
-        }
-
-        GridSizeType& operator[](unsigned int idx) {
-          return index[idx];
-        }
-    };
-
 
 
 
@@ -107,11 +73,13 @@ class OccupancyGrid3D {
             _grid[xidx][yidx].resize(std::ceil((_zmax - _zmin) / _stepsize), false);
             unsigned int zidx = 0;
             for(T z = _zmin; z < _zmax; z += _stepsize, zidx++) {
-              typename ACT::PointCloud<T, 3>::Vector cubemin, cubemax;
+              typename ACT::PointCloud<T, 3>::VectorDIM cubemin, cubemax;
               cubemin(0) = x;
               cubemin(1) = y;
               cubemin(2) = z;
-              cubemax = cubemin + _stepsize;
+              cubemax(0) = cubemin(0) + _stepsize;
+              cubemax(1) = cubemin(1) + _stepsize;
+              cubemax(2) = cubemin(2) + _stepsize;
               typename ACT::PointCloud<T, 3>::AlignedBox cube(cubemin, cubemax);
               for(auto obs : obstacles) {
                 if(obs.convexHullIntersects(cube)) {
@@ -127,7 +95,7 @@ class OccupancyGrid3D {
     /**
      * Returns the index of the grid that x, y, z is inside of.
     */
-    inline Index getIndex(double x, double y, double z) const {
+    inline Index getIndex(T x, T y, T z) const {
       Index idx;
       idx.i = (x - _xmin) / _stepsize;
       idx.j = (y - _ymin) / _stepsize;
@@ -140,39 +108,19 @@ class OccupancyGrid3D {
       return idx;
     }
 
-    /*
-     * Returns the neighbors of idx which are inside the grid with direction
-     * information attached to each neighbor.
-    */
-    std::vector<DirectionalIndex> getNeighbors(const Index& idx) const {
-      const static char** D = {{0,0,1,Direction.ZP}, {0,0,-1,Direction.ZM},
-                               {0,1,0,Direction.YP}, {0,-1,0,Direction.YM},
-                               {1,0,0,Direction.XP}, {-1,0,0,Direction.XM}};
-      std::vector<DirectionalIndex> N;
-      for(unsigned char i = 0; i < 6; i++) {
-        Index index;
-        index.i = idx + D[i][0];
-        index.j = idx + D[i][1];
-        index.k = idx + D[i][2];
-        if(insideGrid(index)) {
-          N.push_back(DirectionalIndex(index, D[i][3]));
-        }
-      }
-      return N;
-    }
 
 
     /*
      * Returns the center of the given cell index
     */
-    std::tuple<double, double, double> getCoordinates(const Index& idx) const {
+    std::tuple<T, T, T> getCoordinates(const Index& idx) const {
       if(!insideGrid(idx)) {
         throw OutOfBoundsException("index out of bounds");
       }
 
-      const double x = _xmin + _stepsize * idx[0] + _stepsize / 2;
-      const double y = _ymin + _stepsize * idx[1] + _stepsize / 2;
-      const double z = _zmin + _stepsize * idx[2] + _stepsize / 2;
+      const T x = _xmin + _stepsize * idx[0] + _stepsize / 2;
+      const T y = _ymin + _stepsize * idx[1] + _stepsize / 2;
+      const T z = _zmin + _stepsize * idx[2] + _stepsize / 2;
       return std::make_tuple(x, y, z);
     }
 
@@ -185,9 +133,61 @@ class OccupancyGrid3D {
       return _grid[idx.i][idx.j][idx.k];
     }
 
-    bool isOccupied(double x, double y, double z) {
+    bool isOccupied(T x, T y, T z) const {
       Index idx = getIndex(x, y, z);
       return _grid[idx.i][idx.j][idx.k];
+    }
+
+    /*
+     * Check if the occupancy grid is occupied at point x,y,z so that when a robot
+     * with radius r stays at x,y,z no cells that touches to robot are occupied
+    */
+    bool isOccupied(T x, T y, T z, T r) const {
+      Index idxmin = getIndex(x-r, y-r, z-r);
+      Index idxmax = getIndex(x+r, y+r, z+r);
+      for(GridSizeType i = idxmin.i; i<=idxmax.i; i++) {
+        for(GridSizeType j = idxmin.j; j<=idxmax.j; j++) {
+          for(GridSizeType k = idxmin.k; k<=idxmax.k; k++) {
+            Index idx(i, j, k);
+            if(isOccupied(idx)) {
+              return true;
+            }
+          }
+        }
+      }
+      return false;
+    }
+
+    /*
+     * Check if spl hits any obstacle when u\in[startTime, endTime] when a robot
+     * with radius r traverses it.
+    */
+    bool isOccupied(const splx::Spline<T, 3>& spl, T r, T startTime, T endTime) const {
+      using namespace splx;
+      const T dt = 0.01;
+      typename splx::Spline<T, 3>::VectorDIM vec;
+      for(T t = startTime; t <= endTime; t += dt) {
+        vec = spl.eval(t, 0);
+        if(isOccupied(vec(0), vec(1), vec(2), r)) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    GridSizeType iMax() const {
+      return _grid.size();
+    }
+
+    GridSizeType jMax() const {
+      assert(_grid.size() > 0);
+      return _grid[0].size();
+    }
+
+    GridSizeType kMax() const {
+      assert(_grid.size() > 0);
+      assert(_grid[0].size() > 0);
+      return _grid[0][0].size();
     }
 
   private:

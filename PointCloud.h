@@ -5,6 +5,7 @@
 #include <Eigen/Geometry>
 #include <vector>
 #include <limits>
+#include <Eigen/StdVector>
 
 #include <iostream>
 
@@ -23,7 +24,7 @@ template <typename T, unsigned int DIM>
 class PointCloudBase {
 
   public:
-    using Vector = Eigen::Matrix<T, DIM, 1>;
+    using VectorDIM = Eigen::Matrix<T, DIM, 1>;
     using Hyperplane = Eigen::Hyperplane<T, DIM>;
     using MatrixDIM = Eigen::Matrix<T, DIM, DIM>;
     using AlignedBox = Eigen::AlignedBox<T, DIM>;
@@ -40,13 +41,13 @@ class PointCloudBase {
     /*
      * Point cloud
     */
-    std::vector<Vector> _pts;
+    std::vector<VectorDIM, Eigen::aligned_allocator<VectorDIM> > _pts;
 
 
     /*
      * Hyperplanes of the convex hull where normals are pointing inside the convex hull.
     */
-    std::vector<Hyperplane> _convexhull;
+    std::vector<Hyperplane, Eigen::aligned_allocator<Hyperplane> > _convexhull;
 
     /*
      * Indices of points from which convex hull hyperplanes are computed.
@@ -56,14 +57,14 @@ class PointCloudBase {
      * DIM elements.
      *
     */
-    std::vector<std::vector<typename std::vector<Vector>::size_type> > _convexhullpts;
+    std::vector<std::vector<typename std::vector<VectorDIM>::size_type> > _convexhullpts;
 
     /*
      * Check if point is inside of the convex hull of the point cloud
      *
      * @test_needed for 2D_D, 3D_F, 3D_D
     */
-    bool pointInside(const Vector& pt) const {
+    bool pointInside(const VectorDIM& pt) const {
       for(auto hp : _convexhull) {
         if(hp.signedDistance(pt) < 0) {
           return false;
@@ -80,7 +81,7 @@ class PointCloudBase {
      * @test_needed for 2D_D, 3D_F, 3D_D
      *
     */
-    bool pointInside(const Vector& pt, T shift) const {
+    bool pointInside(const VectorDIM& pt, T shift) const {
       for(auto hp : _convexhull) {
         if(hp.signedDistance(pt) < -shift) {
           return false;
@@ -115,7 +116,7 @@ class PointCloudBase {
 
         bool everythingNegative = true;
         bool everythingPositive = true;
-        for(typename std::vector<Vector>::size_type i = 0; i < _pts.size(); i++) {
+        for(typename std::vector<VectorDIM>::size_type i = 0; i < _pts.size(); i++) {
           if(std::find(comb.begin(), comb.end(), i) == comb.end()) {
             T dist = hp.signedDistance(_pts[i]);
             if(dist < 0) {
@@ -158,14 +159,14 @@ class PointCloudBase {
     /*
      * Getter for point
     */
-    Vector& operator[](typename std::vector<Vector>::size_type i) {
+    VectorDIM& operator[](typename std::vector<VectorDIM>::size_type i) {
       return _pts[i];
     }
 
     /*
      * Const getter for point
     */
-    const Vector& operator[](typename std::vector<Vector>::size_type i) const {
+    const VectorDIM& operator[](typename std::vector<VectorDIM>::size_type i) const {
       return _pts[i];
     }
 
@@ -188,10 +189,10 @@ class PointCloudBase {
     /*
      * Find the hyperplane that goes through given points
     */
-    Hyperplane hyperplaneThroughPoints(const std::vector<typename std::vector<Vector>::size_type>& indexArray) {
+    Hyperplane hyperplaneThroughPoints(const std::vector<typename std::vector<VectorDIM>::size_type>& indexArray) {
       assert(indexArray.size() == DIM);
       MatrixDIM A;
-      Vector b;
+      VectorDIM b;
       for(unsigned int i = 0; i < DIM; i++) {
         A.block(i, 0, 1, DIM) = _pts[indexArray[i]].transpose();
         b(i) = 1.0;
@@ -203,7 +204,7 @@ class PointCloudBase {
         throw LinearDependenceException("points are not linearly independent.");
       }
 
-      Vector normal = A.inverse() * b;
+      VectorDIM normal = A.inverse() * b;
       T distance = -1.0 / normal.norm();
       normal.normalize();
 
@@ -225,7 +226,7 @@ class PointCloudBase {
         /**
          * Element type of combinations
         */
-        using ElementType = typename std::vector<Vector>::size_type;
+        using ElementType = typename std::vector<VectorDIM>::size_type;
 
 
         /**
@@ -315,7 +316,7 @@ class PointCloud<T, 2U> : public PointCloudBase<T, 2U> {
   public:
 
     using typename PointCloudBase<T, 2U>::AlignedBox;
-    using typename PointCloudBase<T, 2U>::Vector;
+    using typename PointCloudBase<T, 2U>::VectorDIM;
 
     /*
      * Assumes that the point cloud is not completely inside the box!
@@ -345,7 +346,7 @@ class PointCloud<T, 2U> : public PointCloudBase<T, 2U> {
 
       for(T x = xmin; x <= xmax; x += xstep) {
        for(T y = ymin; y <= ymax; y += ystep) {
-         const Vector pt(x, y);
+         const VectorDIM pt(x, y);
          if(this->pointInside(pt)) {
            return true;
          }
@@ -368,7 +369,7 @@ class PointCloud<T, 3U> : public PointCloudBase<T, 3U> {
   public:
 
     using typename PointCloudBase<T, 3U>::AlignedBox;
-    using typename PointCloudBase<T, 3U>::Vector;
+    using typename PointCloudBase<T, 3U>::VectorDIM;
     /*
      * Assumes that the point cloud is not completely inside the box!
      *
@@ -401,8 +402,8 @@ class PointCloud<T, 3U> : public PointCloudBase<T, 3U> {
 
       for(T y = ymin; y <= ymax; y += ystep) {
         for(T z = zmin; z <= zmax; z += zstep) {
-          const Vector ptm(xmin, y, z);
-          const Vector ptM(xmax, y, z);
+          const VectorDIM ptm(xmin, y, z);
+          const VectorDIM ptM(xmax, y, z);
           if(this->pointInside(ptm) || this->pointInside(ptM)) {
             return true;
           }
@@ -411,8 +412,8 @@ class PointCloud<T, 3U> : public PointCloudBase<T, 3U> {
 
       for(T x = xmin; x <= xmax; x += xstep) {
         for(T z = zmin; z <= zmax; z += zstep) {
-          const Vector ptm(x, ymin, z);
-          const Vector ptM(x, ymax, z);
+          const VectorDIM ptm(x, ymin, z);
+          const VectorDIM ptM(x, ymax, z);
           if(this->pointInside(ptm) || this->pointInside(ptM)) {
             return true;
           }
@@ -421,8 +422,8 @@ class PointCloud<T, 3U> : public PointCloudBase<T, 3U> {
 
       for(T x = xmin; x <= xmax; x += xstep) {
         for(T y = ymin; y <= ymax; y += ystep) {
-          const Vector ptm(x, y, zmin);
-          const Vector ptM(x, y, zmax);
+          const VectorDIM ptm(x, y, zmin);
+          const VectorDIM ptM(x, y, zmax);
           if(this->pointInside(ptm) || this->pointInside(ptM)) {
             return true;
           }

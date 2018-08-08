@@ -23,6 +23,7 @@
 #include "svm_seperator.h"
 #include "discrete_search.hpp"
 #include "PointCloud.h"
+#include "OccupancyGrid3D.h"
 
 #include "qp_optimize.h"
 
@@ -53,7 +54,7 @@ int main(int argc, char** argv) {
 
   ACT::PointCloud<double, 3> obs;
   for(int i = 0; i < 100; i++) {
-    ACT::PointCloud<double, 3>::Vector vec;
+    ACT::PointCloud<double, 3>::VectorDIM vec;
     vec(0) = randreal();
     vec(1) = randreal();
     vec(2) = randreal();
@@ -70,6 +71,12 @@ int main(int argc, char** argv) {
     ACT::PointCloud<double, 3>::Hyperplane& hp = obs(i);
     std::cout << "hp " << hp.normal()(0) << " " << hp.normal()(1) << " " << hp.normal()(2) << " " << hp.offset() << std::endl;
   }
+
+  std::vector<ACT::PointCloud<double , 3> > OBSVEC;
+  OBSVEC.push_back(obs);
+
+  ACT::OccupancyGrid3D<double> OG3D(OBSVEC, 0.25);
+
   return 0;
 
   string config_path;
