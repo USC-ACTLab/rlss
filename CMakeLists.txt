@@ -9,6 +9,7 @@ add_subdirectory(lib/osqp)
 
 add_subdirectory(lib/RVO2)
 add_subdirectory(lib/splx)
+add_subdirectory(lib/octomap)
 
 
 find_package(Eigen3 REQUIRED)
@@ -92,6 +93,7 @@ target_link_libraries(main
   svm8pt4obs
   svm32pt4obs
   osqp
+  octomap
 )
 
 add_executable(rvo2_main

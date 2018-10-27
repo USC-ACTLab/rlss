@@ -77,6 +77,9 @@ int main(int argc, char** argv) {
 
   ACT::OccupancyGrid3D<double> OG3D(OBSVEC, 0.25);
 
+
+  
+
   return 0;
 
   string config_path;
