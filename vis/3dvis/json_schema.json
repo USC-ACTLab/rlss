@@ -41,6 +41,7 @@
     },
     "frames": {
       "type": "array",
+      "description": "it can be assumed that frames are sorted by their 'step' properties. However, some frames at some steps may not exist. This happens when there is nothing to update in that timestep",
       "items": {
         "$ref": "#/definitions/frame"
       },
@@ -55,11 +56,13 @@
       "title": "a 3D curve",
       "type": "object",
       "properties": {
-        "duration": {
+        "min_parameter": {
           "type": "number",
-          "description": "duration of the curve",
-          "minimum": 0,
-          "exclusiveMinimum": true
+          "description": "minimum parameter mp for the curve"
+        },
+        "max_parameter": {
+          "type": "number",
+          "description": "maximum parameter Mp for the curve. curve f(t) is defined for f in [mp, Mp]"
         },
         "type": {
           "type": "string",
@@ -74,9 +77,17 @@
             "description": "a single control point"
           },
           "minItems": 1
+        },
+        "knotvector": {
+          "type": "array",
+          "description": "knot vector for bspline",
+          "items": {
+            "type": "number",
+            "description": "a single knot"
+          }
         }
       },
-      "required": ["duration", "type", "controlpoints"]
+      "required": ["min_parameter", "max_parameter", "type", "controlpoints"]
     },
     "vector": {
       "$schema": "http://json-schema.org/draft-07/schema#",
@@ -119,7 +130,7 @@
       "properties": {
         "step": {
           "type": "integer",
-          "description": "the step of the frame(frame at t = step * dt)",
+          "description": "the step count of the frame (frame at t = step * dt), this is like an id that increases by 1 at each step",
           "minimum": 0
         },
         "trajectories" : {
@@ -165,7 +176,7 @@
             "type": "object",
             "properties": {
               "top_left": {
-                "$ref": "#/definitions/json"
+                "$ref": "#/definitions/vector"
               },
               "bottom_right": {
                 "$ref": "#/definitions/vector"

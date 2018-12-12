@@ -7,7 +7,8 @@
       "trajectory": [
         {
           "type": "bezier",
-          "duration": 1.0,
+          "min_parameter": 1.0,
+          "max_parameter": 2.0,
           "controlpoints": [
             [0, 0, 0],
             [0, 1, 2],
@@ -21,7 +22,8 @@
         },
         {
           "type": "bezier",
-          "duration": 1.0,
+          "min_parameter": 2.0,
+          "max_parameter": 3.0,
           "controlpoints": [
               [0, 0, -1.000123],
               [-1, -1, 2],
