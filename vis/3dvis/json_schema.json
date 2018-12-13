@@ -237,7 +237,16 @@
               "hyperplanes": {
                 "type": "array",
                 "items": {
-                  "$ref": "#/definitions/hyperplane"
+                  "type": "object",
+                  "properties": {
+                    "piece_id": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "hyperplane": {
+                      "$ref": "#/definitions/hyperplane"
+                    }
+                  }
                 }
               }
             },
