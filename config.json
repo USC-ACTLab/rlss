@@ -1,7 +1,7 @@
 {
-  "trajectories": "../test_data/trajectories/swapCircle16",
+  "trajectories": "../test_data/3dtrajectories/1trajectory/",
   "scale_traj": 1.0,
-  "obstacles": "../test_data/obstacles/3obstacles/",
+  "obstacles": "../test_data/3dobstacles/1obstacle/",
   "robot_radius": 0.23,
   "cell_size": 0.5,
   "v_max": 2,
@@ -10,12 +10,11 @@
   "set_max_time_as_replan_period": true,
   "planning_horizon": 5,
   "plan_for_curves": 4,
-  "problem_dimension": 3,
   "points_per_curve": 8,
   "continuity_upto_degree": 2,
   "enable_voronoi": true,
   "output_file": "res.json",
-  "print_dt": 0.01,
+  "output_frame_dt": 0.01,
   "algorithm": "QPOASES",
   "lambda_hyperplanes": 0.00,
   "lambda_min_der": 0.1,
@@ -24,6 +23,5 @@
   "lambda_min_der_jerk": 0.0,
   "lambda_min_der_snap": 0.0,
   "scaling_multiplier": 2.0,
-  "rvo2_enable_discrete": false,
   "additional_time": 5
 }

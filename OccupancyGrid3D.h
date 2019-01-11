@@ -1,7 +1,7 @@
 #ifndef ACT_OCCUPANCYGRID3D_H
 #define ACT_OCCUPANCYGRID3D_H
 
-#include <vector>
+#include <Eigen/StdVector>
 #include <iostream>
 #include <tuple>
 #include "spline.h"
@@ -83,6 +83,7 @@ class OccupancyGrid3D {
               typename ACT::PointCloud<T, 3>::AlignedBox cube(cubemin, cubemax);
               for(auto obs : obstacles) {
                 if(obs.convexHullIntersects(cube)) {
+                  _occupied_boxes.push_back(cube);
                   _grid[xidx][yidx][zidx] = true;
                   break;
                 }
@@ -190,7 +191,11 @@ class OccupancyGrid3D {
       return _grid[0][0].size();
     }
 
+
+    std::vector<typename ACT::PointCloud<T, 3>::AlignedBox> _occupied_boxes;
+
   private:
+
     GridType _grid;
 
     /*

@@ -3,7 +3,6 @@
 
 #include <Eigen/Dense>
 #include <Eigen/Geometry>
-#include <vector>
 #include <limits>
 #include <Eigen/StdVector>
 
@@ -58,6 +57,11 @@ class PointCloudBase {
      *
     */
     std::vector<std::vector<typename std::vector<VectorDIM>::size_type> > _convexhullpts;
+
+
+    void addPoint(const VectorDIM& pt) {
+      _pts.push_back(pt);
+    }
 
     /*
      * Check if point is inside of the convex hull of the point cloud
@@ -392,7 +396,7 @@ class PointCloud<T, 3U> : public PointCloudBase<T, 3U> {
       const T xmin = box.min()(0);
       const T ymin = box.min()(1);
       const T zmin = box.min()(2);
-      const T xmax = box.min()(0);
+      const T xmax = box.max()(0);
       const T ymax = box.max()(1);
       const T zmax = box.max()(2);
 
@@ -429,7 +433,6 @@ class PointCloud<T, 3U> : public PointCloudBase<T, 3U> {
           }
         }
       }
-
       return false;
     }
 };
