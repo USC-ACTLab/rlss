@@ -4,9 +4,15 @@
 #include <Eigen/Geometry>
 #include <iostream>
 
-using std::cout;
-using std::endl;
-using std::vector;
+
+#include "cvxgen/64robot8obstacle/solver.h"
+
+namespace _64_8_svm_solver {
+  Vars vars;
+  Params params;
+  Workspace work;
+  Settings settings;
+}
 
 #include "cvxgen/16robot8obstacle/solver.h"
 
@@ -17,15 +23,11 @@ namespace _16_8_svm_solver {
   Settings settings;
 }
 
-/*#include "cvxgen/64robot8obstacle/solver.h"
 
-namespace _64_8_svm_solver {
-  Vars vars;
-  Params params;
-  Workspace workspace;
-  Setting settings;
-}
-*/
+
+using std::cout;
+using std::endl;
+using std::vector;
 
 namespace ACT {
 /*
@@ -43,9 +45,9 @@ Eigen::Hyperplane<T, 3U> _16_8_seperate(
   using Hyperplane = Eigen::Hyperplane<T, 3U>;
 
 
-  unsigned int number_of_constraints = 24;
-  unsigned int robot_constraints = 16;
-  unsigned int obstacle_constraints = 8;
+  const unsigned int number_of_constraints = 24;
+  const unsigned int robot_constraints = 16;
+  const unsigned int obstacle_constraints = 8;
 
   for(unsigned int i = 0; i < robot_points.size(); i++) {
     for(unsigned int d = 0; d < 3U; d++) {
@@ -106,10 +108,56 @@ Eigen::Hyperplane<T, 3U> _64_8_seperate(
 {
   using VectorDIM = Eigen::Matrix<T, 3U, 1>;
   using Hyperplane = Eigen::Hyperplane<T, 3U>;
-  Hyperplane res;
 
 
-  return res;
+  const unsigned int number_of_constraints = 72;
+  const unsigned int robot_constraints = 64;
+  const unsigned int obstacle_constraints = 8;
+
+  for(unsigned int i = 0; i < robot_points.size(); i++) {
+    for(unsigned int d = 0; d < 3U; d++) {
+      _64_8_svm_solver::params.A[number_of_constraints * d + i] = robot_points[i](d);
+    }
+    _64_8_svm_solver::params.A[number_of_constraints * 3 + i] = 1;
+  }
+
+  for(unsigned int i = 0; i < obstacle_points.size(); i++) {
+    for(unsigned int d = 0; d < 3U; d++) {
+      _64_8_svm_solver::params.A[number_of_constraints * d + robot_constraints + i]
+              = -obstacle_points[i](d);
+    }
+    _64_8_svm_solver::params.A[number_of_constraints * 3 + robot_constraints + i] = -1;
+  }
+
+  _64_8_svm_solver::params.H[0] = 1;
+  _64_8_svm_solver::params.H[1] = 1;
+  _64_8_svm_solver::params.H[2] = 1;
+  _64_8_svm_solver::params.H[3] = 0;
+
+  _64_8_svm_solver::set_defaults();
+  _64_8_svm_solver::setup_indexing();
+
+  // _64_8_svm_solver::settings.eps;
+  //_64_8_svm_solver::settings.resid_tol;
+  //_64_8_svm_solver::settings.max_iters;
+  _64_8_svm_solver::settings.verbose = 0;
+  //_64_8_svm_solver::settings.kkt_reg;
+  //_64_8_svm_solver::settings.refine_steps;
+  //_64_8_svm_solver::settings.verbose_refinement;
+
+
+
+  long num_iters = _64_8_svm_solver::solve();
+
+  cout << "# SVM _64_8 Converged: " << _64_8_svm_solver::work.converged << endl;
+
+
+  VectorDIM normal(_64_8_svm_solver::vars.w[0],
+     _64_8_svm_solver::vars.w[1], _64_8_svm_solver::vars.w[2]);
+   T norm = normal.norm();
+   normal /= norm;
+
+  return Hyperplane(normal, _64_8_svm_solver::vars.w[3] / norm);
 }
 
 
@@ -229,11 +277,6 @@ vector<Eigen::Hyperplane<T, 3U> > svm3d(const vector<Eigen::AlignedBox<T, 3U>>& 
 
     hyperplanes.push_back(hp);
   }
-
-
-
-
-
 
   return hyperplanes;
 }

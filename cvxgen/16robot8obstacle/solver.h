@@ -6,8 +6,8 @@
 
 /* Filename: solver.h. */
 /* Description: Header file with relevant definitions. */
-#ifndef SOLVER_H
-#define SOLVER_H
+#ifndef SOLVER_H_16_8
+#define SOLVER_H_16_8
 /* Uncomment the next line to remove all library dependencies. */
 /*#define ZERO_LIBRARY_MODE */
 #ifdef MATLAB_MEX_FILE

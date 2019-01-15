@@ -18,6 +18,7 @@
 #include "spline.h"
 #include "bezier.h"
 #include "SVM.h"
+#include <utility>
 
 
 
@@ -29,6 +30,8 @@ using std::ifstream;
 using namespace ACT;
 using namespace splx;
 using std::max;
+using std::min;
+using std::pair;
 
 
 
@@ -104,7 +107,6 @@ int main(int argc, char** argv) {
     OBSTACLES.push_back(obs);
   }
   OccupancyGrid3D<double> OCCUPANCY_GRID(OBSTACLES, cell_size);
-  std::vector<AlignedBox> CELL_BASED_OBSTACLES = OCCUPANCY_GRID._occupied_boxes;
 
 
   /* Get original trajectories */
@@ -163,27 +165,74 @@ int main(int argc, char** argv) {
 
   /*
   * Initialize TRAJECTORIES to be planned
+  *
+  * fix this
   */
   std::vector<Spline<double, 3U> > TRAJECTORIES(robot_count);
-  // initialize!!!!!!!!!!!!!!
+  for(unsigned int r = 0; r < robot_count; r++) {
+    auto& traj = TRAJECTORIES[r];
+    for(unsigned int i = 0; i < curve_count; i++) {
+      Bezier<double, 3U> bez(traj.getPiece(min(i, traj.numPieces() - 1)));
+      traj.addPiece(bez);
+    }
+  }
 
   double SIMULATION_DURATION = MAX_TOTAL_TIME + additional_time;
   for(double ct = 0; ct <= SIMULATION_DURATION; ct += dt) {
     for(unsigned int r = 0; r < robot_count; r++) {
+
+      /*
+      * Add other robots as obstacles
+      */
+      vector<pair<OccupancyGrid3D<double>::Index, unsigned int> > OG_CHANGES;
+      for(int i = 0; i < robot_count; i++) {
+        if(i != r) {
+          auto changes = OCCUPANCY_GRID.addRobot(CURRENT_STATES[i][0], robot_radius);
+          for(const auto& c: changes) {
+            OG_CHANGES.push_back(c);
+          }
+        }
+      }
+
+      /*
+      * Calculate voronoi for the current robot
+      */
       vector<Hyperplane> VORONOI_HYPERPLANES;
-
       if(enable_voronoi) {
-        VORONOI_HYPERPLANES = voronoi<double, 3U>(CURRENT_STATES, r);
+        VORONOI_HYPERPLANES = voronoi<double, 3U>(CURRENT_STATES, r, robot_radius);
       }
 
-      // is true if original trajectory occupied
+
+      /*
+      * Check if the first piece of the previous plan is outside of the
+      * buffered voronoi cell
+      */
+      bool first_piece_outside_voronoi = false;
+      for(const auto& hp: VORONOI_HYPERPLANES) {
+        // DO DIS MATE
+      }
+
+
+      /*
+      * Check if original trajectory is occupied from ct to ct + hor
+      */
       bool original_trajectory_occupied = false;
-
-      for(const auto& o: CELL_BASED_OBSTACLES) {
-        
+      for(auto& alignedBox: OCCUPANCY_GRID._occupied_boxes) {
+        if(ORIGINAL_TRAJECTORIES[r].intersects(alignedBox,
+            min(TOTAL_TIMES[r], ct), min(TOTAL_TIMES[r], ct + hor), robot_radius)) {
+          original_trajectory_occupied = true;
+          break;
+        }
       }
 
 
+
+
+
+      /*
+      * Remove other robots from occupancy grid
+      */
+      OCCUPANCY_GRID.undoRobotChanges(OG_CHANGES);
     }
 
   }

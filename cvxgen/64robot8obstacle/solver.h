@@ -6,8 +6,8 @@
 
 /* Filename: solver.h. */
 /* Description: Header file with relevant definitions. */
-#ifndef SOLVER_H
-#define SOLVER_H
+#ifndef SOLVER_H_64_8
+#define SOLVER_H_64_8
 /* Uncomment the next line to remove all library dependencies. */
 /*#define ZERO_LIBRARY_MODE */
 #ifdef MATLAB_MEX_FILE
@@ -27,7 +27,6 @@
 #include <math.h>
 #define pm(A, m, n) printmatrix(#A, A, m, n, 1)
 #endif
-
 namespace _64_8_svm_solver {
 typedef struct Params_t {
   double H[4];

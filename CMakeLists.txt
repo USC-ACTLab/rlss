@@ -15,6 +15,10 @@ cvxgen/16robot8obstacle/solver.cpp
 cvxgen/16robot8obstacle/ldl.cpp
 cvxgen/16robot8obstacle/util.cpp
 cvxgen/16robot8obstacle/matrix_support.cpp
+cvxgen/64robot8obstacle/solver.cpp
+cvxgen/64robot8obstacle/ldl.cpp
+cvxgen/64robot8obstacle/util.cpp
+cvxgen/64robot8obstacle/matrix_support.cpp
 )
 
 find_package(Eigen3 REQUIRED)

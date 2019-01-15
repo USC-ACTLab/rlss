@@ -5,6 +5,17 @@
 #include <iostream>
 #include <tuple>
 #include "spline.h"
+#include <Eigen/Dense>
+#include <algorithm>
+#include <iterator>
+
+using std::vector;
+using std::pair;
+using std::numeric_limits;
+using std::min;
+using std::max;
+using std::make_pair;
+using std::advance;
 
 namespace ACT {
 
@@ -17,6 +28,8 @@ class OccupancyGrid3D {
   public:
     using GridType = std::vector<std::vector<std::vector<bool> > >;
     using GridSizeType = GridType::size_type;
+    using VectorDIM = Eigen::Matrix<T, 3U, 1U>;
+    using AlignedBox = Eigen::AlignedBox<T, 3U>;
 
     class OutOfBoundsException : public std::runtime_error {
       public:
@@ -36,11 +49,15 @@ class OccupancyGrid3D {
         GridSizeType j;
         GridSizeType k;
 
+        Index() {
+
+        }
+
         Index(GridSizeType x, GridSizeType y, GridSizeType z): i(x), j(y), k(z) {
 
         }
 
-        Index(const Index& rhs): i(rhs.i), j(rhs.j), k(rhs,k) {
+        Index(const Index& rhs): i(rhs.i), j(rhs.j), k(rhs.k) {
 
         }
 
@@ -80,7 +97,7 @@ class OccupancyGrid3D {
               cubemax(0) = cubemin(0) + _stepsize;
               cubemax(1) = cubemin(1) + _stepsize;
               cubemax(2) = cubemin(2) + _stepsize;
-              typename ACT::PointCloud<T, 3>::AlignedBox cube(cubemin, cubemax);
+              AlignedBox cube(cubemin, cubemax);
               for(auto obs : obstacles) {
                 if(obs.convexHullIntersects(cube)) {
                   _occupied_boxes.push_back(cube);
@@ -114,15 +131,15 @@ class OccupancyGrid3D {
     /*
      * Returns the center of the given cell index
     */
-    std::tuple<T, T, T> getCoordinates(const Index& idx) const {
+    VectorDIM getCoordinates(const Index& idx) const {
       if(!insideGrid(idx)) {
         throw OutOfBoundsException("index out of bounds");
       }
 
-      const T x = _xmin + _stepsize * idx[0] + _stepsize / 2;
-      const T y = _ymin + _stepsize * idx[1] + _stepsize / 2;
-      const T z = _zmin + _stepsize * idx[2] + _stepsize / 2;
-      return std::make_tuple(x, y, z);
+      const T x = _xmin + _stepsize * idx.i + _stepsize / 2;
+      const T y = _ymin + _stepsize * idx.j + _stepsize / 2;
+      const T z = _zmin + _stepsize * idx.k + _stepsize / 2;
+      return VectorDIM(x, y, z);
     }
 
 
@@ -191,8 +208,70 @@ class OccupancyGrid3D {
       return _grid[0][0].size();
     }
 
+    /*
+    * Adds a robot to occupancy grid positioned at pos with cube side 2 * r
+    *
+    * Returns the indexes that are set true in _grid,
+    * and indexes that are added in occupied_boxes
+    */
+    vector<pair<Index, unsigned int>> addRobot(const VectorDIM& pos, T r) {
+      VectorDIM rad(r, r, r);
+      VectorDIM _min = pos - rad;
+      VectorDIM _max = pos + rad;
+      auto minidx = getIndex(_min(0), _min(1), _min(2));
+      auto maxidx = getIndex(_max(0), _max(1), _max(2));
 
-    std::vector<typename ACT::PointCloud<T, 3>::AlignedBox> _occupied_boxes;
+      vector<pair<Index, unsigned int>> changes;
+
+      VectorDIM ss2(_stepsize / 2, _stepsize / 2, _stepsize / 2);
+
+      for(auto i = minidx.i; i <= maxidx.i; i++) {
+        for(auto j = minidx.j; j <= maxidx.j; j++) {
+          for(auto k = minidx.k; k <= maxidx.k; k++) {
+            if(_grid[i][j][k] == false) {
+              Index idx(i, j, k);
+              VectorDIM coord = getCoordinates(idx);
+              VectorDIM topleft(coord - ss2);
+              VectorDIM bottomright(coord + ss2);
+              AlignedBox cube(topleft, bottomright);
+
+              _occupied_boxes.push_back(cube);
+              _grid[i][j][k] = true;
+
+              changes.push_back(make_pair(idx,
+                 (unsigned int) _occupied_boxes.size() - 1));
+            }
+          }
+        }
+      }
+
+      return changes;
+    }
+
+    /*
+    * Undoes the changes done by addRobot function
+    *
+    * Changes should be sorted in increasing order
+    * by their second members (i.e. occupied box indexes)
+    */
+    void undoRobotChanges(const vector<pair<Index, unsigned int>>& changes) {
+      for(auto it = changes.rbegin(); it != changes.rend(); it++) {
+        const auto& change = *it;
+        const auto& grididx = change.first;
+        const unsigned int boxidx = change.second;
+
+        _grid[grididx.i][grididx.j][grididx.k] = false;
+        if(boxidx == _occupied_boxes.size() - 1) {
+          _occupied_boxes.pop_back();
+        } else {
+          auto loc = _occupied_boxes.begin();
+          advance(loc, boxidx);
+          _occupied_boxes.erase(loc);
+        }
+      }
+    }
+
+    std::vector<AlignedBox> _occupied_boxes;
 
   private:
 

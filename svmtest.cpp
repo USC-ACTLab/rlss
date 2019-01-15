@@ -16,10 +16,16 @@ int main() {
   vector<AlignedBox> obstacle_boxes;
 
   obstacle_boxes.push_back(AlignedBox(VectorDIM(-0.5, -0.5, -0.5), VectorDIM(0.5, 0.5, 0.5)));
-    obstacle_boxes.push_back(AlignedBox(VectorDIM(-10, -10, -10), VectorDIM(-8, -7, -6)));
+  obstacle_boxes.push_back(AlignedBox(VectorDIM(-10, -10, -10), VectorDIM(-8, -7, -6)));
 
   robot_boxes.push_back(AlignedBox(VectorDIM(5, 5, -0.5), VectorDIM(6,6,0.5)));
   robot_boxes.push_back(AlignedBox(VectorDIM(5, -0.5, -0.5), VectorDIM(6,0.5,0.5)));
+  robot_boxes.push_back(AlignedBox(VectorDIM(5, -0.5, -0.5), VectorDIM(6,0.5,0.5)));
+  robot_boxes.push_back(AlignedBox(VectorDIM(6, -0.5, -0.5), VectorDIM(7,0.5,0.5)));
+  robot_boxes.push_back(AlignedBox(VectorDIM(7, -0.5, -0.5), VectorDIM(8,0.5,0.5)));
+  robot_boxes.push_back(AlignedBox(VectorDIM(8, -0.5, -0.5), VectorDIM(9,0.5,0.5)));
+  robot_boxes.push_back(AlignedBox(VectorDIM(9, -0.5, -0.5), VectorDIM(10,0.5,0.5)));
+  robot_boxes.push_back(AlignedBox(VectorDIM(10, -0.5, -0.5), VectorDIM(11,0.5,0.5)));
 
   vector<Hyperplane> res = svm3d(robot_boxes, obstacle_boxes);
 
