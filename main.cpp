@@ -19,7 +19,7 @@
 #include "bezier.h"
 #include "SVM.h"
 #include <utility>
-
+#include "discrete_search.hpp"
 
 
 namespace fs = std::experimental::filesystem;
@@ -32,6 +32,7 @@ using namespace splx;
 using std::max;
 using std::min;
 using std::pair;
+using std::ofstream;
 
 
 
@@ -73,7 +74,7 @@ int main(int argc, char** argv) {
   const double dt = jsn["replan_period"];
   const double robot_radius = jsn["robot_radius"];
   const double cell_size = jsn["cell_size"];
-  const double hor = jsn["planning_horizon"];
+  const double desired_horizon = jsn["planning_horizon"];
   const double v_max = jsn["v_max"];
   const double a_max = jsn["a_max"];
   const double lambda_hyperplanes = jsn["lambda_hyperplanes"];
@@ -85,6 +86,10 @@ int main(int argc, char** argv) {
   const double scaling_multiplier = jsn["scaling_multiplier"];
   const double additional_time = jsn["additional_time"];
   const double output_frame_dt = jsn["output_frame_dt"];
+
+  const double step = 0.01; // general purpose step
+
+  ofstream LOG("log", ofstream::out);
 
 
   using VectorDIM = Spline<double, 3U>::VectorDIM;
@@ -114,7 +119,6 @@ int main(int argc, char** argv) {
   for(auto& p: fs::directory_iterator(initial_trajectories_path)) {
     Spline<double, 3U> spline;
     string path(p.path());
-    cout << path << endl;
     ifstream file(path);
     string line;
     while(file >> line) {
@@ -129,7 +133,6 @@ int main(int argc, char** argv) {
         vec(0) = stod(numbers[i]);
         vec(1) = stod(numbers[i+1]);
         vec(2) = stod(numbers[i+2]);
-        //cout << vec << endl;
         bez.m_controlPoints.push_back(vec);
       }
       spline.addPiece(bez);
@@ -171,15 +174,21 @@ int main(int argc, char** argv) {
   std::vector<Spline<double, 3U> > TRAJECTORIES(robot_count);
   for(unsigned int r = 0; r < robot_count; r++) {
     auto& traj = TRAJECTORIES[r];
+    auto& origtraj = ORIGINAL_TRAJECTORIES[r];
     for(unsigned int i = 0; i < curve_count; i++) {
-      Bezier<double, 3U> bez(traj.getPiece(min(i, traj.numPieces() - 1)));
+      Bezier<double, 3U> bez(origtraj.getPiece(min(i, origtraj.numPieces() - 1)));
       traj.addPiece(bez);
     }
   }
 
   double SIMULATION_DURATION = MAX_TOTAL_TIME + additional_time;
   for(double ct = 0; ct <= SIMULATION_DURATION; ct += dt) {
+    LOG << "Current Time: " << ct << "/" << SIMULATION_DURATION << endl;
     for(unsigned int r = 0; r < robot_count; r++) {
+      LOG << "Robot: " << r << endl;
+
+      const auto& origtraj = ORIGINAL_TRAJECTORIES[r];
+      auto& traj = TRAJECTORIES[r];
 
       /*
       * Add other robots as obstacles
@@ -204,28 +213,98 @@ int main(int argc, char** argv) {
 
 
       /*
-      * Check if the first piece of the previous plan is outside of the
+      * Check if the first piece of the previous trajectory is outside of the
       * buffered voronoi cell
       */
-      bool first_piece_outside_voronoi = false;
+      bool previous_trajectory_first_piece_outside_voronoi = false;
       for(const auto& hp: VORONOI_HYPERPLANES) {
-        // DO DIS MATE
-      }
-
-
-      /*
-      * Check if original trajectory is occupied from ct to ct + hor
-      */
-      bool original_trajectory_occupied = false;
-      for(auto& alignedBox: OCCUPANCY_GRID._occupied_boxes) {
-        if(ORIGINAL_TRAJECTORIES[r].intersects(alignedBox,
-            min(TOTAL_TIMES[r], ct), min(TOTAL_TIMES[r], ct + hor), robot_radius)) {
-          original_trajectory_occupied = true;
+        if(!traj.onNegativeSide(hp, 0)) {
+          previous_trajectory_first_piece_outside_voronoi = true;
           break;
         }
       }
 
 
+      /*
+      * Check if original trajectory is occupied from ct to ct + desired_horizon
+      */
+      bool original_trajectory_occupied = origtraj.
+        intersects(OCCUPANCY_GRID._occupied_boxes,
+          min(TOTAL_TIMES[r], ct), min(TOTAL_TIMES[r], ct + desired_horizon),
+          robot_radius);
+
+
+      /*
+      * Check if previous trajectory is occupied from 0 to tau
+      */
+      bool previous_trajectory_occupied = traj.
+        intersects(OCCUPANCY_GRID._occupied_boxes,
+          0, traj.totalSpan(), robot_radius);
+
+
+      /*
+      * true if discrete planning is needed
+      */
+      bool discrete_planning_needed =
+        previous_trajectory_first_piece_outside_voronoi ||
+        original_trajectory_occupied ||
+        previous_trajectory_occupied;
+
+      /*
+      * even if discrete planning is needed we may not be able to do it
+      * because there is no unoccupied location in original trajectory
+      * from time ct + desired_horizon to TOTAL_TIMES[r]
+      */
+      bool discrete_planning_done = false;
+
+      if(discrete_planning_needed) {
+        // discrete planning needed
+
+        /*
+        * find the target time that we try to reach
+        */
+        double target_time;
+        /*
+        * target_time_valid:
+        * true if original trajectory is not occupied at time target_time
+        */
+        bool target_time_valid = false;
+        if(ct + desired_horizon > TOTAL_TIMES[r]) {
+          // we are using extra time or remaining time is less than desired_horizon
+          // try to go to the end point
+          target_time = TOTAL_TIMES[r];
+          // we can go to the end point if original trajectory is not occupied at that time.
+          target_time_valid = !origtraj.intersects(OCCUPANCY_GRID._occupied_boxes,
+            target_time, target_time, robot_radius);
+        } else {
+          // we have not less than desired_horizon time
+          for(target_time = ct + desired_horizon;
+            target_time <= TOTAL_TIMES[r]; target_time += step) {
+            if(!origtraj.intersects(OCCUPANCY_GRID._occupied_boxes,
+              target_time, target_time, robot_radius)) {
+              target_time_valid = true;
+              break;
+            }
+          }
+        }
+
+        // if the original trajectory is unoccupied at target_time
+        if(target_time_valid) {
+          // try discrete planning
+          // it may fail if there is no path
+          // or it may succeed if there is a path
+          // if it succeeds set discrete_planning_done to True
+          // else set it to False
+
+        }
+      }
+
+
+      if(discrete_planning_done) {
+
+      } else {
+
+      }
 
 
 
@@ -239,7 +318,7 @@ int main(int argc, char** argv) {
 
 
 
-
+  LOG.close();
   return 0;
 
 }

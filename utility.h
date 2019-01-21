@@ -16,6 +16,7 @@ using std::endl;
 using std::vector;
 using std::string;
 
+
 namespace ACT {
 
 double fRand(double fMin, double fMax)
@@ -130,6 +131,8 @@ std::vector<Eigen::Hyperplane<T, DIM> > voronoi(std::vector<std::vector<Eigen::M
   }
   return hyperplanes;
 }
+
+
 
 }
 
