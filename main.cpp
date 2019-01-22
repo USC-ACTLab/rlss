@@ -25,6 +25,7 @@
 namespace fs = std::experimental::filesystem;
 using std::string;
 using std::cout;
+using std::vector;
 using std::endl;
 using std::ifstream;
 using namespace ACT;
@@ -63,9 +64,9 @@ int main(int argc, char** argv) {
 
   const bool enable_voronoi = jsn["enable_voronoi"];
   const bool set_max_time = jsn["set_max_time_as_replan_period"];
-  const int max_continuity = jsn["continuity_upto_degree"];
-  const int curve_count = jsn["plan_for_curves"];
-  const int points_per_curve = jsn["points_per_curve"];
+  const unsigned int max_continuity = jsn["continuity_upto_degree"];
+  const unsigned int curve_count = jsn["plan_for_curves"];
+  const unsigned int points_per_curve = jsn["points_per_curve"];
   const string outputfile = jsn["output_file"];
   const string alg = jsn["algorithm"];
   const string initial_trajectories_path = jsn["trajectories"];
@@ -92,9 +93,9 @@ int main(int argc, char** argv) {
   ofstream LOG("log", ofstream::out);
 
 
-  using VectorDIM = Spline<double, 3U>::VectorDIM;
+  using VectorDIM = Eigen::Matrix<double, 3U, 1U>;
   using Hyperplane = Eigen::Hyperplane<double, 3U>;
-  using AlignedBox = PointCloud<double, 3>::AlignedBox;
+  using AlignedBox = PointCloud<double, 3U>::AlignedBox;
 
 
   /* Get obstacles and construct occupancy grid */
@@ -190,6 +191,8 @@ int main(int argc, char** argv) {
       const auto& origtraj = ORIGINAL_TRAJECTORIES[r];
       auto& traj = TRAJECTORIES[r];
 
+      const auto& state = CURRENT_STATES[r];
+
       /*
       * Add other robots as obstacles
       */
@@ -256,7 +259,6 @@ int main(int argc, char** argv) {
       * from time ct + desired_horizon to TOTAL_TIMES[r]
       */
       bool discrete_planning_done = false;
-
       if(discrete_planning_needed) {
         // discrete planning needed
 
@@ -295,7 +297,52 @@ int main(int argc, char** argv) {
           // or it may succeed if there is a path
           // if it succeeds set discrete_planning_done to True
           // else set it to False
+          const VectorDIM& currentPos = state[0];
+          const VectorDIM targetPos = origtraj.eval(target_time, 0);
 
+          auto start_idx = OCCUPANCY_GRID.getIndex(currentPos);
+          auto target_idx = OCCUPANCY_GRID.getIndex(targetPos);
+
+          discreteSearch::State startState(start_idx.i,
+              start_idx.j, start_idx.k, discreteSearch::Direction::NONE);
+          discreteSearch::State targetState(target_idx.i,
+              target_idx.j, target_idx.k, discreteSearch::Direction::NONE);
+
+          discreteSearch::Environment<double> env(OCCUPANCY_GRID, robot_radius, targetState);
+
+          libSearch::AStar<discreteSearch::State,
+            discreteSearch::Action, int, discreteSearch::Environment<double> > astar(env);
+          libSearch::PlanResult<discreteSearch::State, discreteSearch::Action, int> solution;
+
+          discrete_planning_done = astar.search(startState, solution);
+
+          vector<VectorDIM, Eigen::aligned_allocator<VectorDIM>> corners;
+          corners.push_back(currentPos);
+          const auto& firstSolutionState = solution.states[0].first;
+          corners.push_back(OCCUPANCY_GRID.getCoordinates(firstSolutionState.x,
+            firstSolutionState.y, firstSolutionState.z));
+          for(unsigned int i = 0; i < solution.actions.size(); i++) {
+            const auto& action = solution.actions[i].first;
+            if(action != discreteSearch::Action::Forward) {
+              const auto& state = solution.states[i].first; // i == i-1, only directions change
+              corners.push_back(OCCUPANCY_GRID.getCoordinates(state.x,
+                state.y, state.z));
+            }
+          }
+          const auto& lastSolutionState = solution.states.back().first;
+          corners.push_back(OCCUPANCY_GRID.getCoordinates(lastSolutionState.x,
+            lastSolutionState.y, lastSolutionState.z));
+          corners.push_back(targetPos);
+
+          if(curve_count > corners.size() - 1) {
+            // we need to split segments since there are not enough segments
+            // for each curve
+            bestSplitSegments<double, 3U>(corners, curve_count);
+          }
+
+          // corners are ready here
+          // load the trajectory with first curve_count segments
+          // TODO!!!
         }
       }
 

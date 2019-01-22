@@ -247,9 +247,9 @@ private:
   {
     // check if occupied in grid
     typename OccupancyGrid3D<T>::Index idx(s.x, s.y, s.z);
-    std::pair<double, double> coord = m_og.get_coordinates(idx);
+    auto coord = m_og.getCoordinates(idx);
     try {
-      if(m_og.isOccupied(idx[0], idx[1], idx[2], m_robotRadius)) {
+      if(m_og.isOccupied(coord(0), coord(1), coord(2), m_robotRadius)) {
         return false;
       }
     } catch(const typename OccupancyGrid3D<T>::OutOfBoundsException& exp) {

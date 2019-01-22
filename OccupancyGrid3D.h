@@ -126,6 +126,9 @@ class OccupancyGrid3D {
       return idx;
     }
 
+    inline Index getIndex(const VectorDIM& pos) const {
+      return getIndex(pos(0), pos(1), pos(2));
+    }
 
 
     /*
@@ -142,6 +145,9 @@ class OccupancyGrid3D {
       return VectorDIM(x, y, z);
     }
 
+    VectorDIM getCoordinates(unsigned int x, unsigned int y, unsigned int z) {
+      return getCoordinates(Index(x, y, z));
+    }
 
     bool isOccupied(const Index& idx) const {
       if(!insideGrid(idx)) {

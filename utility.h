@@ -19,6 +19,9 @@ using std::string;
 
 namespace ACT {
 
+template<typename T, unsigned int DIM>
+using VectorDIM = Eigen::Matrix<T, DIM, 1U>;
+
 double fRand(double fMin, double fMax)
 {
     double f = (double)rand() / RAND_MAX;
@@ -133,6 +136,45 @@ std::vector<Eigen::Hyperplane<T, DIM> > voronoi(std::vector<std::vector<Eigen::M
 }
 
 
+/*
+* interpolate from point 'from' to point 'to' with number_of_points points in total.
+* number_of_points >= 2.
+*/
+template<class T, unsigned int DIM>
+vector<VectorDIM<T, DIM>, Eigen::aligned_allocator<VectorDIM<T, DIM>>> linearInterpolate(
+    const VectorDIM<T, DIM>& from, const VectorDIM<T, DIM>& to,
+    unsigned int number_of_points) {
+  assert(number_of_points >= 2);
+  using VectorDIM = VectorDIM<T, DIM>;
+  vector<VectorDIM, Eigen::aligned_allocator<VectorDIM>> res;
+  res.push_back(from);
+  VectorDIM step = (to - from) / (number_of_points - 1);
+  VectorDIM current_add = step;
+  for(int s = 0; s < number_of_points - 1; s++) {
+    res.push_back(from + current_add);
+    current_add += step;
+  }
+
+  return res;
+}
+
+/*
+* segment i is defined by point pairs corners[i], corners[i+1]
+* when corners.size() - 1 < segment_count, try to divide already existing segments
+* so that we have segment_count number of segments
+*
+* do the division in the best way such that
+* minimize the length difference between longest segment and the shortest segment
+*
+* I feel like this can be solved greedily (needs proof!)
+*/
+template<class T, unsigned int DIM>
+void bestSplitSegments(
+  vector<VectorDIM<T, DIM>, Eigen::aligned_allocator<VectorDIM<T, DIM> > >& corners,
+  unsigned int segment_count) {
+  assert(segment_count > corners.size() - 1);
+  // TODO!!!
+}
 
 }
 
