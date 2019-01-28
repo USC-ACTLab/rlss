@@ -337,7 +337,7 @@ int main(int argc, char** argv) {
           if(curve_count > corners.size() - 1) {
             // we need to split segments since there are not enough segments
             // for each curve
-            bestSplitSegments<double, 3U>(corners, curve_count);
+            corners = bestSplitSegments<double, 3U>(corners, curve_count);
           }
 
           // corners are ready here

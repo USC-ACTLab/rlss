@@ -8,7 +8,7 @@
 #include <iostream>
 #include "PointCloud.h"
 #include <limits>
-
+#include <queue>
 
 using std::cout;
 using std::endl;
@@ -159,6 +159,9 @@ vector<VectorDIM<T, DIM>, Eigen::aligned_allocator<VectorDIM<T, DIM>>> linearInt
 }
 
 /*
+* Divide the segments as best as possible so that total number of segments
+* is segment_count
+*
 * segment i is defined by point pairs corners[i], corners[i+1]
 * when corners.size() - 1 < segment_count, try to divide already existing segments
 * so that we have segment_count number of segments
@@ -169,11 +172,80 @@ vector<VectorDIM<T, DIM>, Eigen::aligned_allocator<VectorDIM<T, DIM>>> linearInt
 * I feel like this can be solved greedily (needs proof!)
 */
 template<class T, unsigned int DIM>
-void bestSplitSegments(
-  vector<VectorDIM<T, DIM>, Eigen::aligned_allocator<VectorDIM<T, DIM> > >& corners,
+vector<VectorDIM<T, DIM>, Eigen::aligned_allocator<VectorDIM<T, DIM> > >
+  bestSplitSegments(
+  const vector<VectorDIM<T, DIM>, Eigen::aligned_allocator<VectorDIM<T, DIM> > >& corners,
   unsigned int segment_count) {
+
+  using VectorDIM = VectorDIM<T, DIM>;
+  using std::priority_queue;
+
   assert(segment_count > corners.size() - 1);
-  // TODO!!!
+
+  class PQSegment {
+    public:
+
+      unsigned int from_idx;
+      unsigned int to_idx;
+      unsigned int div_count;
+      const vector<VectorDIM, Eigen::aligned_allocator<VectorDIM> > *corners;
+      PQSegment(unsigned int fi, unsigned int ti,
+        const vector<VectorDIM, Eigen::aligned_allocator<VectorDIM>>* crnrs):
+        from_idx(fi), to_idx(ti), corners(crnrs), div_count(1) {
+
+      }
+
+      bool operator<(const PQSegment& rhs) const {
+        T this_length = ((*corners)[to_idx] - (*corners)[from_idx]).norm();
+        T rhs_length = ((*corners)[rhs.to_idx] - (*corners)[rhs.from_idx]).norm();
+        return (this_length / div_count) < (rhs_length / rhs.div_count);
+      }
+  };
+
+
+  priority_queue<PQSegment, vector<PQSegment>> pq;
+  for(unsigned int i = 0; i < corners.size()-1; i++) {
+    pq.emplace(i, i+1, &corners);
+  }
+
+
+  for(unsigned int current_segment_count = corners.size() - 1;
+    current_segment_count < segment_count; current_segment_count++) {
+    PQSegment top = pq.top();
+    top.div_count++;
+    pq.pop();
+    pq.push(top);
+  }
+
+
+  vector<PQSegment> segments;
+  while(!pq.empty()) {
+    segments.push_back(pq.top());
+    pq.pop();
+  }
+
+  sort(segments.begin(), segments.end(), [](const PQSegment& lhs, const PQSegment& rhs) {
+    return lhs.from_idx < rhs.from_idx;
+  });
+
+  vector<VectorDIM, Eigen::aligned_allocator<VectorDIM>> new_corners;
+
+  for(int i = 0; i < segments.size(); i++) {
+    const PQSegment& segment = segments[i];
+    const VectorDIM& from = corners[segment.from_idx];
+    const VectorDIM& to = corners[segment.to_idx];
+    unsigned int div_count = segment.div_count;
+    auto segment_corners = linearInterpolate<T, DIM>(from , to, div_count + 1);
+
+    for(int j = 0; j < segment_corners.size() - 1; j++) {
+      new_corners.push_back(segment_corners[j]);
+    }
+    if(i == segments.size() - 1) {
+      new_corners.push_back(segment_corners.back());
+    }
+  }
+
+  return new_corners;
 }
 
 }
