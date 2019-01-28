@@ -184,20 +184,18 @@ vector<VectorDIM<T, DIM>, Eigen::aligned_allocator<VectorDIM<T, DIM> > >
 
   class PQSegment {
     public:
-
-      unsigned int from_idx;
-      unsigned int to_idx;
+      unsigned int start_idx; // segment is from corners[start_idx]  to corners[start_idx + 1]
       unsigned int div_count;
       const vector<VectorDIM, Eigen::aligned_allocator<VectorDIM> > *corners;
-      PQSegment(unsigned int fi, unsigned int ti,
+      PQSegment(unsigned int fi,
         const vector<VectorDIM, Eigen::aligned_allocator<VectorDIM>>* crnrs):
-        from_idx(fi), to_idx(ti), corners(crnrs), div_count(1) {
+        start_idx(fi), corners(crnrs), div_count(1) {
 
       }
 
       bool operator<(const PQSegment& rhs) const {
-        T this_length = ((*corners)[to_idx] - (*corners)[from_idx]).norm();
-        T rhs_length = ((*corners)[rhs.to_idx] - (*corners)[rhs.from_idx]).norm();
+        T this_length = ((*corners)[start_idx+1] - (*corners)[start_idx]).norm();
+        T rhs_length = ((*corners)[rhs.start_idx + 1] - (*corners)[rhs.start_idx]).norm();
         return (this_length / div_count) < (rhs_length / rhs.div_count);
       }
   };
@@ -205,7 +203,7 @@ vector<VectorDIM<T, DIM>, Eigen::aligned_allocator<VectorDIM<T, DIM> > >
 
   priority_queue<PQSegment, vector<PQSegment>> pq;
   for(unsigned int i = 0; i < corners.size()-1; i++) {
-    pq.emplace(i, i+1, &corners);
+    pq.emplace(i, &corners);
   }
 
 
@@ -225,15 +223,15 @@ vector<VectorDIM<T, DIM>, Eigen::aligned_allocator<VectorDIM<T, DIM> > >
   }
 
   sort(segments.begin(), segments.end(), [](const PQSegment& lhs, const PQSegment& rhs) {
-    return lhs.from_idx < rhs.from_idx;
+    return lhs.start_idx < rhs.start_idx;
   });
 
   vector<VectorDIM, Eigen::aligned_allocator<VectorDIM>> new_corners;
 
   for(int i = 0; i < segments.size(); i++) {
     const PQSegment& segment = segments[i];
-    const VectorDIM& from = corners[segment.from_idx];
-    const VectorDIM& to = corners[segment.to_idx];
+    const VectorDIM& from = corners[segment.start_idx];
+    const VectorDIM& to = corners[segment.start_idx + 1];
     unsigned int div_count = segment.div_count;
     auto segment_corners = linearInterpolate<T, DIM>(from , to, div_count + 1);
 
