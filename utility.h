@@ -22,17 +22,6 @@ namespace ACT {
 template<typename T, unsigned int DIM>
 using VectorDIM = Eigen::Matrix<T, DIM, 1U>;
 
-double fRand(double fMin, double fMax)
-{
-    double f = (double)rand() / RAND_MAX;
-    return fMin + f * (fMax - fMin);
-}
-
-double linearInterpolation(double start, double end, size_t idx, size_t count)
-{
-  return start + (end - start) * idx / (count - 1);
-}
-
 // trim from start
 static inline std::string &ltrim(std::string &s) {
     s.erase(s.begin(), std::find_if(s.begin(), s.end(),

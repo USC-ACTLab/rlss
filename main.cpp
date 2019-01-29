@@ -20,6 +20,7 @@
 #include "SVM.h"
 #include <utility>
 #include "discrete_search.hpp"
+#include <memory>
 
 
 namespace fs = std::experimental::filesystem;
@@ -76,8 +77,7 @@ int main(int argc, char** argv) {
   const double robot_radius = jsn["robot_radius"];
   const double cell_size = jsn["cell_size"];
   const double desired_horizon = jsn["planning_horizon"];
-  const double v_max = jsn["v_max"];
-  const double a_max = jsn["a_max"];
+  const vector<double> max_derivative_magnitudes = jsn["max_derivative_magnitudes"];
   const double lambda_hyperplanes = jsn["lambda_hyperplanes"];
   const double lambda_min_der = jsn["lambda_min_der"];
   const double lambda_min_der_vel = jsn["lambda_min_der_vel"];
@@ -316,41 +316,95 @@ int main(int argc, char** argv) {
 
           discrete_planning_done = astar.search(startState, solution);
 
-          vector<VectorDIM, Eigen::aligned_allocator<VectorDIM>> corners;
-          corners.push_back(currentPos);
-          const auto& firstSolutionState = solution.states[0].first;
-          corners.push_back(OCCUPANCY_GRID.getCoordinates(firstSolutionState.x,
-            firstSolutionState.y, firstSolutionState.z));
-          for(unsigned int i = 0; i < solution.actions.size(); i++) {
-            const auto& action = solution.actions[i].first;
-            if(action != discreteSearch::Action::Forward) {
-              const auto& state = solution.states[i].first; // i == i-1, only directions change
-              corners.push_back(OCCUPANCY_GRID.getCoordinates(state.x,
-                state.y, state.z));
+          if(discrete_planning_done) {
+            vector<VectorDIM, Eigen::aligned_allocator<VectorDIM>> corners;
+            corners.push_back(currentPos);
+            const auto& firstSolutionState = solution.states[0].first;
+            corners.push_back(OCCUPANCY_GRID.getCoordinates(firstSolutionState.x,
+              firstSolutionState.y, firstSolutionState.z));
+            for(unsigned int i = 0; i < solution.actions.size(); i++) {
+              const auto& action = solution.actions[i].first;
+              if(action != discreteSearch::Action::Forward) {
+                const auto& state = solution.states[i].first; // i == i-1, only directions change
+                corners.push_back(OCCUPANCY_GRID.getCoordinates(state.x,
+                  state.y, state.z));
+              }
+            }
+            const auto& lastSolutionState = solution.states.back().first;
+            corners.push_back(OCCUPANCY_GRID.getCoordinates(lastSolutionState.x,
+              lastSolutionState.y, lastSolutionState.z));
+            corners.push_back(targetPos);
+
+            if(curve_count > corners.size() - 1) {
+              // we need to split segments since there are not enough segments
+              // for each curve
+              corners = bestSplitSegments<double, 3U>(corners, curve_count);
+            }
+
+            // corners are ready here
+            // load the trajectory with first curve_count segments
+            // interpolate and stuff
+
+            // this is just a sanity check
+            assert(corners.size() == curve_count + 1);
+
+
+            double total_discrete_path_length = 0;
+            for(int i = 0; i < corners.size() - 1; i++) {
+              total_discrete_path_length += (corners[i+1] - corners[i]).norm();
+            }
+
+            // target time may be less than the current time since we allow extra time
+            double discrete_path_total_duration = max(target_time - ct, 0.0);
+
+            /*
+            * if discrete_path_total_duration is not enough for robot to go from start to end
+            * even with the maximum allowed velocity
+            * increase it to needed duration if it goes with maximum allowed velocity
+            * notice that this ignores higher order dynamic limits
+            * but it is something ¯\_(ツ)_/¯
+            * may need to multiply with 1.2 or 1.5 or smth like that in the future
+            * to solve the problems with higher order dynamic limits!
+            */
+            if(max_derivative_magnitudes.size() > 2 && max_derivative_magnitudes[1] >= 0) {
+              discrete_path_total_duration = max(discrete_path_total_duration,
+                  total_discrete_path_length / max_derivative_magnitudes[1]);
+            }
+
+
+            /*
+            * interpolate the corners, and set interpolation results
+            * as control points in the corresponding pieces
+            *
+            * also set curve durations
+            */
+            for(int i = 0; i < corners.size() - 1; i++) {
+              auto points = linearInterpolate<double, 3U>(corners[i], corners[i+1], points_per_curve);
+              auto bezptr = std::static_pointer_cast<Bezier<double, 3U>>(traj.getPiece(i));
+              bezptr->m_controlPoints = points;
+              bezptr->m_a = ((corners[i+1] - corners[i]).norm() / total_discrete_path_length)
+                * discrete_path_total_duration;
+              // duration of first piece must be at least dt
+              if(i == 0) {
+                bezptr->m_a = max(bezptr->m_a, dt);
+              }
             }
           }
-          const auto& lastSolutionState = solution.states.back().first;
-          corners.push_back(OCCUPANCY_GRID.getCoordinates(lastSolutionState.x,
-            lastSolutionState.y, lastSolutionState.z));
-          corners.push_back(targetPos);
-
-          if(curve_count > corners.size() - 1) {
-            // we need to split segments since there are not enough segments
-            // for each curve
-            corners = bestSplitSegments<double, 3U>(corners, curve_count);
-          }
-
-          // corners are ready here
-          // load the trajectory with first curve_count segments
-          // TODO!!!
         }
       }
 
 
-      if(discrete_planning_done) {
+      // at this point, initial points in traj are set
+      // and if discrete search is done, durations are set as well
+      // yeah. cool.
 
-      } else {
 
+      /*
+      * initialize the durations if discrete planning is not done.
+      * if it is done, durations are already initialized before
+      */
+      if(!discrete_planning_done) {
+        // current policy: dont change them?
       }
 
 
