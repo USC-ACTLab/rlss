@@ -77,7 +77,7 @@ void shiftHyperplane(const Eigen::AlignedBox<T, 3U>& box, Eigen::Hyperplane<T, 3
   VectorDIM dir;
   T proj;
 
-  T maxProj = numeric_limits<T>::lowest();
+  T maxProj = std::numeric_limits<T>::lowest();
 
   for(int i = 0; i < 2; i++) {
     for(int j = 0; j < 2; j++) {

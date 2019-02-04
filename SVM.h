@@ -84,7 +84,8 @@ Eigen::Hyperplane<T, 3U> _16_8_seperate(
 
   long num_iters = _16_8_svm_solver::solve();
 
-  cout << "# SVM _16_8 Converged: " << _16_8_svm_solver::work.converged << endl;
+
+  //cout << "# SVM _16_8 Converged: " << _16_8_svm_solver::work.converged << endl;
 
 
   VectorDIM normal(_16_8_svm_solver::vars.w[0],
@@ -149,7 +150,7 @@ Eigen::Hyperplane<T, 3U> _64_8_seperate(
 
   long num_iters = _64_8_svm_solver::solve();
 
-  cout << "# SVM _64_8 Converged: " << _64_8_svm_solver::work.converged << endl;
+  //cout << "# SVM _64_8 Converged: " << _64_8_svm_solver::work.converged << endl;
 
 
   VectorDIM normal(_64_8_svm_solver::vars.w[0],
@@ -274,6 +275,23 @@ vector<Eigen::Hyperplane<T, 3U> > svm3d(const vector<Eigen::AlignedBox<T, 3U>>& 
     }
 
     // SHIFTING
+
+    // first shift back to obstacle
+    double min_dist = std::numeric_limits<double>::infinity();
+    const vector<VectorDIM, Eigen::aligned_allocator<VectorDIM> > vec{o.min(), o.max()};
+
+    for(int i = 0; i < 2; i++) {
+      for(int j = 0; j < 2; j++) {
+        for(int k = 0; k < 2; k++) {
+          VectorDIM corner(vec[i](0), vec[j](1), vec[k](2));
+          min_dist = min(min_dist, hp.signedDistance(corner));
+        }
+      }
+    }
+    hp.offset() -= min_dist;
+
+    // now shift according to radius
+    shiftHyperplane(robot_boxes[0], hp);
 
     hyperplanes.push_back(hp);
   }

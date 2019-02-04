@@ -1,6 +1,7 @@
 cmake_minimum_required (VERSION 3.0)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_FLAGS "-O3 -Wno-ignored-attributes")
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DACT_DEBUG")
 project (ACT_TRAJ_REPLANNING)
 
 add_subdirectory(lib/qpOASES)
@@ -53,4 +54,5 @@ target_link_libraries(
   main
   csv
   stdc++fs
+  qpOASES
 )

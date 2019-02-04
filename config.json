@@ -1,7 +1,7 @@
 {
-  "trajectories": "../test_data/3dtrajectories/1trajectory/",
+  "trajectories": "../test_data/3dtrajectories/swap2/",
   "scale_traj": 1.0,
-  "obstacles": "../test_data/3dobstacles/1obstacle/",
+  "obstacles": "../test_data/3dobstacles/noobstacle/",
   "robot_radius": 0.23,
   "cell_size": 0.5,
   "max_derivative_magnitudes": [-1, 2, 4],
@@ -12,15 +12,10 @@
   "points_per_curve": 8,
   "continuity_upto_degree": 2,
   "enable_voronoi": true,
+  "enable_svm": true,
   "output_file": "res.json",
   "output_frame_dt": 0.01,
-  "algorithm": "QPOASES",
-  "lambda_hyperplanes": 0.00,
-  "lambda_min_der": 0.1,
-  "lambda_min_der_vel": 1.0,
-  "lambda_min_der_acc": 0.5,
-  "lambda_min_der_jerk": 0.0,
-  "lambda_min_der_snap": 0.0,
+  "lambdas_integrated_squared_derivative": [-1, 1.0, 0.5, 0.0, 0.0],
   "scaling_multiplier": 2.0,
   "additional_time": 5
 }
