@@ -181,6 +181,9 @@ int main(int argc, char** argv) {
     }
   }
 
+
+  vector<bool> LAST_QP_FAILED(robot_count, false);
+
   double SIMULATION_DURATION = MAX_TOTAL_TIME + additional_time;
   for(double ct = 0; ct <= SIMULATION_DURATION; ct += dt) {
     cout << endl << "#######" << endl << "#### Current Time: " << ct
@@ -279,13 +282,18 @@ int main(int argc, char** argv) {
         << previous_trajectory_occupied << endl;
 #endif
 
+#ifdef ACT_DEBUG
+      cout << "[DEBUG] qp failed in previous iteration: " << LAST_QP_FAILED[r] << endl;
+#endif
+
       /*
       * true if discrete planning is needed
       */
       bool discrete_planning_needed =
         previous_trajectory_first_piece_outside_voronoi ||
         original_trajectory_occupied ||
-        previous_trajectory_occupied;
+        previous_trajectory_occupied ||
+        LAST_QP_FAILED[r];
 
 #ifdef ACT_DEBUG
       cout << "[DEBUG] discrete_planning_needed: " << discrete_planning_needed << endl;
@@ -455,9 +463,9 @@ int main(int argc, char** argv) {
               bezptr->m_a = ((corners[i+1] - corners[i]).norm() / total_discrete_path_length)
                 * discrete_path_total_duration;
               // duration of first piece must be at least dt
-              if(i == 0) {
-                bezptr->m_a = max(bezptr->m_a, dt);
-              }
+              //if(i == 0) {
+                bezptr->m_a = max(bezptr->m_a, 1.1 * dt);
+              //}
             }
 #ifdef ACT_DEBUG
             cout << "[DEBUG] [with discrete planning] piece durations: ";
@@ -528,9 +536,9 @@ int main(int argc, char** argv) {
           * If this is the first piece, make sure that it has at least dt duration
           * for voronoi!
           */
-          if(i == 0) {
-            piece->m_a = max(piece->m_a, dt);
-          }
+          //if(i == 0) {
+            piece->m_a = max(piece->m_a, 1.1 * dt);
+          //}
         }
 #ifdef ACT_DEBUG
         cout << "[DEBUG] [without discrete planning] piece durations: ";
@@ -601,11 +609,21 @@ int main(int argc, char** argv) {
           }
         }
 
-        // add position at costs
+        // add endpoint costs
         if(discrete_planning_done) {
-
+          auto bezptr = std::static_pointer_cast<Bezier<double, 3U>>(
+            traj.getPiece(traj.numPieces() - 1));
+          const VectorDIM& endpt = bezptr->m_controlPoints.back();
+          traj.extendQPPositionAt(qp, traj.totalSpan(), endpt, 100);
         } else {
-          
+          double time_forward = 0;
+          double theta_factor = 0.5 / curve_count;
+          for(unsigned int i = 0; i < traj.numPieces(); i++) {
+            auto bezptr = std::static_pointer_cast<Bezier<double, 3U>>(traj.getPiece(i));
+            time_forward += bezptr->m_a;
+            const VectorDIM endpt = origtraj.eval(min(ct + time_forward, TOTAL_TIMES[r]), 0);
+            traj.extendQPPositionAt(qp, time_forward, endpt, theta_factor * (i+1));
+          }
         }
 
         // merge matrices
@@ -643,7 +661,12 @@ int main(int argc, char** argv) {
           );
         qpOASES::int_t simpleStatus = qpOASES::getSimpleStatus(ret);
         if(simpleStatus != 0) {
-          cout << "QP Failed" << endl;
+          LAST_QP_FAILED[r] = true;
+#ifdef ACT_DEBUG
+          cout << "[DEBUG] QP Failed" << endl;
+#endif
+        } else {
+          LAST_QP_FAILED[r] = false;
         }
 
 
@@ -665,7 +688,9 @@ int main(int argc, char** argv) {
             }
           }
         }
-
+#ifdef ACT_DEBUG
+        cout << "[DEBUG] dynamic_limits_OK: " << dynamic_limits_OK << endl;
+#endif
         if(!dynamic_limits_OK) {
           for(unsigned i = 0; i < traj.numPieces(); i++) {
             auto bezptr = std::static_pointer_cast<Bezier<double, 3U>>(
