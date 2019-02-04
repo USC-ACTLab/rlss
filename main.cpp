@@ -22,7 +22,7 @@
 #include "discrete_search.hpp"
 #include <memory>
 #include "qpOASES.hpp"
-#include "printutil.hpp"
+#include "outpututils.hpp"
 
 
 namespace fs = std::experimental::filesystem;
@@ -37,6 +37,7 @@ using std::max;
 using std::min;
 using std::pair;
 using std::ofstream;
+using nlohmann::json;
 
 
 
@@ -62,7 +63,7 @@ int main(int argc, char** argv) {
   ifstream cfg(config_path);
 
 
-  nlohmann::json jsn = nlohmann::json::parse(cfg);
+  json jsn = nlohmann::json::parse(cfg);
 
 
   const bool enable_voronoi = jsn["enable_voronoi"];
@@ -184,7 +185,24 @@ int main(int argc, char** argv) {
 
   vector<bool> LAST_QP_FAILED(robot_count, false);
 
+
+  json output_json;
+  output_json["robot_count"] = robot_count;
+  output_json["robot_radius"] = robot_radius;
+  for(unsigned int r = 0; r < robot_count; r++) {
+    json original_trajectory_json;
+    original_trajectory_json["robot_id"] = r;
+    const auto& origtraj = ORIGINAL_TRAJECTORIES[r];
+    original_trajectory_json["trajectory"] = json_spline<double, 3U>(origtraj);
+    output_json["original_trajectories"].push_back(original_trajectory_json);
+  }
+  output_json["frame_dt"] = output_frame_dt;
+
+  cout << output_json << endl;
+  return 0;
+
   double SIMULATION_DURATION = MAX_TOTAL_TIME + additional_time;
+
   for(double ct = 0; ct <= SIMULATION_DURATION; ct += dt) {
     cout << endl << "#######" << endl << "#### Current Time: " << ct
       << "/" << SIMULATION_DURATION << " ####" << endl << "#######" << endl;
