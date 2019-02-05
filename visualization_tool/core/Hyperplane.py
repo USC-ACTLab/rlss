@@ -35,7 +35,7 @@ class Hyperplane(object):
     @param depth depth of the marker
     @param color color of the marker. TODO: Random is possible if color generator is passed
     """
-    def to_marker_3d(self,frame_id="map",width=1.0,height=1.0,depth=0.1,color=None):
+    def to_marker(self,frame_id="map",width=1.0,height=1.0,depth=0.1,color=None):
         #TODO: add color
         normal = np.array(self.normal)
         unit_v = normal/np.linalg.norm(normal)
