@@ -1,3 +1,4 @@
 build/*
 build
-visualization_tool/*.pyc
+/visualization_tool/core/*.pyc
+.vscode/
