@@ -1,6 +1,7 @@
 from visualization_msgs.msg import Marker
 from geometry_msgs.msg import Point
 from std_msgs.msg import ColorRGBA
+import json
 
 def create_point(x=0,y=0,z=0):
    pt1=Point()
@@ -29,12 +30,22 @@ It is assumed that all cells have same scale
 Occupied cells is in the form of:
 [[min_xyz_1],[max_xyz_1],[min_xyz_2],[max_xyz_2]]
 """
-class OccupiedCells(object):
+class OccupiedCellsContainer(object):
 
-    def __init__(self,points = []):
-        self.points  = points
+    def __init__(self,copy=None):
+        if copy:
+            self.points = copy.points
+        else:
+            self.points = []
 
-    def to_marker(self,frame_id="map"):
+    def update(self,occupied_cells_key):
+        self.points = []
+        for j in occupied_cells_key:
+            self.points.append(j["bottom_right"])
+            self.points.append(j["top_left"])
+
+
+    def get_all_markers(self,frame_id="map"):
         if len(self.points)>0:
             wx,wy,wz = getDims(self.points[0],self.points[1])
         else:
@@ -45,9 +56,9 @@ class OccupiedCells(object):
         colors = [clr_ for x in pts]
         marker.type = marker.CUBE_LIST
         marker.action = marker.ADD
-        marker.scale.x = wx
-        marker.scale.y = wy
-        marker.scale.z = wz
+        marker.scale.x = abs(wx)
+        marker.scale.y = abs(wy)
+        marker.scale.z = abs(wz)
         marker.color.a = 1.0
         marker.color.g = 1.0
         marker.pose.position.x = 0
@@ -56,6 +67,6 @@ class OccupiedCells(object):
         marker.pose.orientation.w = 1.0
         marker.points = pts
         marker.colors = colors
+        marker.frame_locked = True
         marker.header.frame_id = frame_id
-        return marker
-
+        return [marker]

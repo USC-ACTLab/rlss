@@ -8,6 +8,12 @@ def create_point(x=0,y=0,z=0):
    pt1.z = z
    return pt1
 
+"""
+Points are in the form of [[px1,py1,pz1],[px2,py2,pz2]...], and has to be
+in the correct order for NOW. 
+#TODO: add Convex Hull
+"""
+
 class Obstacle(object):
     
     def __init__(self,points=[]):

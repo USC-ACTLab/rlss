@@ -30,5 +30,3 @@ class Robot(object):
         marker.pose.position.z = self.z
         marker.pose.orientation.w = 1.0
         return marker
-
-
