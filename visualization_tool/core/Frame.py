@@ -49,20 +49,13 @@ class Frame(object):
     and set the new pointer
     """
     def update(self,newFrame):
-        #TODO: add ifs
         self.step = newFrame["step"]
-        #if has trajectory key
-        self.path_container.update(newFrame["trajectories"])
-        #if has obstacle_container key
-        self.obstacle_container.update(newFrame["obstacles"])
-        #if has occupied cells key
-        self.occupied_cells_container.update(newFrame["occupied_cells"])
-        # if has robots key
-        self.robot_container.update(newFrame["robot_positions"])
-        #if has voronoi key
-        self.voronoi_container.update(newFrame["voronoi_hyperplanes"])
-        #if has svm key
-        self.svm_container.update(newFrame["svm_hyperplanes"])
+        if newFrame.has_key("trajectories"): self.path_container.update(newFrame["trajectories"])
+        if newFrame.has_key("obstacles"):self.obstacle_container.update(newFrame["obstacles"])
+        if newFrame.has_key("occupied_cells"):self.occupied_cells_container.update(newFrame["occupied_cells"])
+        if newFrame.has_key("robot_positions"):self.robot_container.update(newFrame["robot_positions"])
+        if newFrame.has_key("voronoi_hyperplanes"):self.voronoi_container.update(newFrame["voronoi_hyperplanes"])
+        if newFrame.has_key("svm_hyperplanes"):self.svm_container.update(newFrame["svm_hyperplanes"])
 
 
     """

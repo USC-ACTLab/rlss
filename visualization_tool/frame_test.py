@@ -16,12 +16,20 @@ def get_marker_pose(marker):
 
 rospy.init_node("test")
 rp = rospy.Publisher("marker_test",MarkerArray,queue_size=10)
-fc = FrameContainer("/home/alpcevikel/mr-trajectory-replanning/visualization_tool/data/samplex.json")
+fc = FrameContainer("/home/alpcevikel/mr-trajectory-replanning/visualization_tool/data/twor.json")
 fr,tm = fc.getFrame(0)
+fr2,tm2 = fc.getFrame(1)
+wh = True
 i=0
 while not rospy.is_shutdown():
-    m = fr.toMarkerArray(timestamp=rospy.Time.now())
-    rp.publish(m)
+    if wh:
+        m = fr.toMarkerArray(timestamp=rospy.Time.now())
+        rp.publish(m)
+        wh=False
+    else:
+        m = fr2.toMarkerArray(timestamp=rospy.Time.now())
+        rp.publish(m)
+        wh=True        
     time.sleep(1)
     i+=1
 
