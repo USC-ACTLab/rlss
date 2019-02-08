@@ -78,7 +78,7 @@ namespace ACT {
   }
 
   template<class T, unsigned int DIM>
-  json json_robot_position(const Spline<T, DIM>& spl, T t, unsigned int robot_id) {
+  json json_robot_position(const Spline<T, DIM>& spl, unsigned int robot_id, T t) {
     json res;
     res["robot_id"] = robot_id;
     res["position"] = json_vectordim<double, 3U>(spl.eval(t, 0));
