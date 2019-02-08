@@ -3,6 +3,7 @@
 #include <Eigen/StdVector>
 #include <Eigen/Geometry>
 #include <iostream>
+#include "utility.h"
 
 
 #include "cvxgen/64robot8obstacle/solver.h"
@@ -284,7 +285,7 @@ vector<Eigen::Hyperplane<T, 3U> > svm3d(const vector<Eigen::AlignedBox<T, 3U>>& 
       for(int j = 0; j < 2; j++) {
         for(int k = 0; k < 2; k++) {
           VectorDIM corner(vec[i](0), vec[j](1), vec[k](2));
-          min_dist = min(min_dist, hp.signedDistance(corner));
+          min_dist = std::min(min_dist, hp.signedDistance(corner));
         }
       }
     }

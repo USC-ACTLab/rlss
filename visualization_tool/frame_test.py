@@ -5,9 +5,15 @@ import time
 from tf import TransformBroadcaster
 from tf import transformations as tfs
 import math
-import random 
-import numpy as np 
+import random
+import numpy as np
 from core.FrameContainer import FrameContainer
+import sys
+
+if(len(sys.argv)<2):
+    exit("Usage: frame_test.py <json-path>")
+
+jsn_path = sys.argv[1]
 
 def get_marker_pose(marker):
     r1 = (marker.pose.position.x,marker.pose.position.y,marker.pose.position.z)
@@ -16,21 +22,14 @@ def get_marker_pose(marker):
 
 rospy.init_node("test")
 rp = rospy.Publisher("marker_test",MarkerArray,queue_size=10)
-fc = FrameContainer("/home/alpcevikel/mr-trajectory-replanning/visualization_tool/data/twor.json")
-fr,tm = fc.getFrame(0)
-fr2,tm2 = fc.getFrame(1)
-wh = True
-i=0
+fc = FrameContainer(jsn_path)
+i = 0
 while not rospy.is_shutdown():
-    if wh:
-        m = fr.toMarkerArray(timestamp=rospy.Time.now())
+    try:
+        fr,tm = fc.getFrame(i)
+        m = fr.toMarkerArray(timestamp = rospy.Time.now())
         rp.publish(m)
-        wh=False
-    else:
-        m = fr2.toMarkerArray(timestamp=rospy.Time.now())
-        rp.publish(m)
-        wh=True        
-    time.sleep(1)
-    i+=1
-
-
+        time.sleep(fc.frame_dt)
+        i += 1
+    except IndexError:
+        i = 0

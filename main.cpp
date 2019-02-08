@@ -44,6 +44,19 @@ using nlohmann::json;
 
 
 int main(int argc, char** argv) {
+
+#ifdef ACT_DEBUG
+  cout << "ACT_DEBUG" << endl;
+#else
+  cout << "NO_ACT_DEBUG" << endl;
+#endif
+
+#ifdef ACT_GENERATE_OUTPUT_JSON
+  cout << "ACT_GENERATE_OUTPUT_JSON" << endl;
+#else
+  cout << "NO_ACT_GENERATE_OUTPUT_JSON" << endl;
+#endif
+
   string config_path;
 
   cxxopts::Options options("Trajectory Replanner", "trajectory replanner");
@@ -183,10 +196,12 @@ int main(int argc, char** argv) {
   }
 
 
-  vector<bool> LAST_QP_FAILED(robot_count, false);
+  vector<bool> LAST_QP_FAILED(robot_count, true);
 
 
+#ifdef ACT_GENERATE_OUTPUT_JSON
   json output_json;
+  unsigned int frame_step = 0; // step that corresponds to current time (ct / output_frame_dt)
   output_json["robot_count"] = robot_count;
   output_json["robot_radius"] = robot_radius;
   for(unsigned int r = 0; r < robot_count; r++) {
@@ -197,9 +212,7 @@ int main(int argc, char** argv) {
     output_json["original_trajectories"].push_back(original_trajectory_json);
   }
   output_json["frame_dt"] = output_frame_dt;
-
-  cout << output_json << endl;
-  return 0;
+#endif
 
   double SIMULATION_DURATION = MAX_TOTAL_TIME + additional_time;
 
@@ -218,6 +231,17 @@ int main(int argc, char** argv) {
     }
 #endif
 
+#ifdef ACT_GENERATE_OUTPUT_JSON
+    json frame_json; // json for the current frame
+    frame_json["step"] = frame_step;
+    if(frame_step == 0) {
+      // if this is the first frame, add obstacles and occupied cells
+      if(!OBSTACLES.empty())
+        frame_json["obstacles"] = json_obstacles(OBSTACLES);
+      if(!OCCUPANCY_GRID._occupied_boxes.empty())
+        frame_json["occupied_cells"] = json_occupied_cells<double, 3U>(OCCUPANCY_GRID._occupied_boxes);
+    }
+#endif
     for(unsigned int r = 0; r < robot_count; r++) {
       cout << endl << "#### Iteration for robot " << r  << " ####"<< endl;
 
@@ -256,6 +280,11 @@ int main(int argc, char** argv) {
       for(const auto& vhp: VORONOI_HYPERPLANES) {
         cout << "[DEBUG] voronoi hyperplane " << string_hyperplane<double, 3U>(vhp) << endl;
       }
+#endif
+
+#ifdef ACT_GENERATE_OUTPUT_JSON
+      frame_json["voronoi_hyperplanes"].push_back(
+        json_voronoi_hyperplanes_of_robot<double, 3U>(VORONOI_HYPERPLANES, r));
 #endif
 
       /*
@@ -317,6 +346,11 @@ int main(int argc, char** argv) {
       cout << "[DEBUG] discrete_planning_needed: " << discrete_planning_needed << endl;
 #endif
 
+
+#ifdef ACT_GENERATE_OUTPUT_JSON
+      json trajectory_update_json; // an element of 'trajectories' field in output json
+      trajectory_update_json["robot_id"] = r;
+#endif
 
       /*
       * even if discrete planning is needed we may not be able to do it
@@ -421,6 +455,7 @@ int main(int argc, char** argv) {
             }
             cout << endl;
 #endif
+
             if(curve_count > corners.size() - 1) {
 #ifdef ACT_DEBUG
               cout << "[DEBUG] Splitting segments" << endl;
@@ -443,6 +478,9 @@ int main(int argc, char** argv) {
             // load the trajectory with first curve_count segments
             // interpolate and stuff
 
+#ifdef ACT_GENERATE_OUTPUT_JSON
+            trajectory_update_json["discrete_path"] = json_vec_vectordim<double, 3U>(corners);
+#endif
 
 
             double total_discrete_path_length = 0;
@@ -590,6 +628,11 @@ int main(int argc, char** argv) {
           traj.extendQPHyperplaneConstraint(qp, 0, hp);
         }
 
+#ifdef ACT_GENERATE_OUTPUT_JSON
+        json svm_hyperplanes_json;
+        svm_hyperplanes_json["robot_id"] = r;
+        svm_hyperplanes_json["hyperplanes"] = json::array();
+#endif
 
         // add svm constraints
         VectorDIM rad(robot_radius, robot_radius, robot_radius);
@@ -612,11 +655,22 @@ int main(int argc, char** argv) {
 
           if(enable_svm)
             hyperplanes = svm3d(robot_boxes, OCCUPANCY_GRID._occupied_boxes);
-
+#ifdef ACT_DEBUG
+          cout << "[DEBUG] SVM Hyperplane count for piece " << piece_idx << ": " << hyperplanes.size() << endl;
+          cout << "[DEBUG] SVM Hyperplanes: ";
+          for(const auto& hp: hyperplanes) {
+            cout << string_hyperplane<double, 3U>(hp) << " ";
+          }
+          cout << endl;
+#endif
+#ifdef ACT_GENERATE_OUTPUT_JSON
+          json_svm_hyperplanes_of_piece_insert<double, 3U>(svm_hyperplanes_json["hyperplanes"], hyperplanes, piece_idx);
+#endif
           for(const auto& hp: hyperplanes) {
             traj.extendQPHyperplaneConstraint(qp, piece_idx, hp);
           }
         }
+
 
         // add integrated squared derivative cost
         for(unsigned int i = 0;
@@ -716,9 +770,19 @@ int main(int argc, char** argv) {
 
             bezptr->m_a *= scaling_multiplier;
           }
+        } else {
+#ifdef ACT_GENERATE_OUTPUT_JSON
+          if(svm_hyperplanes_json.size() != 0)
+            frame_json["svm_hyperplanes"].push_back(svm_hyperplanes_json);
+#endif
         }
 
       }
+
+#ifdef ACT_GENERATE_OUTPUT_JSON
+      trajectory_update_json["trajectory"] = json_spline(traj);
+      frame_json["trajectories"].push_back(trajectory_update_json);
+#endif
 
       /*
       * Remove other robots from occupancy grid
@@ -735,7 +799,31 @@ int main(int argc, char** argv) {
         CURRENT_STATES[r][c] = traj.eval(dt, c);
       }
     }
+
+#ifdef ACT_GENERATE_OUTPUT_JSON
+    for(double t = 0; t < dt - output_frame_dt / 2; t += output_frame_dt) {
+      for(unsigned int r = 0; r < robot_count; r++) {
+        frame_json["robot_positions"].push_back(json_robot_position<double, 3U>(TRAJECTORIES[r], r, t));
+      }
+      output_json["frames"].push_back(frame_json);
+      frame_json = json();
+      frame_step++;
+      frame_json["step"] =frame_step;
+    }
+#endif
+
+#ifdef ACT_GENERATE_OUTPUT_JSON
+    ofstream json_outp_file(outputfile);
+    json_outp_file << output_json;
+    json_outp_file.close();
+#endif
   }
+
+#ifdef ACT_GENERATE_OUTPUT_JSON
+  ofstream json_outp_file(outputfile);
+  json_outp_file << output_json;
+  json_outp_file.close();
+#endif
 
 
 
