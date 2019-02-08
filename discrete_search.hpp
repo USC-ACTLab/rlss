@@ -84,15 +84,16 @@ public:
   Environment(
     OccupancyGrid3D<T>& og,
     T robotRadius,
-    const State& goal)
+    const State& goal,
+    bool& targetStateValid)
     : m_og(og)
     , m_robotRadius(robotRadius)
     , m_goal(goal)
   {
 
-    if (!stateValid(goal)) {
-      std::cerr << "GOAL not valid! goal: " << goal.x << " " << goal.y
-        << " " << goal.z  << std::endl;
+    if (!(targetStateValid = stateValid(goal))) {
+      //std::cerr << "GOAL not valid! goal: " << goal.x << " " << goal.y
+      //  << " " << goal.z  << std::endl;
     }
   }
 
@@ -247,8 +248,8 @@ private:
   {
     // check if occupied in grid
     typename OccupancyGrid3D<T>::Index idx(s.x, s.y, s.z);
-    auto coord = m_og.getCoordinates(idx);
     try {
+      auto coord = m_og.getCoordinates(idx);
       if(m_og.isOccupied(coord(0), coord(1), coord(2), m_robotRadius)) {
         return false;
       }

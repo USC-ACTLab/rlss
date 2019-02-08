@@ -120,6 +120,7 @@ class OccupancyGrid3D {
       idx.k = (z - _zmin) / _stepsize;
 
       if(!insideGrid(idx)) {
+
         throw OutOfBoundsException("coordinate out of bounds");
       }
 

@@ -124,7 +124,7 @@ int main(int argc, char** argv) {
     obs.convexHull();
     OBSTACLES.push_back(obs);
   }
-  OccupancyGrid3D<double> OCCUPANCY_GRID(OBSTACLES, cell_size, 0, 20, 0, 20, 0, 20);
+  OccupancyGrid3D<double> OCCUPANCY_GRID(OBSTACLES, cell_size, -5, 25, -5, 25, -5, 25);
   cout << "Occupied cell count: " << OCCUPANCY_GRID._occupied_boxes.size() << endl;
 
   /* Get original trajectories */
@@ -417,13 +417,16 @@ int main(int argc, char** argv) {
           discreteSearch::State targetState(target_idx.i,
               target_idx.j, target_idx.k, discreteSearch::Direction::NONE);
 
-          discreteSearch::Environment<double> env(OCCUPANCY_GRID, robot_radius, targetState);
+          bool targetStateValid; // constructor of environment sets targetStateValid
+          discreteSearch::Environment<double> env(OCCUPANCY_GRID, robot_radius, targetState, targetStateValid);
 
           libSearch::AStar<discreteSearch::State,
             discreteSearch::Action, int, discreteSearch::Environment<double> > astar(env);
           libSearch::PlanResult<discreteSearch::State, discreteSearch::Action, int> solution;
 
-          discrete_planning_done = astar.search(startState, solution);
+
+
+          discrete_planning_done = targetStateValid && astar.search(startState, solution);
 
 #ifdef ACT_DEBUG
           cout << "[DEBUG] discrete planning successful: " << discrete_planning_done << endl;
@@ -433,8 +436,8 @@ int main(int argc, char** argv) {
             vector<VectorDIM, Eigen::aligned_allocator<VectorDIM>> corners;
             corners.push_back(currentPos);
             const auto& firstSolutionState = solution.states[0].first;
-            corners.push_back(OCCUPANCY_GRID.getCoordinates(firstSolutionState.x,
-              firstSolutionState.y, firstSolutionState.z));
+            //corners.push_back(OCCUPANCY_GRID.getCoordinates(firstSolutionState.x,
+            //  firstSolutionState.y, firstSolutionState.z));
             for(unsigned int i = 0; i < solution.actions.size(); i++) {
               const auto& action = solution.actions[i].first;
               if(action != discreteSearch::Action::Forward) {
@@ -443,9 +446,9 @@ int main(int argc, char** argv) {
                   state.y, state.z));
               }
             }
-            const auto& lastSolutionState = solution.states.back().first;
-            corners.push_back(OCCUPANCY_GRID.getCoordinates(lastSolutionState.x,
-              lastSolutionState.y, lastSolutionState.z));
+            //const auto& lastSolutionState = solution.states.back().first;
+            //corners.push_back(OCCUPANCY_GRID.getCoordinates(lastSolutionState.x,
+            //  lastSolutionState.y, lastSolutionState.z));
             corners.push_back(targetPos);
 
 #ifdef ACT_DEBUG
@@ -656,12 +659,12 @@ int main(int argc, char** argv) {
           if(enable_svm)
             hyperplanes = svm3d(robot_boxes, OCCUPANCY_GRID._occupied_boxes);
 #ifdef ACT_DEBUG
-          cout << "[DEBUG] SVM Hyperplane count for piece " << piece_idx << ": " << hyperplanes.size() << endl;
-          cout << "[DEBUG] SVM Hyperplanes: ";
-          for(const auto& hp: hyperplanes) {
-            cout << string_hyperplane<double, 3U>(hp) << " ";
-          }
-          cout << endl;
+//          cout << "[DEBUG] SVM Hyperplane count for piece " << piece_idx << ": " << hyperplanes.size() << endl;
+//          cout << "[DEBUG] SVM Hyperplanes: ";
+//          for(const auto& hp: hyperplanes) {
+//            cout << string_hyperplane<double, 3U>(hp) << " ";
+//          }
+//          cout << endl;
 #endif
 #ifdef ACT_GENERATE_OUTPUT_JSON
           json_svm_hyperplanes_of_piece_insert<double, 3U>(svm_hyperplanes_json["hyperplanes"], hyperplanes, piece_idx);

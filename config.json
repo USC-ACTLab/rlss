@@ -1,12 +1,12 @@
 {
-  "trajectories": "../test_data/3dtrajectories/swap2/",
+  "trajectories": "../test_data/3dtrajectories/swap4/",
   "scale_traj": 1.0,
   "obstacles": "../test_data/3dobstacles/noobstacle/",
-  "robot_radius": 0.23,
+  "robot_radius": 0.25,
   "cell_size": 0.5,
   "max_derivative_magnitudes": [-1, 2, 4],
   "replan_period": 0.1,
-  "set_max_time_as_replan_period": true,
+  "set_max_time_as_replan_period": false,
   "planning_horizon": 5,
   "plan_for_curves": 4,
   "points_per_curve": 8,
@@ -16,6 +16,6 @@
   "output_file": "res.json",
   "output_frame_dt": 0.01,
   "lambdas_integrated_squared_derivative": [-1, 1.0, 0.5, 0.0, 0.0],
-  "scaling_multiplier": 2.0,
+  "scaling_multiplier": 1.2,
   "additional_time": 5
 }
