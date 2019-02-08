@@ -74,7 +74,7 @@ class Frame(object):
         sq = 0
         for ms in markers:
             if timestamp!=None : ms.header.stamp = timestamp
-            ms.lifetime = Duration(secs=self.frame_dt*10)
+            #ms.lifetime = Duration(secs=self.frame_dt*10)
             ms.id = sq 
             sq+=1
         return msg

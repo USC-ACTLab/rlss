@@ -3,19 +3,19 @@ import rospy
 import sys, select, termios, tty
 import select
 from bisect import bisect_right
-
-
+from FrameContainer import FrameContainer
+from visualization_msgs.msg import MarkerArray
 class Simulator (object):
 
-    def __init__(self):
-        self.times = [1,5,15,20,25,35]
-        self.data = ["A","B","C","D","E","F"]
+    def __init__(self,json_path):
+        self.fc = FrameContainer(json_path)
+        self.data,self.times  = self.fc.frames,self.fc.times
         #self.data = [(10,"A"),(20,"B")]
         self.cur_frame = None
         self.read_list = [sys.stdin]
         self.timeout = 0.1
         self.last_work_time = time()
-        self.rate = 2.0
+        self.rate = 1/self.fc.frame_dt
         self.play = False
 
         
@@ -51,7 +51,7 @@ class Simulator (object):
             print  "Input not found"
         self.last_work_time = time()
 
-    def update_frame(self):
+    def update_frame(self): 
         now = time()
         if now-self.last_work_time>1/self.rate:
             td = time()-self.lastTime
@@ -67,8 +67,10 @@ class Simulator (object):
         self.ct = 0
         self.frame = 0
         self.lastTime = time()
+        rospy.init_node("simulation_result")
+        self.rp = rospy.Publisher("marker_test",MarkerArray,queue_size=10)
         while self.read_list and self.ct<self.times[-1]:
-            print "Current time: ",self.ct
+            #print "Current time: ",self.ct
             ready = select.select(self.read_list, [], [], self.timeout)[0]
             if not ready:
                 self.update_frame()
@@ -84,7 +86,10 @@ class Simulator (object):
         if self.cur_frame == frame : return
         if frame>=len(self.data): return
         #handle frame here
-        print self.data[frame]," ",self.ct
+        fr,tm = self.fc.getFrame(frame)
+        m = fr.toMarkerArray(timestamp=rospy.Time.now())
+        self.rp.publish(m)
+        #print self.data[frame]," ",self.ct
         #handle end  
         self.cur_frame = frame
     
@@ -97,5 +102,5 @@ class Simulator (object):
             
 
 if __name__== "__main__":
-    sm = Simulator()
+    sm = Simulator("/home/alpcevikel/mr-trajectory-replanning/visualization_tool/data/res2.json")
     sm.run()

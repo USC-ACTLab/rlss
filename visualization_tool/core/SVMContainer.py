@@ -17,7 +17,7 @@ class SVMContainer(object):
 
     def get_all_markers(self):
         if self.config==None:
-            pc = 0
+            pc = 1
         else:
             pc = self.config["max_pieces"]
         res = []
