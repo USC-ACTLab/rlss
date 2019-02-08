@@ -175,14 +175,14 @@
           "items": {
             "type": "object",
             "properties": {
-              "top_left": {
+              "min": {
                 "$ref": "#/definitions/vector"
               },
-              "bottom_right": {
+              "max": {
                 "$ref": "#/definitions/vector"
               }
             },
-            "required": ["top_left", "bottom_right"]
+            "required": ["min", "max"]
           }
         },
         "robot_positions": {
