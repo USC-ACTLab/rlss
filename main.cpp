@@ -772,8 +772,7 @@ int main(int argc, char** argv) {
           }
         } else {
 #ifdef ACT_GENERATE_OUTPUT_JSON
-          if(svm_hyperplanes_json.size() != 0)
-            frame_json["svm_hyperplanes"].push_back(svm_hyperplanes_json);
+          frame_json["svm_hyperplanes"].push_back(svm_hyperplanes_json);
 #endif
         }
 
