@@ -15,12 +15,16 @@ class PathContainer(object):
 
     def update(self,trajectories_key):
         for el in trajectories_key:
-            rid = el["robot_id"]
-            self.trajectories[rid] = Trajectory(json_file=el["trajectory"])
-            self.discrete_paths[rid] = DiscretePath(json=el["discrete_path"])
+            if el.has_key("trajectory"):
+                rid = el["robot_id"]
+                self.trajectories[rid] = Trajectory(json_file=el["trajectory"])
+            if el.has_key("discrete_path"):
+                rid = el["robot_id"]
+                self.discrete_paths[rid] = DiscretePath(json=el["discrete_path"])
 
     def get_all_markers(self,evalfrom):
         res = []
-        res.extend([x.to_marker(evalfrom,granularity=10) for x in self.trajectories if x!=None])
+        #was evalfrom
+        res.extend([x.to_marker(0,granularity=50) for x in self.trajectories if x!=None])
         res.extend([x.to_marker() for x in self.discrete_paths if x!=None])
         return res

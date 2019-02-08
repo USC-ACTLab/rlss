@@ -24,6 +24,7 @@ rospy.init_node("test")
 rp = rospy.Publisher("marker_test",MarkerArray,queue_size=10)
 fc = FrameContainer(jsn_path)
 i = 0
+
 while not rospy.is_shutdown():
     try:
         fr,tm = fc.getFrame(i)
