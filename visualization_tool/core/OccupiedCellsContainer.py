@@ -41,8 +41,8 @@ class OccupiedCellsContainer(object):
     def update(self,occupied_cells_key):
         self.points = []
         for j in occupied_cells_key:
-            self.points.append(j["bottom_right"])
-            self.points.append(j["top_left"])
+            self.points.append(j["min"])
+            self.points.append(j["max"])
 
 
     def get_all_markers(self,frame_id="map"):
