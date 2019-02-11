@@ -31,27 +31,25 @@ Optimization results in a "res.json" file.
 
 To install dependencies
 ```
-sudo pip3 install shapely
-sudo pip3 install descartes
+sudo pip install bezier
+sudo pip install numpy
 ```
 
 Run visualization
 
 ```
-python3 vis.py ../build/res.json
+cd visualization_tool
+python launch.py ../build/res.json
+./rviz.sh
 ```
 
-To save the images of each frame to images/ folder
+The visualization tool accepts commands while simulation is running.
+The commands could be sent by typing the command and pressing enter
 
-```
-python3 vis.py ../build/res.json save
-```
+```python
+p #play/pause the visualization
 
-Saving waits until frame number 300 (3 seconds). Until that time, zoom the simulation for better images.
-
-Visualize bezier curves
-```
-python3 bezier.py ../test_data/trajectories/head_to_head_trajs/curve1.csv
+t time_diff #Seek by time_diff seconds Ex: t 10 will seek forward by 10 seconds and t -5 will seek backward by 5 seconds 
 ```
 
 ## Profiling
