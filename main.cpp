@@ -85,7 +85,8 @@ int main(int argc, char** argv) {
   const unsigned int max_continuity = jsn["continuity_upto_degree"];
   const unsigned int curve_count = jsn["plan_for_curves"];
   const unsigned int points_per_curve = jsn["points_per_curve"];
-  const string outputfile = jsn["output_file"];
+  const string outputfile = jsn["simulation_output_file"];
+  const string statoutputfile = jsn["statistics_output_file"];
   const string initial_trajectories_path = jsn["trajectories"];
   const string obstacles_path = jsn["obstacles"];
   const double scale_traj = jsn["scale_traj"];
@@ -102,6 +103,10 @@ int main(int argc, char** argv) {
 
   const double step = 0.01; // general purpose step
 
+
+#ifdef ACT_STATISTICS
+  json stats;
+#endif
 
 
   using VectorDIM = Eigen::Matrix<double, 3U, 1U>;
@@ -198,6 +203,8 @@ int main(int argc, char** argv) {
 
   vector<bool> LAST_QP_FAILED(robot_count, true);
 
+  // how many of the last successive iterations the QP has failed
+  vector<unsigned int> SUCCESSIVE_FAILURE_COUNTS(robot_count, 0);
 
 #ifdef ACT_GENERATE_OUTPUT_JSON
   json output_json;
@@ -247,6 +254,7 @@ int main(int argc, char** argv) {
 
       const auto& origtraj = ORIGINAL_TRAJECTORIES[r];
       auto& traj = TRAJECTORIES[r];
+      Spline<double, 3U> trajback(traj);
 
       const auto& state = CURRENT_STATES[r];
 
@@ -616,7 +624,14 @@ int main(int argc, char** argv) {
       // this is set to true
       bool dynamic_limits_OK = false;
 
-      while(!dynamic_limits_OK) {
+      // give it 5 tries to solve the problem
+      unsigned int allowed_tries = 10;
+      unsigned int tries_remaining = allowed_tries;
+
+      Spline<double, 3U> planning_ready_traj(traj);
+
+      while((!dynamic_limits_OK || LAST_QP_FAILED[r]) && tries_remaining > 0) {
+
         // Lets start to construct the QP
         vector<QPMatrices> qp = traj.getQPMatrices();
 
@@ -746,32 +761,34 @@ int main(int argc, char** argv) {
 
 
         // load
-        problem.getPrimalSolution(combinedQP.x.data());
-        traj.loadControlPoints(combinedQP, qp);
+        if(!LAST_QP_FAILED[r]) {
+          problem.getPrimalSolution(combinedQP.x.data());
+          traj.loadControlPoints(combinedQP, qp);
+          // check dynamic limits
 
-
-
-        // check dynamic limits
-        dynamic_limits_OK = true;
-        for(unsigned int i = 0; i < max_derivative_magnitudes.size(); i++) {
-          double max_allowed_mag = max_derivative_magnitudes[i];
-          if(max_allowed_mag >= 0.0) {
-            double max_mag = traj.maxDerivativeMagnitude(i, 0.01);
-            if(max_mag > max_allowed_mag) {
-              dynamic_limits_OK = false;
-              break;
+          dynamic_limits_OK = true;
+          for(unsigned int i = 0; i < max_derivative_magnitudes.size(); i++) {
+            double max_allowed_mag = max_derivative_magnitudes[i];
+            if(max_allowed_mag >= 0.0) {
+              double max_mag = traj.maxDerivativeMagnitude(i, 0.01);
+              if(max_mag > max_allowed_mag) {
+                dynamic_limits_OK = false;
+                break;
+              }
             }
           }
+  #ifdef ACT_DEBUG
+          cout << "[DEBUG] dynamic_limits_OK: " << dynamic_limits_OK << endl;
+  #endif
         }
-#ifdef ACT_DEBUG
-        cout << "[DEBUG] dynamic_limits_OK: " << dynamic_limits_OK << endl;
-#endif
-        if(!dynamic_limits_OK) {
+
+        if(LAST_QP_FAILED[r] || !dynamic_limits_OK) {
+          traj = planning_ready_traj;
           for(unsigned i = 0; i < traj.numPieces(); i++) {
             auto bezptr = std::static_pointer_cast<Bezier<double, 3U>>(
               traj.getPiece(i));
 
-            bezptr->m_a *= scaling_multiplier;
+            bezptr->m_a *= std::pow(scaling_multiplier, allowed_tries - tries_remaining + 1);
           }
         } else {
 #ifdef ACT_GENERATE_OUTPUT_JSON
@@ -779,11 +796,20 @@ int main(int argc, char** argv) {
 #endif
         }
 
+        tries_remaining--;
       }
 
+      if(LAST_QP_FAILED[r] || !dynamic_limits_OK) {
+        SUCCESSIVE_FAILURE_COUNTS[r]++;
+        traj = trajback;
+      } else
+        SUCCESSIVE_FAILURE_COUNTS[r] = 0;
+
 #ifdef ACT_GENERATE_OUTPUT_JSON
-      trajectory_update_json["trajectory"] = json_spline(traj);
-      frame_json["trajectories"].push_back(trajectory_update_json);
+      if(!LAST_QP_FAILED[r]) {
+        trajectory_update_json["trajectory"] = json_spline(traj);
+        frame_json["trajectories"].push_back(trajectory_update_json);
+      }
 #endif
 
       /*
@@ -798,14 +824,14 @@ int main(int argc, char** argv) {
     for(int r = 0; r < robot_count; r++) {
       const auto& traj = TRAJECTORIES[r];
       for(int c = 0; c <= max_continuity; c++) {
-        CURRENT_STATES[r][c] = traj.eval(dt, c);
+        CURRENT_STATES[r][c] = traj.eval(dt * (SUCCESSIVE_FAILURE_COUNTS[r] + 1), c);
       }
     }
 
 #ifdef ACT_GENERATE_OUTPUT_JSON
     for(double t = 0; t < dt - output_frame_dt / 2; t += output_frame_dt) {
       for(unsigned int r = 0; r < robot_count; r++) {
-        frame_json["robot_positions"].push_back(json_robot_position<double, 3U>(TRAJECTORIES[r], r, t));
+        frame_json["robot_positions"].push_back(json_robot_position<double, 3U>(TRAJECTORIES[r], r, t + SUCCESSIVE_FAILURE_COUNTS[r] * dt));
       }
       output_json["frames"].push_back(frame_json);
       frame_json = json();
