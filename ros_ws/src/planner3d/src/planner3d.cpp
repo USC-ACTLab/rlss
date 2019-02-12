@@ -312,7 +312,6 @@ int main(int argc, char **argv) {
       cout << "[DEBUG] Occupied cell count after other robot additions: " << OCCUPANCY_GRID._occupied_boxes.size() << endl;
 #endif
 
-
       /*
       * Calculate voronoi for the current robot
       */
@@ -397,7 +396,6 @@ int main(int argc, char **argv) {
       json trajectory_update_json; // an element of 'trajectories' field in output json
       trajectory_update_json["robot_id"] = r;
 #endif
-
 
       /*
       * even if discrete planning is needed we may not be able to do it
@@ -659,6 +657,57 @@ int main(int argc, char **argv) {
 
       // initial guesses are set here
 
+      /*
+      * Add every constraint that is not related to duration of curves here
+      * Later in the loop we will add constraints and costs which
+      * changes with curve duration
+      */
+      vector<QPMatrices> QP_init = traj.getQPMatrices();
+
+
+      // add voronoi constraints
+      for(const auto& hp: VORONOI_HYPERPLANES) {
+        traj.extendQPHyperplaneConstraint(QP_init, 0, hp);
+      }
+
+#ifdef ACT_GENERATE_OUTPUT_JSON
+      json svm_hyperplanes_json;
+      svm_hyperplanes_json["robot_id"] = r;
+      svm_hyperplanes_json["hyperplanes"] = json::array();
+#endif
+
+      // add svm constraints
+      VectorDIM rad(robot_radius, robot_radius, robot_radius);
+      for(unsigned int piece_idx = 0; piece_idx < traj.numPieces(); piece_idx++) {
+        auto piece = std::static_pointer_cast<Bezier<double, 3U>>(
+            traj.getPiece(piece_idx));
+        vector<AlignedBox> robot_boxes;
+        if(discrete_planning_done) {
+          const VectorDIM& first_pt = piece->m_controlPoints[0];
+          const VectorDIM& last_pt = piece->m_controlPoints.back();
+          robot_boxes.push_back(AlignedBox(first_pt - rad, first_pt + rad));
+          robot_boxes.push_back(AlignedBox(last_pt - rad, last_pt + rad));
+        } else {
+          for(const auto& pt: piece->m_controlPoints) {
+            robot_boxes.push_back(AlignedBox(pt - rad, pt + rad));
+          }
+        }
+
+        vector<Hyperplane> hyperplanes;
+
+        if(enable_svm)
+          hyperplanes = svm3d(robot_boxes, OCCUPANCY_GRID._occupied_boxes);
+
+
+#ifdef ACT_GENERATE_OUTPUT_JSON
+        json_svm_hyperplanes_of_piece_insert<double, 3U>(svm_hyperplanes_json["hyperplanes"], hyperplanes, piece_idx);
+#endif
+        for(const auto& hp: hyperplanes) {
+          traj.extendQPHyperplaneConstraint(QP_init, piece_idx, hp);
+        }
+      }
+
+
       // if dynamic limits are NOT violated after an optimization iteration,
       // this is set to true
       bool dynamic_limits_OK = false;
@@ -672,62 +721,12 @@ int main(int argc, char **argv) {
       while((!dynamic_limits_OK || LAST_QP_FAILED[r]) && tries_remaining > 0) {
 
         // Lets start to construct the QP
-        vector<QPMatrices> qp = traj.getQPMatrices();
-
+        vector<QPMatrices> qp = QP_init;
 
         // add initial point constraints
         for(unsigned int k = 0; k <= max_continuity; k++) {
           traj.extendQPBeginningConstraint(qp, k, CURRENT_STATES[r][k]);
         }
-
-        // add voronoi constraints
-        for(const auto& hp: VORONOI_HYPERPLANES) {
-          traj.extendQPHyperplaneConstraint(qp, 0, hp);
-        }
-
-#ifdef ACT_GENERATE_OUTPUT_JSON
-        json svm_hyperplanes_json;
-        svm_hyperplanes_json["robot_id"] = r;
-        svm_hyperplanes_json["hyperplanes"] = json::array();
-#endif
-
-        // add svm constraints
-        VectorDIM rad(robot_radius, robot_radius, robot_radius);
-        for(unsigned int piece_idx = 0; piece_idx < traj.numPieces(); piece_idx++) {
-          auto piece = std::static_pointer_cast<Bezier<double, 3U>>(
-              traj.getPiece(piece_idx));
-          vector<AlignedBox> robot_boxes;
-          if(discrete_planning_done) {
-            const VectorDIM& first_pt = piece->m_controlPoints[0];
-            const VectorDIM& last_pt = piece->m_controlPoints.back();
-            robot_boxes.push_back(AlignedBox(first_pt - rad, first_pt + rad));
-            robot_boxes.push_back(AlignedBox(last_pt - rad, last_pt + rad));
-          } else {
-            for(const auto& pt: piece->m_controlPoints) {
-              robot_boxes.push_back(AlignedBox(pt - rad, pt + rad));
-            }
-          }
-
-          vector<Hyperplane> hyperplanes;
-
-          if(enable_svm)
-            hyperplanes = svm3d(robot_boxes, OCCUPANCY_GRID._occupied_boxes);
-#ifdef ACT_DEBUG
-//          cout << "[DEBUG] SVM Hyperplane count for piece " << piece_idx << ": " << hyperplanes.size() << endl;
-//          cout << "[DEBUG] SVM Hyperplanes: ";
-//          for(const auto& hp: hyperplanes) {
-//            cout << string_hyperplane<double, 3U>(hp) << " ";
-//          }
-//          cout << endl;
-#endif
-#ifdef ACT_GENERATE_OUTPUT_JSON
-          json_svm_hyperplanes_of_piece_insert<double, 3U>(svm_hyperplanes_json["hyperplanes"], hyperplanes, piece_idx);
-#endif
-          for(const auto& hp: hyperplanes) {
-            traj.extendQPHyperplaneConstraint(qp, piece_idx, hp);
-          }
-        }
-
 
         // add integrated squared derivative cost
         for(unsigned int i = 0;
