@@ -3,6 +3,7 @@
 #include "bezier.h"
 #include "json.hpp"
 #include "PointCloud.h"
+#include <Eigen/StdVector>
 
 using ACT::PointCloud;
 using Eigen::Hyperplane;
@@ -46,7 +47,7 @@ namespace ACT {
   }
 
   template<class T, unsigned int DIM>
-  json json_vec_vectordim(const vector<VectorDIM<T, DIM>,
+  json json_vec_vectordim(const vector<Vector<T, DIM>,
       Eigen::aligned_allocator<Vector<T, DIM>>>& vectors) {
     json res;
     for(const auto& vec: vectors) {

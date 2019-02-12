@@ -1,7 +1,6 @@
 #ifndef PATHREPLAN_UTILITY_H
 #define PATHREPLAN_UTILITY_H
 #include <string>
-#include <vector>
 #include <Eigen/Dense>
 #include <Eigen/Geometry>
 #include <Eigen/StdVector>

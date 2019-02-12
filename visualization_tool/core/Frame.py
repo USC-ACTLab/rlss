@@ -30,7 +30,7 @@ class Frame(object):
             self.frame_dt = copy.frame_dt
         else:
             #default constructor inits with nones
-            #array of {robot_id,trajectory,discrete_path},size=nR ->PathContainer 
+            #array of {robot_id,trajectory,discrete_path},size=nR ->PathContainer
             self.path_container = PathContainer(numRobots=numRobots)
             #array of obstacle_container
             self.obstacle_container = ObstacleContainer()
@@ -75,6 +75,6 @@ class Frame(object):
         for ms in markers:
             if timestamp!=None : ms.header.stamp = timestamp
             #ms.lifetime = Duration(secs=self.frame_dt*10)
-            ms.id = sq 
+            ms.id = sq
             sq+=1
         return msg

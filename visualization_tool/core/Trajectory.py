@@ -1,7 +1,7 @@
 from CurvePiece import CurvePiece
 import csv
 import bezier
-import numpy as np 
+import numpy as np
 from visualization_msgs.msg import Marker
 from geometry_msgs.msg import Point
 
@@ -33,7 +33,7 @@ class Trajectory(object):
             with open(csv_file_2d, 'rb') as csvfile:
                 spamreader = csv.reader(csvfile, delimiter=',')
                 first = True
-                curtime = 0 
+                curtime = 0
                 for row in spamreader:
                     if first:
                         first = False
@@ -58,7 +58,7 @@ class Trajectory(object):
             with open(csv_file_3d, 'rb') as csvfile:
                 spamreader = csv.reader(csvfile, delimiter=',')
                 first = True
-                curtime = 0 
+                curtime = 0
                 for row in spamreader:
                     if first:
                         first = False
@@ -77,7 +77,7 @@ class Trajectory(object):
                     curtime+=dur
             self.start = self.curve_pieces[0].start
             self.end = self.curve_pieces[-1].end
-        
+
     def __str__(self):
         res = ["Trajectory. Start: {0}, End: {1}, Curves :".format(self.start,self.end)]
         for c in self.curve_pieces:
@@ -106,11 +106,11 @@ class Trajectory(object):
         m.header.frame_id = frame_id
         m.type = m.LINE_STRIP
         m.color.a =1
-        m.color.r = 1
+        m.color.b = 1
         m.pose.orientation.w =1
         m.scale.x = 0.05
         m.scale.y = 0.05
         m.scale.z = 0.05
         evarr = self.evalfrom(time,granularity=granularity)
         m.points= [creatept(x,y,z) for x,y,z in zip(evarr[0],evarr[1],evarr[2])]
-        return m 
+        return m

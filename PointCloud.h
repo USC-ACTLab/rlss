@@ -7,6 +7,8 @@
 #include <Eigen/StdVector>
 
 #include <iostream>
+using std::cout;
+using std::endl;
 
 namespace ACT {
 
@@ -111,6 +113,10 @@ class PointCloudBase {
       _convexhullpts.clear();
       CombinationGenerator generator(_pts.size());
       for(auto comb = generator.begin(); !generator.end(); comb = generator.next()) {
+        /*for(const auto& idx: comb) {
+          cout << "comb: " << idx << " ";
+        }
+        cout << endl;*/
         Hyperplane hp;
         try {
           hp = hyperplaneThroughPoints(comb);
@@ -123,6 +129,7 @@ class PointCloudBase {
         for(typename std::vector<VectorDIM>::size_type i = 0; i < _pts.size(); i++) {
           if(std::find(comb.begin(), comb.end(), i) == comb.end()) {
             T dist = hp.signedDistance(_pts[i]);
+            cout << i << endl;
             if(dist < 0) {
               everythingPositive = false;
             } else if(dist > 0) {
@@ -135,9 +142,11 @@ class PointCloudBase {
           Normals should point inside of the obstacle
         */
         if(everythingNegative) {
+          cout << "everything neg" << endl;
           hp.normal() = -1 * hp.normal();
           hp.offset() = -1 * hp.offset();
         } else if(everythingPositive) {
+          cout << "everything pos" << endl;
 
         } else {
           continue;
@@ -193,26 +202,11 @@ class PointCloudBase {
     /*
      * Find the hyperplane that goes through given points
     */
-    Hyperplane hyperplaneThroughPoints(const std::vector<typename std::vector<VectorDIM>::size_type>& indexArray) {
+    virtual Hyperplane hyperplaneThroughPoints(const std::vector<typename std::vector<VectorDIM>::size_type>& indexArray) {
       assert(indexArray.size() == DIM);
-      MatrixDIM A;
-      VectorDIM b;
-      for(unsigned int i = 0; i < DIM; i++) {
-        A.block(i, 0, 1, DIM) = _pts[indexArray[i]].transpose();
-        b(i) = 1.0;
-      }
-
-
-      Eigen::FullPivLU<MatrixDIM> decomp(A);
-      if(!decomp.isInvertible()) {
-        throw LinearDependenceException("points are not linearly independent.");
-      }
-
-      VectorDIM normal = A.inverse() * b;
-      T distance = -1.0 / normal.norm();
-      normal.normalize();
-
-      return Hyperplane(normal, distance);
+      cout << "This is wrong" << endl;
+      exit(0);
+      return Hyperplane();
     }
 
 
@@ -374,6 +368,8 @@ class PointCloud<T, 3U> : public PointCloudBase<T, 3U> {
 
     using typename PointCloudBase<T, 3U>::AlignedBox;
     using typename PointCloudBase<T, 3U>::VectorDIM;
+    using typename PointCloudBase<T, 3U>::Hyperplane;
+
     /*
      * Assumes that the point cloud is not completely inside the box!
      *
@@ -434,6 +430,28 @@ class PointCloud<T, 3U> : public PointCloudBase<T, 3U> {
         }
       }
       return false;
+    }
+  private:
+    Hyperplane hyperplaneThroughPoints(const std::vector<typename std::vector<VectorDIM>::size_type>& indexArray) override {
+      assert(indexArray.size() == 3U);
+      const auto& p1 = this->_pts[indexArray[0]];
+      const auto& p2 = this->_pts[indexArray[1]];
+      const auto& p3 = this->_pts[indexArray[2]];
+
+      const auto dir1 = p2 - p1;
+      const auto dir2 = p3 - p1;
+
+      auto crossp = dir1.cross(dir2);
+      if(crossp.norm() < 1e-10) {
+        throw PointCloud<double, 3U>::LinearDependenceException("directions are not linearly independent.");
+      }
+
+
+      VectorDIM normal = crossp;
+      normal.normalize();
+      T distance = -normal.dot(p1);
+
+      return Hyperplane(normal, distance);
     }
 };
 

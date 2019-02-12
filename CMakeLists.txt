@@ -42,6 +42,11 @@ ${SVM_CPP_FILES}
 )
 target_include_directories(svmtest PRIVATE lib)
 
+add_executable(
+pointcloudtest
+pointcloudtest.cpp
+)
+target_include_directories(pointcloudtest PRIVATE lib)
 
 add_library(csv
   lib/csv/CSVparser.cpp
