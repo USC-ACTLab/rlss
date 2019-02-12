@@ -130,7 +130,7 @@ namespace ACT {
   }
 
   template<class T, unsigned int DIM>
-  void json_svm_hyperplanes_of_piece_insert(json insert_to, const vector<Hyperplane<T, DIM>>& hps,
+  void json_svm_hyperplanes_of_piece_insert(json& insert_to, const vector<Hyperplane<T, DIM>>& hps,
     unsigned int piece_id) {
     for(const auto& hp: hps) {
       json svmsingle;
