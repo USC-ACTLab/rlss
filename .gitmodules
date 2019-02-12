@@ -19,6 +19,3 @@
 [submodule "lib/splx"]
 	path = lib/splx
 	url = https://github.com/baskinburak/splx.git
-[submodule "lib/octomap"]
-	path = lib/octomap
-	url = https://github.com/OctoMap/octomap
