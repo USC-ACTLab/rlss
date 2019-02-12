@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+
+<!--
+  Assumes that crazyswarm is running already in a different workspace.
+ -->
+
+<launch>
+
+  <rosparam>
+    config_path: "config.json"
+    robots: [
+      cf1,
+      cf2
+    ]
+  <rosparam>
+
+  <node name="cf1" pkg="planner3d" type="planner3d" output="screen">
+    <rosparam>
+      robotIdx: 0
+    </rosparam>
+  </node>
+
+  <node name="cf2" pkg="planner3d" type="planner3d" output="screen">
+    <rosparam>
+      robotIdx: 1
+    </rosparam>
+  </node>
+
+</launch>
