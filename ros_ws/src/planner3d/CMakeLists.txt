@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(planner)
+project(planner3d)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 # add_compile_options(-std=c++11)
@@ -9,7 +9,6 @@ set(CMAKE_CXX_STANDARD 14)
 
 add_subdirectory(../../../lib/qpOASES ../../../lib/qpOASES/build/)
 set(UNITTESTS OFF CACHE BOOL "disable osqp unittests")
-add_subdirectory(../../../lib/osqp ../../../lib/osqp/build/)
 
 
 find_package (Eigen3 REQUIRED)
@@ -18,6 +17,7 @@ find_package(stdc++fs)
 include_directories(
   ${EIGEN3_INCLUDE_DIR}
   ../../../lib/qpOASES/include
+  ../../../lib/splx/include
 )
 
 
@@ -27,13 +27,12 @@ include_directories(
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   std_msgs
-  create2_controller
   tf
 )
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
-find_package(Boost REQUIRED COMPONENTS thread system)
+# find_package(Boost REQUIRED COMPONENTS thread system)
 
 
 ## Uncomment this if the package has a setup.py. This macro ensures
@@ -147,59 +146,21 @@ include_directories(
 #   src/${PROJECT_NAME}/planner.cpp
 # )
 
-add_library(svm2pt4obs
-  ../../../cvxgen/2pt4obspt/cvxgen/solver.cpp
-  ../../../cvxgen/2pt4obspt/cvxgen/ldl.cpp
-  ../../../cvxgen/2pt4obspt/cvxgen/matrix_support.cpp
-  ../../../cvxgen/2pt4obspt/cvxgen/util.cpp
-  ../../../svmcvxwrapper_2pt_4obs.cpp
+set(SVM_CPP_FILES
+  ../../../cvxgen/16robot8obstacle/solver.cpp
+  ../../../cvxgen/16robot8obstacle/ldl.cpp
+  ../../../cvxgen/16robot8obstacle/util.cpp
+  ../../../cvxgen/16robot8obstacle/matrix_support.cpp
+  ../../../cvxgen/64robot8obstacle/solver.cpp
+  ../../../cvxgen/64robot8obstacle/ldl.cpp
+  ../../../cvxgen/64robot8obstacle/util.cpp
+  ../../../cvxgen/64robot8obstacle/matrix_support.cpp
 )
 
-add_library(svm8pt4obs
-  ../../../cvxgen/8pt4obspt/cvxgen/solver.cpp
-  ../../../cvxgen/8pt4obspt/cvxgen/ldl.cpp
-  ../../../cvxgen/8pt4obspt/cvxgen/matrix_support.cpp
-  ../../../cvxgen/8pt4obspt/cvxgen/util.cpp
-  ../../../svmcvxwrapper_8pt_4obs.cpp
-)
-
-add_library(svm32pt4obs
-  ../../../cvxgen/32pt4obspt/cvxgen/solver.cpp
-  ../../../cvxgen/32pt4obspt/cvxgen/ldl.cpp
-  ../../../cvxgen/32pt4obspt/cvxgen/matrix_support.cpp
-  ../../../cvxgen/32pt4obspt/cvxgen/util.cpp
-  ../../../svmcvxwrapper_32pt_4obs.cpp
-)
-
-add_library(geometry
-  ../../../hyperplane.cpp
-  ../../../vectoreuc.cpp
-  ../../../occupancy_grid.cpp
-)
-
-add_library(svm
-  ../../../svm_seperator.cpp
-  ../../../lib/libsvm/svm.cpp
-)
-
-target_include_directories(svm PRIVATE ../../../lib)
-
-add_library(obstacle
-  ../../../obstacle.cpp
-)
-
-add_library(traj
-  ../../../curve.cpp
-  ../../../trajectory.cpp
-  ../../../bezier_2d_8pts.cpp
-)
+# target_include_directories(svm PRIVATE ../../../lib)
 
 add_library(csv
   ../../../lib/csv/CSVparser.cpp
-)
-
-add_library(optimization
-  ../../../qp_optimize.cpp
 )
 
 ## Add cmake target dependencies of the library
@@ -210,9 +171,12 @@ add_library(optimization
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
 # add_executable(${PROJECT_NAME}_node src/planner_node.cpp)
-add_executable(planner src/planner.cpp)
-add_dependencies(planner ${catkin_EXPORTED_TARGETS})
-target_include_directories(planner PRIVATE ../../../lib)
+add_executable(planner3d
+  src/planner3d.cpp
+  ${SVM_CPP_FILES}
+)
+add_dependencies(planner3d ${catkin_EXPORTED_TARGETS})
+target_include_directories(planner3d PRIVATE ../../../lib)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -229,21 +193,16 @@ target_include_directories(planner PRIVATE ../../../lib)
 #   ${catkin_LIBRARIES}
 # )
 
-target_link_libraries(planner
-${catkin_LIBRARIES}
-  geometry
-  svm
-  obstacle
-  optimization
-  traj
+target_link_libraries(planner3d
+  ${catkin_LIBRARIES}
   csv
   stdc++fs
   qpOASES
-  svm2pt4obs
-  svm8pt4obs
-  svm32pt4obs
-  osqp
-  )
+)
+target_compile_definitions(planner3d PRIVATE
+  ACT_GENERATE_OUTPUT_JSON
+  ACT_DEBUG
+)
 
 #############
 ## Install ##
