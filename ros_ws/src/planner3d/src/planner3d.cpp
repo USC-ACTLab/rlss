@@ -16,7 +16,10 @@
 #include "discrete_search.hpp"
 #include "outpututils.hpp"
 #include "qpOASES.hpp"
+
 #include "ros/ros.h"
+#include "crazyflie_driver/FullState.h"
+#include <tf/transform_listener.h>
 
 namespace fs = std::experimental::filesystem;
 using std::string;
@@ -73,6 +76,11 @@ int main(int argc, char **argv) {
 
   ros::init(argc, argv, "planner3d");
   ros::NodeHandle nh;
+
+  crazyflie_driver::FullState desired_state_msg;
+  ros::Publisher desired_state_publisher = nh.advertise<crazyflie_driver::FullState>("desired_state", 1000);
+
+  tf::TransformListener transformlistener;
 
   // Read parameters
   ros::NodeHandle nl("~");
@@ -850,6 +858,54 @@ int main(int argc, char **argv) {
 #ifdef ACT_DEBUG
       cout << "[DEBUG] Occupied cell count after other robot removals: " << OCCUPANCY_GRID._occupied_boxes.size() << endl;
 #endif
+
+      /*
+      * Send new setpoint to CF
+      */
+
+      // const auto& traj = TRAJECTORIES[r];
+
+      auto pos = traj.eval(dt * (SUCCESSIVE_FAILURE_COUNTS[r] + 1), 0);
+      auto vel = traj.eval(dt * (SUCCESSIVE_FAILURE_COUNTS[r] + 1), 1);
+      auto acc = traj.eval(dt * (SUCCESSIVE_FAILURE_COUNTS[r] + 1), 2);
+
+
+      desired_state_msg.header.seq += 1;
+      desired_state_msg.header.stamp = ros::Time::now();
+      desired_state_msg.header.frame_id = "world";
+
+      desired_state_msg.pose.position.x = pos(0);
+      desired_state_msg.pose.position.y = pos(1);
+      desired_state_msg.pose.position.z = pos(2);
+      desired_state_msg.twist.linear.x = vel(0);
+      desired_state_msg.twist.linear.y = vel(1);
+      desired_state_msg.twist.linear.z = vel(2);
+      desired_state_msg.acc.x = acc(0);
+      desired_state_msg.acc.y = acc(1);
+      desired_state_msg.acc.z = acc(2);
+      // fixed yaw=0
+      desired_state_msg.pose.orientation.x = 0;
+      desired_state_msg.pose.orientation.y = 0;
+      desired_state_msg.pose.orientation.z = 0;
+      desired_state_msg.pose.orientation.w = 1;
+
+      // compute omega
+      const double yaw = 0.0;
+      const double dyaw = 0.0;
+      auto jerk = traj.eval(dt * (SUCCESSIVE_FAILURE_COUNTS[r] + 1), 3);
+      auto thrust = acc + VectorDIM(0.0, 0.0, 9.81); // add gravity
+      auto z_body = thrust.normalized();
+      auto x_world = VectorDIM(cos(yaw), sin(yaw), 0);
+      auto y_body = z_body.cross(x_world).normalized();
+      auto x_body = y_body.cross(z_body);
+      auto jerk_orth_zbody = jerk - (jerk.dot(z_body) * z_body);
+      auto h_w = jerk_orth_zbody / thrust.norm();
+
+      desired_state_msg.twist.angular.x = -h_w.dot(y_body);
+      desired_state_msg.twist.angular.y = h_w.dot(x_body);
+      desired_state_msg.twist.angular.z = z_body(2) * dyaw;
+
+      desired_state_publisher.publish(desired_state_msg);
     }
 
 
