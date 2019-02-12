@@ -85,7 +85,7 @@ void shiftHyperplane(const Eigen::AlignedBox<T, 3U>& box, Eigen::Hyperplane<T, 3
         VectorDIM pt(coords[i](0), coords[j](1), coords[k](2));
         VectorDIM dir = pt - _cntr;
         T proj = dir.dot(normal);
-        maxProj = max(proj, maxProj);
+        maxProj = std::max(proj, maxProj);
       }
     }
   }

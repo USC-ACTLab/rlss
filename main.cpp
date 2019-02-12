@@ -806,7 +806,7 @@ int main(int argc, char** argv) {
         SUCCESSIVE_FAILURE_COUNTS[r] = 0;
 
 #ifdef ACT_GENERATE_OUTPUT_JSON
-      if(!LAST_QP_FAILED[r]) {
+      if(!LAST_QP_FAILED[r] && dynamic_limits_OK) {
         trajectory_update_json["trajectory"] = json_spline(traj);
         frame_json["trajectories"].push_back(trajectory_update_json);
       }
