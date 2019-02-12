@@ -7,10 +7,6 @@ project (ACT_TRAJ_REPLANNING)
 
 
 add_subdirectory(lib/qpOASES)
-set(UNITTESTS OFF CACHE BOOL "disable osqp unittests")
-add_subdirectory(lib/osqp)
-
-#add_subdirectory(lib/splx)
 
 set(
 SVM_CPP_FILES
