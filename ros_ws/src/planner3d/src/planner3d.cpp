@@ -133,6 +133,7 @@ int main(int argc, char **argv) {
   const double scaling_multiplier = jsn["scaling_multiplier"];
   const double additional_time = jsn["additional_time"];
   const double output_frame_dt = jsn["output_frame_dt"];
+  const double lambda_hyperplane_cost = jsn["lambda_hyperplane_cost"];
 
   const double step = 0.01; // general purpose step
 
@@ -524,6 +525,21 @@ int main(int argc, char **argv) {
             cout << endl;
 #endif
 
+
+            /*
+            * voronoi fix to handle voronoi/svm/continuity constraint
+            * strange case
+            */
+            voronoi_fix<double, 3U>(corners, VORONOI_HYPERPLANES);
+
+#ifdef ACT_DEBUG
+            cout << "[DEBUG] Corners after Voronoi fix: ";
+            for(const auto& crnr: corners) {
+              cout << " " << string_vector<double, 3U>(crnr);
+            }
+            cout << endl;
+#endif
+
             if(curve_count > corners.size() - 1) {
 #ifdef ACT_DEBUG
               cout << "[DEBUG] Splitting segments" << endl;
@@ -541,6 +557,8 @@ int main(int argc, char **argv) {
               // this is just a sanity check
               assert(corners.size() == curve_count + 1);
             }
+
+
 
             // corners are ready here
             // load the trajectory with first curve_count segments
@@ -677,6 +695,19 @@ int main(int argc, char **argv) {
 
       // initial guesses are set here
 
+
+      // this is for adding hp costs later
+      class hp_constraint {
+        public:
+          Hyperplane hp;
+          unsigned int piece_idx;
+          hp_constraint(const Hyperplane& h, unsigned int i): hp(h), piece_idx(i) {
+
+          }
+      };
+
+      vector<hp_constraint> hp_constraints;
+
       /*
       * Add every constraint that is not related to duration of curves here
       * Later in the loop we will add constraints and costs which
@@ -688,6 +719,7 @@ int main(int argc, char **argv) {
       // add voronoi constraints
       for(const auto& hp: VORONOI_HYPERPLANES) {
         traj.extendQPHyperplaneConstraint(QP_init, 0, hp);
+        hp_constraints.push_back(hp_constraint(hp, 0));
       }
 
 #ifdef ACT_GENERATE_OUTPUT_JSON
@@ -724,6 +756,7 @@ int main(int argc, char **argv) {
 #endif
         for(const auto& hp: hyperplanes) {
           traj.extendQPHyperplaneConstraint(QP_init, piece_idx, hp);
+          hp_constraints.push_back(hp_constraint(hp, piece_idx));
         }
       }
 
@@ -772,6 +805,12 @@ int main(int argc, char **argv) {
             const VectorDIM endpt = origtraj.eval(min(ct + time_forward, TOTAL_TIMES[r]), 0);
             traj.extendQPPositionAt(qp, time_forward, endpt, theta_factor * (i+1));
           }
+        }
+
+        // add hp costs
+        for(const auto& constraint: hp_constraints) {
+          traj.extendQPHyperplaneCost(qp, constraint.piece_idx, constraint.hp,
+            lambda_hyperplane_cost);
         }
 
         // merge matrices
@@ -962,5 +1001,8 @@ int main(int argc, char **argv) {
   json_outp_file.close();
 #endif
 
+
+
   return 0;
+
 }
