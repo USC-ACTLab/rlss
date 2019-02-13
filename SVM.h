@@ -271,7 +271,7 @@ vector<Eigen::Hyperplane<T, 3U> > svm3d(const vector<Eigen::AlignedBox<T, 3U>>& 
       hp = _16_8_seperate<T>(robot_points, obstacle_points);
     } else {
       // generic case
-      cout << "NOT IMPLEMENTED" << endl;
+      cout << "[svm3d] NOT IMPLEMENTED: " << robot_points.size() << " " << obstacle_points.size() << endl;
       exit(0);
     }
 

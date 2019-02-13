@@ -129,7 +129,7 @@ class PointCloudBase {
         for(typename std::vector<VectorDIM>::size_type i = 0; i < _pts.size(); i++) {
           if(std::find(comb.begin(), comb.end(), i) == comb.end()) {
             T dist = hp.signedDistance(_pts[i]);
-            cout << i << endl;
+            //cout << i << endl;
             if(dist < 0) {
               everythingPositive = false;
             } else if(dist > 0) {
@@ -142,11 +142,11 @@ class PointCloudBase {
           Normals should point inside of the obstacle
         */
         if(everythingNegative) {
-          cout << "everything neg" << endl;
+          //cout << "everything neg" << endl;
           hp.normal() = -1 * hp.normal();
           hp.offset() = -1 * hp.offset();
         } else if(everythingPositive) {
-          cout << "everything pos" << endl;
+          //cout << "everything pos" << endl;
 
         } else {
           continue;

@@ -97,6 +97,8 @@ int main(int argc, char** argv) {
   const vector<double> max_derivative_magnitudes = jsn["max_derivative_magnitudes"];
   const vector<double> lambdas_integrated_squared_derivative
     = jsn["lambdas_integrated_squared_derivative"];
+  const double grid_min = jsn["grid_min"];
+  const double grid_max = jsn["grid_max"];
   const double scaling_multiplier = jsn["scaling_multiplier"];
   const double additional_time = jsn["additional_time"];
   const double output_frame_dt = jsn["output_frame_dt"];
@@ -130,7 +132,7 @@ int main(int argc, char** argv) {
     obs.convexHull();
     OBSTACLES.push_back(obs);
   }
-  OccupancyGrid3D<double> OCCUPANCY_GRID(OBSTACLES, cell_size, -5, 25, -5, 25, -5, 25);
+  OccupancyGrid3D<double> OCCUPANCY_GRID(OBSTACLES, cell_size, grid_min, grid_max, grid_min, grid_max, grid_min, grid_max);
   cout << "Occupied cell count: " << OCCUPANCY_GRID._occupied_boxes.size() << endl;
 
   /* Get original trajectories */
@@ -292,8 +294,9 @@ int main(int argc, char** argv) {
 #endif
 
 #ifdef ACT_GENERATE_OUTPUT_JSON
-      frame_json["voronoi_hyperplanes"].push_back(
-        json_voronoi_hyperplanes_of_robot<double, 3U>(VORONOI_HYPERPLANES, r));
+      if(!VORONOI_HYPERPLANES.empty())
+        frame_json["voronoi_hyperplanes"].push_back(
+          json_voronoi_hyperplanes_of_robot<double, 3U>(VORONOI_HYPERPLANES, r));
 #endif
 
       /*
@@ -658,6 +661,9 @@ int main(int argc, char** argv) {
       */
       vector<QPMatrices> QP_init = traj.getQPMatrices();
 
+
+      //constain decision variables to the grid cube
+      traj.extendQPDecisionConstraint(QP_init, grid_min, grid_max);
 
       // add voronoi constraints
       for(const auto& hp: VORONOI_HYPERPLANES) {
