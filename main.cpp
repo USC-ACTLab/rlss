@@ -661,7 +661,7 @@ int main(int argc, char** argv) {
 
       // add voronoi constraints
       for(const auto& hp: VORONOI_HYPERPLANES) {
-        traj.extendQPHyperplaneConstraint(QP_init, 0, hp);
+        traj.extendQPHyperplaneConstraint(QP_init, 0, hp, true, 1);
         hp_constraints.push_back(hp_constraint(hp, 0));
       }
 
@@ -698,7 +698,7 @@ int main(int argc, char** argv) {
         json_svm_hyperplanes_of_piece_insert<double, 3U>(svm_hyperplanes_json["hyperplanes"], hyperplanes, piece_idx);
 #endif
         for(const auto& hp: hyperplanes) {
-          traj.extendQPHyperplaneConstraint(QP_init, piece_idx, hp);
+          traj.extendQPHyperplaneConstraint(QP_init, piece_idx, hp, piece_idx == 0, 1);
           hp_constraints.push_back(hp_constraint(hp, piece_idx));
         }
       }
