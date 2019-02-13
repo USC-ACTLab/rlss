@@ -1,7 +1,7 @@
 {
   "trajectories": "../test_data/3dtrajectories/swap4/",
   "scale_traj": 1.0,
-  "obstacles": "../test_data/3dobstacles/1obstacle/",
+  "obstacles": "../test_data/3dobstacles/noobstacle/",
   "robot_radius": 0.23,
   "cell_size": 0.5,
   "max_derivative_magnitudes": [-1, 2, 4],
@@ -17,6 +17,7 @@
   "statistics_output_file": "stat.json",
   "output_frame_dt": 0.01,
   "lambdas_integrated_squared_derivative": [-1, 1.0, 0.5, 0.0, 0.0],
+  "lambda_hyperplane_cost": 0,
   "scaling_multiplier": 1.2,
   "additional_time": 5
 }

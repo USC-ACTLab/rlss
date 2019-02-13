@@ -21,6 +21,9 @@ namespace ACT {
 template<typename T, unsigned int DIM>
 using VectorDIM = Eigen::Matrix<T, DIM, 1U>;
 
+using Eigen::Hyperplane;
+using Eigen::Matrix;
+
 // trim from start
 static inline std::string &ltrim(std::string &s) {
     s.erase(s.begin(), std::find_if(s.begin(), s.end(),
@@ -206,6 +209,7 @@ vector<VectorDIM<T, DIM>, Eigen::aligned_allocator<VectorDIM<T, DIM> > >
 
   vector<PQSegment> segments;
   while(!pq.empty()) {
+using Eigen::Hyperplane;
     segments.push_back(pq.top());
     pq.pop();
   }
@@ -232,6 +236,45 @@ vector<VectorDIM<T, DIM>, Eigen::aligned_allocator<VectorDIM<T, DIM> > >
   }
 
   return new_corners;
+}
+
+template<class T, unsigned int DIM>
+void voronoi_fix(vector<VectorDIM<T,DIM>,
+  Eigen::aligned_allocator<VectorDIM<T, DIM>>>& corners,
+  const vector<Hyperplane<T, DIM>>& VORONOI_HYPERPLANES) {
+  assert(corners.size() >= 2);
+  using VectorDIM = VectorDIM<T, DIM>;
+  using Hyperplane = Hyperplane<T, DIM>;
+
+
+  bool needs_split = false;
+  T min_distance = std::numeric_limits<T>::infinity();
+
+  const auto& first_corner = corners[0];
+  const auto& second_corner = corners[1];
+
+  VectorDIM split_loc;
+
+  for(const auto& hp: VORONOI_HYPERPLANES) {
+
+    if(hp.signedDistance(second_corner) > 0 && hp.signedDistance(first_corner) < 0) {
+      needs_split = true;
+
+      T k = (-hp.offset() - first_corner.dot(hp.normal())) /
+        (second_corner.dot(hp.normal()) - first_corner.dot(hp.normal()));
+      VectorDIM pt = first_corner + k * (second_corner - first_corner);
+      T dist = (pt - first_corner).squaredNorm();
+      if(dist < min_distance) {
+        min_distance = dist;
+        split_loc = pt;
+      }
+    }
+  }
+
+  if(needs_split) {
+    split_loc = split_loc - (split_loc - first_corner) * 0.01;
+    corners.insert(corners.begin() + 1, split_loc);
+  }
 }
 
 }
