@@ -20,6 +20,7 @@
 #include "ros/ros.h"
 #include "crazyflie_driver/FullState.h"
 #include <crazyflie_driver/Takeoff.h>
+#include <crazyflie_driver/Land.h>
 #include <crazyflie_driver/GoTo.h>
 #include <tf/transform_listener.h>
 
@@ -271,6 +272,9 @@ int main(int argc, char** argv) {
 
   ros::service::waitForService("/" + robots[robotIdx] + "/takeoff");
   ros::ServiceClient serviceTakeoff = nh.serviceClient<crazyflie_driver::Takeoff>("/" + robots[robotIdx] + "/takeoff");
+
+  ros::service::waitForService("/" + robots[robotIdx] + "/land");
+  ros::ServiceClient serviceLand = nh.serviceClient<crazyflie_driver::Land>("/" + robots[robotIdx] + "/land");
 
   ros::service::waitForService("/" + robots[robotIdx] + "/go_to");
   ros::ServiceClient serviceGoTo = nh.serviceClient<crazyflie_driver::GoTo>("/" + robots[robotIdx] + "/go_to");
@@ -969,7 +973,7 @@ int main(int argc, char** argv) {
       auto vel = traj.eval(dt * (SUCCESSIVE_FAILURE_COUNTS[r] + 1), 1);
       auto acc = traj.eval(dt * (SUCCESSIVE_FAILURE_COUNTS[r] + 1), 2);
       auto jerk = traj.eval(dt * (SUCCESSIVE_FAILURE_COUNTS[r] + 1), 3);
-      
+
       // auto pos = origtraj.eval(min(ct, TOTAL_TIMES[r]), 0);
       // auto vel = origtraj.eval(min(ct, TOTAL_TIMES[r]), 1);
       // auto acc = origtraj.eval(min(ct, TOTAL_TIMES[r]), 2);
@@ -1052,6 +1056,34 @@ int main(int argc, char** argv) {
 #endif
 
   // attempt to land...
+
+  // 1. use goTo to update the high-level setpoint
+  {
+    crazyflie_driver::GoTo srv;
+    srv.request.groupMask = 0;
+    srv.request.relative = false;
+    srv.request.goal.x = CURRENT_STATES[robotIdx][0](0);
+    srv.request.goal.y = CURRENT_STATES[robotIdx][0](1);
+    srv.request.goal.z = CURRENT_STATES[robotIdx][0](2);
+    srv.request.yaw = 0;
+    srv.request.duration = ros::Duration(0.1);
+    serviceGoTo.call(srv);
+  }
+
+  // 2. wait until high-level took over from low level (2s in default firmware)
+  ros::Duration(2.0).sleep();
+
+  // 3. land
+  {
+    crazyflie_driver::Land srv;
+    srv.request.groupMask = 0;
+    srv.request.height = 0.05;
+    srv.request.duration = ros::Duration(2.0);
+    serviceLand.call(srv);
+    ros::Duration(2.5).sleep();
+  }
+
+#if 0
   while (true) {
     desired_state_msg.header.seq += 1;
     desired_state_msg.header.stamp = ros::Time::now();
@@ -1072,6 +1104,7 @@ int main(int argc, char** argv) {
     cmdStop_publisher.publish(empty_msg);
     rate.sleep();
   }
+#endif
 
 
   return 0;
