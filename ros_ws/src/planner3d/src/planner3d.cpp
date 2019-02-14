@@ -72,7 +72,7 @@ void waitForStartTrajectoryCommand()
   socket.close();
 }
 
-int main(int argc, char **argv) {
+int main(int argc, char** argv) {
 
 #ifdef ACT_DEBUG
   cout << "ACT_DEBUG" << endl;
@@ -139,13 +139,14 @@ int main(int argc, char **argv) {
   const vector<double> max_derivative_magnitudes = jsn["max_derivative_magnitudes"];
   const vector<double> lambdas_integrated_squared_derivative
     = jsn["lambdas_integrated_squared_derivative"];
+  const double grid_min = jsn["grid_min"];
+  const double grid_max = jsn["grid_max"];
   const double scaling_multiplier = jsn["scaling_multiplier"];
   const double additional_time = jsn["additional_time"];
   const double output_frame_dt = jsn["output_frame_dt"];
   const double lambda_hyperplane_cost = jsn["lambda_hyperplane_cost"];
 
   const double step = 0.01; // general purpose step
-
 
 
 #ifdef ACT_STATISTICS
@@ -173,7 +174,7 @@ int main(int argc, char **argv) {
     obs.convexHull();
     OBSTACLES.push_back(obs);
   }
-  OccupancyGrid3D<double> OCCUPANCY_GRID(OBSTACLES, cell_size, -5, 5, -5, 5, -5, 5);
+  OccupancyGrid3D<double> OCCUPANCY_GRID(OBSTACLES, cell_size, grid_min, grid_max, grid_min, grid_max, grid_min, grid_max);
   cout << "Occupied cell count: " << OCCUPANCY_GRID._occupied_boxes.size() << endl;
 
   /* Get original trajectories */
@@ -754,9 +755,12 @@ int main(int argc, char **argv) {
       vector<QPMatrices> QP_init = traj.getQPMatrices();
 
 
+      //constain decision variables to the grid cube
+      traj.extendQPDecisionConstraint(QP_init, grid_min, grid_max);
+
       // add voronoi constraints
       for(const auto& hp: VORONOI_HYPERPLANES) {
-        traj.extendQPHyperplaneConstraint(QP_init, 0, hp);
+        traj.extendQPHyperplaneConstraint(QP_init, 0, hp, true, 1);
         hp_constraints.push_back(hp_constraint(hp, 0));
       }
 
@@ -793,7 +797,7 @@ int main(int argc, char **argv) {
         json_svm_hyperplanes_of_piece_insert<double, 3U>(svm_hyperplanes_json["hyperplanes"], hyperplanes, piece_idx);
 #endif
         for(const auto& hp: hyperplanes) {
-          traj.extendQPHyperplaneConstraint(QP_init, piece_idx, hp);
+          traj.extendQPHyperplaneConstraint(QP_init, piece_idx, hp, piece_idx == 0, 1);
           hp_constraints.push_back(hp_constraint(hp, piece_idx));
         }
       }
