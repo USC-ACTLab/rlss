@@ -19,6 +19,8 @@
 
 #include "ros/ros.h"
 #include "crazyflie_driver/FullState.h"
+#include <crazyflie_driver/Takeoff.h>
+#include <crazyflie_driver/GoTo.h>
 #include <tf/transform_listener.h>
 
 #include <boost/asio/ip/udp.hpp>
@@ -47,7 +49,7 @@ void waitForStartTrajectoryCommand()
   boost::asio::io_service ioserv;
   udp::socket socket(ioserv);
   socket.open(udp::v4());
-  udp::endpoint ep(boost::asio::ip::address_v4::any(), 5007);
+  udp::endpoint ep(boost::asio::ip::address_v4::any(), 5008);
   boost::asio::socket_base::reuse_address option(true);
   socket.set_option(option);
   socket.bind(ep);
@@ -59,7 +61,7 @@ void waitForStartTrajectoryCommand()
   std::array<char, 128> recv_buf;
 
   ROS_INFO("Waiting for startTrajectory command!");
-  while(true) {
+  while(ros::ok()) {
     int len = socket.receive(boost::asio::buffer(recv_buf));
     string socketdata(recv_buf.data(), len);
     cout << socketdata << endl;
@@ -87,9 +89,6 @@ int main(int argc, char **argv) {
   ros::init(argc, argv, "planner3d");
   ros::NodeHandle nh;
 
-  crazyflie_driver::FullState desired_state_msg;
-  ros::Publisher desired_state_publisher = nh.advertise<crazyflie_driver::FullState>("desired_state", 1000);
-
   tf::TransformListener transformlistener;
 
   // Read parameters
@@ -105,8 +104,18 @@ int main(int argc, char **argv) {
   nl.getParam("robotIdx", robotIdx);
 
 
+  crazyflie_driver::FullState desired_state_msg;
+  ros::Publisher desired_state_publisher = nh.advertise<crazyflie_driver::FullState>("/" + robots[robotIdx] + "/cmd_full_state", 1);
+
+  ros::Publisher cmdStop_publisher = nh.advertise<std_msgs::Empty>("/" + robots[robotIdx] + "/cmd_stop", 1);
+
+
   // read config file
   ifstream cfg(config_path);
+  if (!cfg) {
+    std::cerr << "Couldn't find: " << config_path << endl;
+    return 1;
+  }
 
 
   json jsn = nlohmann::json::parse(cfg);
@@ -138,6 +147,7 @@ int main(int argc, char **argv) {
   const double step = 0.01; // general purpose step
 
 
+
 #ifdef ACT_STATISTICS
   json stats;
 #endif
@@ -163,7 +173,7 @@ int main(int argc, char **argv) {
     obs.convexHull();
     OBSTACLES.push_back(obs);
   }
-  OccupancyGrid3D<double> OCCUPANCY_GRID(OBSTACLES, cell_size, -5, 25, -5, 25, -5, 25);
+  OccupancyGrid3D<double> OCCUPANCY_GRID(OBSTACLES, cell_size, -5, 5, -5, 5, -5, 5);
   cout << "Occupied cell count: " << OCCUPANCY_GRID._occupied_boxes.size() << endl;
 
   /* Get original trajectories */
@@ -257,6 +267,33 @@ int main(int argc, char **argv) {
 
   double SIMULATION_DURATION = MAX_TOTAL_TIME + additional_time;
 
+
+  ros::service::waitForService("/" + robots[robotIdx] + "/takeoff");
+  ros::ServiceClient serviceTakeoff = nh.serviceClient<crazyflie_driver::Takeoff>("/" + robots[robotIdx] + "/takeoff");
+
+  ros::service::waitForService("/" + robots[robotIdx] + "/go_to");
+  ros::ServiceClient serviceGoTo = nh.serviceClient<crazyflie_driver::GoTo>("/" + robots[robotIdx] + "/go_to");
+  {
+    crazyflie_driver::Takeoff srv;
+    srv.request.groupMask = 0;
+    srv.request.height = CURRENT_STATES[robotIdx][0](2);
+    srv.request.duration = ros::Duration(2.0);
+    serviceTakeoff.call(srv);
+    ros::Duration(2.5).sleep();
+  }
+  {
+    crazyflie_driver::GoTo srv;
+    srv.request.groupMask = 0;
+    srv.request.relative = false;
+    srv.request.goal.x = CURRENT_STATES[robotIdx][0](0);
+    srv.request.goal.y = CURRENT_STATES[robotIdx][0](1);
+    srv.request.goal.z = CURRENT_STATES[robotIdx][0](2);
+    srv.request.yaw = 0;
+    srv.request.duration = ros::Duration(2.0);
+    serviceGoTo.call(srv);
+    ros::Duration(2.5).sleep();
+  }
+
   waitForStartTrajectoryCommand();
 
   ros::Rate rate((int)(1.0/dt + 0.5));
@@ -349,8 +386,9 @@ int main(int argc, char **argv) {
 #endif
 
 #ifdef ACT_GENERATE_OUTPUT_JSON
-      frame_json["voronoi_hyperplanes"].push_back(
-        json_voronoi_hyperplanes_of_robot<double, 3U>(VORONOI_HYPERPLANES, r));
+      if(!VORONOI_HYPERPLANES.empty())
+        frame_json["voronoi_hyperplanes"].push_back(
+          json_voronoi_hyperplanes_of_robot<double, 3U>(VORONOI_HYPERPLANES, r));
 #endif
 
       /*
@@ -926,6 +964,14 @@ int main(int argc, char **argv) {
       auto pos = traj.eval(dt * (SUCCESSIVE_FAILURE_COUNTS[r] + 1), 0);
       auto vel = traj.eval(dt * (SUCCESSIVE_FAILURE_COUNTS[r] + 1), 1);
       auto acc = traj.eval(dt * (SUCCESSIVE_FAILURE_COUNTS[r] + 1), 2);
+      auto jerk = traj.eval(dt * (SUCCESSIVE_FAILURE_COUNTS[r] + 1), 3);
+      
+      // auto pos = origtraj.eval(min(ct, TOTAL_TIMES[r]), 0);
+      // auto vel = origtraj.eval(min(ct, TOTAL_TIMES[r]), 1);
+      // auto acc = origtraj.eval(min(ct, TOTAL_TIMES[r]), 2);
+      // auto jerk = origtraj.eval(min(ct, TOTAL_TIMES[r]), 3);
+
+      // trajfile << pos << " " << vel << " " << acc << " " << jerk << std::endl;
 
 
       desired_state_msg.header.seq += 1;
@@ -950,8 +996,8 @@ int main(int argc, char **argv) {
       // compute omega
       const double yaw = 0.0;
       const double dyaw = 0.0;
-      auto jerk = traj.eval(dt * (SUCCESSIVE_FAILURE_COUNTS[r] + 1), 3);
-      auto thrust = acc + VectorDIM(0.0, 0.0, 9.81); // add gravity
+      VectorDIM gravity(0.0, 0.0, 9.81);
+      auto thrust = acc + gravity; // add gravity
       auto z_body = thrust.normalized();
       auto x_world = VectorDIM(cos(yaw), sin(yaw), 0);
       auto y_body = z_body.cross(x_world).normalized();
@@ -967,12 +1013,12 @@ int main(int argc, char **argv) {
     }
 
 
-    // for(int r = 0; r < robot_count; r++) {
-    //   const auto& traj = TRAJECTORIES[r];
-    //   for(int c = 0; c <= max_continuity; c++) {
-    //     CURRENT_STATES[r][c] = traj.eval(dt * (SUCCESSIVE_FAILURE_COUNTS[r] + 1), c);
-    //   }
-    // }
+    for(int r = 0; r < robot_count; r++) {
+      const auto& traj = TRAJECTORIES[r];
+      for(int c = 1; c <= max_continuity; c++) {
+        CURRENT_STATES[r][c] = traj.eval(dt * (SUCCESSIVE_FAILURE_COUNTS[r] + 1), c);
+      }
+    }
 
 #ifdef ACT_GENERATE_OUTPUT_JSON
     for(double t = 0; t < dt - output_frame_dt / 2; t += output_frame_dt) {
@@ -1001,6 +1047,27 @@ int main(int argc, char **argv) {
   json_outp_file.close();
 #endif
 
+  // attempt to land...
+  while (true) {
+    desired_state_msg.header.seq += 1;
+    desired_state_msg.header.stamp = ros::Time::now();
+
+    const double v_max = 0.5;
+    desired_state_msg.pose.position.z -= v_max * dt;
+    if (desired_state_msg.pose.position.z < 0) {
+      break;
+    }
+
+    desired_state_publisher.publish(desired_state_msg);
+
+    rate.sleep();
+  }
+
+  for (size_t i = 0; i < 50; ++i) {
+    std_msgs::Empty empty_msg;
+    cmdStop_publisher.publish(empty_msg);
+    rate.sleep();
+  }
 
 
   return 0;

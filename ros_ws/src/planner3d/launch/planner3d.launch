@@ -7,12 +7,11 @@
 <launch>
 
   <rosparam>
-    config_path: "config.json"
+    config_path: "/home/baskin/mr-trajectory-replanning/config.json"
     robots: [
-      cf1,
-      cf2
+      cf18
     ]
-  <rosparam>
+  </rosparam>
 
   <node name="cf1" pkg="planner3d" type="planner3d" output="screen">
     <rosparam>
@@ -20,10 +19,10 @@
     </rosparam>
   </node>
 
-  <node name="cf2" pkg="planner3d" type="planner3d" output="screen">
+<!--   <node name="cf2" pkg="planner3d" type="planner3d" output="screen">
     <rosparam>
       robotIdx: 1
     </rosparam>
-  </node>
+  </node> -->
 
 </launch>
