@@ -64,11 +64,11 @@ class Frame(object):
     def toMarkerArray(self,timestamp=None):
         markers = []
         markers.extend(self.path_container.get_all_markers(float(self.frame_dt)*self.step))
-        markers.extend(self.obstacle_container.get_all_markers())
+        #markers.extend(self.obstacle_container.get_all_markers())
         markers.extend(self.occupied_cells_container.get_all_markers())
         markers.extend(self.robot_container.get_all_markers())
-        markers.extend(self.voronoi_container.get_all_markers())
-        markers.extend(self.svm_container.get_all_markers())
+        #markers.extend(self.voronoi_container.get_all_markers())
+        #markers.extend(self.svm_container.get_all_markers())
         msg = MarkerArray()
         msg.markers = markers
         sq = 0

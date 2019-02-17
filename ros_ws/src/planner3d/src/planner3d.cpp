@@ -140,8 +140,9 @@ int main(int argc, char** argv) {
   const vector<double> max_derivative_magnitudes = jsn["max_derivative_magnitudes"];
   const vector<double> lambdas_integrated_squared_derivative
     = jsn["lambdas_integrated_squared_derivative"];
-  const double grid_min = jsn["grid_min"];
-  const double grid_max = jsn["grid_max"];
+  const vector<double> grid_min = jsn["grid_min"];
+  const vector<double> grid_max = jsn["grid_max"];
+
   const double scaling_multiplier = jsn["scaling_multiplier"];
   const double additional_time = jsn["additional_time"];
   const double output_frame_dt = jsn["output_frame_dt"];
@@ -175,7 +176,7 @@ int main(int argc, char** argv) {
     obs.convexHull();
     OBSTACLES.push_back(obs);
   }
-  OccupancyGrid3D<double> OCCUPANCY_GRID(OBSTACLES, cell_size, grid_min, grid_max, grid_min, grid_max, grid_min, grid_max);
+  OccupancyGrid3D<double> OCCUPANCY_GRID(OBSTACLES, cell_size, grid_min[0], grid_max[0], grid_min[1], grid_max[1], grid_min[2], grid_max[2]);
   cout << "Occupied cell count: " << OCCUPANCY_GRID._occupied_boxes.size() << endl;
 
   /* Get original trajectories */
@@ -303,6 +304,7 @@ int main(int argc, char** argv) {
 
   ros::Rate rate((int)(1.0/dt + 0.5));
   ros::Time start = ros::Time::now();
+  ros::Time lastIteration = start;
   while (ros::ok()) {
     ros::spinOnce();
     ros::Time now = ros::Time::now();
@@ -311,6 +313,11 @@ int main(int argc, char** argv) {
     if (ct > SIMULATION_DURATION) {
       break;
     }
+    ros::Duration iterationDt = now - lastIteration;
+    if (iterationDt.toSec() > dt + 1e-3) {
+      ROS_WARN("Computation too slow! %f", iterationDt.toSec());
+    }
+    lastIteration = now;
 
     cout << endl << "#######" << endl << "#### Current Time: " << ct
       << "/" << SIMULATION_DURATION << " ####" << endl << "#######" << endl;
@@ -490,8 +497,10 @@ int main(int argc, char** argv) {
           // we have not less than desired_horizon time
           for(target_time = ct + desired_horizon;
             target_time <= TOTAL_TIMES[r]; target_time += step) {
+            auto pos = origtraj.eval(target_time, 0);
+            auto idx = OCCUPANCY_GRID.getIndex(pos);
             if(!origtraj.intersects(OCCUPANCY_GRID._occupied_boxes,
-              target_time, target_time, robot_radius)) {
+              target_time, target_time, robot_radius) && !OCCUPANCY_GRID.isOccupied(idx, robot_radius)) {
               target_time_valid = true;
               break;
             }
@@ -512,14 +521,17 @@ int main(int argc, char** argv) {
           const VectorDIM& currentPos = state[0];
           const VectorDIM targetPos = origtraj.eval(target_time, 0);
 
-#ifdef ACT_DEBUG
-          cout << "[DEBUG] Discrete planning attempt from currentPos: "
-            << string_vector<double, 3U>(currentPos) <<" to targetPos: "
-            << string_vector<double, 3U>(targetPos) << endl;
-#endif
-
           auto start_idx = OCCUPANCY_GRID.getIndex(currentPos);
           auto target_idx = OCCUPANCY_GRID.getIndex(targetPos);
+
+#ifdef ACT_DEBUG
+          cout << "[DEBUG] Discrete planning attempt from currentPos: "
+            << string_vector<double, 3U>(currentPos) << "," 
+            << OCCUPANCY_GRID.isOccupied(start_idx, robot_radius) 
+            << " to targetPos: "
+            << string_vector<double, 3U>(targetPos) << "," 
+            << OCCUPANCY_GRID.isOccupied(target_idx, robot_radius) << endl;
+#endif
 
           discreteSearch::State startState(start_idx.i,
               start_idx.j, start_idx.k, discreteSearch::Direction::NONE);
@@ -538,7 +550,7 @@ int main(int argc, char** argv) {
           discrete_planning_done = targetStateValid && astar.search(startState, solution);
 
 #ifdef ACT_DEBUG
-          cout << "[DEBUG] discrete planning successful: " << discrete_planning_done << endl;
+          cout << "[DEBUG] discrete planning successful: " << discrete_planning_done << "," << targetStateValid << endl;
 #endif
 
           if(discrete_planning_done) {
@@ -796,6 +808,16 @@ int main(int argc, char** argv) {
         if(enable_svm)
           hyperplanes = svm3d(robot_boxes, OCCUPANCY_GRID._occupied_boxes);
 
+#ifdef ACT_DEBUG
+        for(const auto& hp: hyperplanes) {
+          for(const auto& pt: piece->m_controlPoints) {
+            if(hp.signedDistance(pt) > 0) {
+              cout << "[DEBUG] SVM failed for piece " << piece_idx << endl;
+            }
+          }
+        }
+#endif
+
 
 #ifdef ACT_GENERATE_OUTPUT_JSON
         json_svm_hyperplanes_of_piece_insert<double, 3U>(svm_hyperplanes_json["hyperplanes"], hyperplanes, piece_idx);
@@ -969,10 +991,10 @@ int main(int argc, char** argv) {
 
       // const auto& traj = TRAJECTORIES[r];
 
-      auto pos = traj.eval(dt * (SUCCESSIVE_FAILURE_COUNTS[r] + 1), 0);
-      auto vel = traj.eval(dt * (SUCCESSIVE_FAILURE_COUNTS[r] + 1), 1);
-      auto acc = traj.eval(dt * (SUCCESSIVE_FAILURE_COUNTS[r] + 1), 2);
-      auto jerk = traj.eval(dt * (SUCCESSIVE_FAILURE_COUNTS[r] + 1), 3);
+      auto pos = traj.eval(dt * (SUCCESSIVE_FAILURE_COUNTS[r] + 2), 0);
+      auto vel = traj.eval(dt * (SUCCESSIVE_FAILURE_COUNTS[r] + 2), 1);
+      auto acc = traj.eval(dt * (SUCCESSIVE_FAILURE_COUNTS[r] + 2), 2);
+      auto jerk = traj.eval(dt * (SUCCESSIVE_FAILURE_COUNTS[r] + 2), 3);
 
       // auto pos = origtraj.eval(min(ct, TOTAL_TIMES[r]), 0);
       // auto vel = origtraj.eval(min(ct, TOTAL_TIMES[r]), 1);
@@ -1024,7 +1046,7 @@ int main(int argc, char** argv) {
     for(int r = 0; r < robot_count; r++) {
       const auto& traj = TRAJECTORIES[r];
       for(int c = 1; c <= max_continuity; c++) {
-        CURRENT_STATES[r][c] = traj.eval(dt * (SUCCESSIVE_FAILURE_COUNTS[r] + 1), c);
+        CURRENT_STATES[r][c] = traj.eval(dt * (SUCCESSIVE_FAILURE_COUNTS[r] + 2), c);
       }
     }
 
@@ -1070,8 +1092,8 @@ int main(int argc, char** argv) {
     serviceGoTo.call(srv);
   }
 
-  // 2. wait until high-level took over from low level (2s in default firmware)
-  ros::Duration(2.0).sleep();
+  // 2. wait until high-level took over from low level (2s in default firmware; 0.5 in modified firmware)
+  ros::Duration(0.5).sleep();
 
   // 3. land
   {

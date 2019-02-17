@@ -97,8 +97,9 @@ int main(int argc, char** argv) {
   const vector<double> max_derivative_magnitudes = jsn["max_derivative_magnitudes"];
   const vector<double> lambdas_integrated_squared_derivative
     = jsn["lambdas_integrated_squared_derivative"];
-  const double grid_min = jsn["grid_min"];
-  const double grid_max = jsn["grid_max"];
+  const vector<double> grid_min = jsn["grid_min"];
+  const vector<double> grid_max = jsn["grid_max"];
+
   const double scaling_multiplier = jsn["scaling_multiplier"];
   const double additional_time = jsn["additional_time"];
   const double output_frame_dt = jsn["output_frame_dt"];
@@ -132,7 +133,7 @@ int main(int argc, char** argv) {
     obs.convexHull();
     OBSTACLES.push_back(obs);
   }
-  OccupancyGrid3D<double> OCCUPANCY_GRID(OBSTACLES, cell_size, grid_min, grid_max, grid_min, grid_max, grid_min, grid_max);
+  OccupancyGrid3D<double> OCCUPANCY_GRID(OBSTACLES, cell_size, grid_min[0], grid_max[0], grid_min[1], grid_max[1], grid_min[2], grid_max[2]);
   cout << "Occupied cell count: " << OCCUPANCY_GRID._occupied_boxes.size() << endl;
 
   /* Get original trajectories */
@@ -393,8 +394,10 @@ int main(int argc, char** argv) {
           // we have not less than desired_horizon time
           for(target_time = ct + desired_horizon;
             target_time <= TOTAL_TIMES[r]; target_time += step) {
+            auto pos = origtraj.eval(target_time, 0);
+            auto idx = OCCUPANCY_GRID.getIndex(pos);
             if(!origtraj.intersects(OCCUPANCY_GRID._occupied_boxes,
-              target_time, target_time, robot_radius)) {
+              target_time, target_time, robot_radius) && !OCCUPANCY_GRID.isOccupied(idx, robot_radius)) {
               target_time_valid = true;
               break;
             }
@@ -415,14 +418,17 @@ int main(int argc, char** argv) {
           const VectorDIM& currentPos = state[0];
           const VectorDIM targetPos = origtraj.eval(target_time, 0);
 
-#ifdef ACT_DEBUG
-          cout << "[DEBUG] Discrete planning attempt from currentPos: "
-            << string_vector<double, 3U>(currentPos) <<" to targetPos: "
-            << string_vector<double, 3U>(targetPos) << endl;
-#endif
-
           auto start_idx = OCCUPANCY_GRID.getIndex(currentPos);
           auto target_idx = OCCUPANCY_GRID.getIndex(targetPos);
+
+#ifdef ACT_DEBUG
+          cout << "[DEBUG] Discrete planning attempt from currentPos: "
+            << string_vector<double, 3U>(currentPos) << "," 
+            << OCCUPANCY_GRID.isOccupied(start_idx, robot_radius) 
+            << " to targetPos: "
+            << string_vector<double, 3U>(targetPos) << "," 
+            << OCCUPANCY_GRID.isOccupied(target_idx, robot_radius) << endl;
+#endif
 
           discreteSearch::State startState(start_idx.i,
               start_idx.j, start_idx.k, discreteSearch::Direction::NONE);
@@ -441,15 +447,15 @@ int main(int argc, char** argv) {
           discrete_planning_done = targetStateValid && astar.search(startState, solution);
 
 #ifdef ACT_DEBUG
-          cout << "[DEBUG] discrete planning successful: " << discrete_planning_done << endl;
+          cout << "[DEBUG] discrete planning successful: " << discrete_planning_done << "," << targetStateValid << endl;
 #endif
 
           if(discrete_planning_done) {
             vector<VectorDIM, Eigen::aligned_allocator<VectorDIM>> corners;
             corners.push_back(currentPos);
             const auto& firstSolutionState = solution.states[0].first;
-            //corners.push_back(OCCUPANCY_GRID.getCoordinates(firstSolutionState.x,
-            //  firstSolutionState.y, firstSolutionState.z));
+            corners.push_back(OCCUPANCY_GRID.getCoordinates(firstSolutionState.x,
+              firstSolutionState.y, firstSolutionState.z));
             for(unsigned int i = 0; i < solution.actions.size(); i++) {
               const auto& action = solution.actions[i].first;
               if(action != discreteSearch::Action::Forward) {
@@ -458,9 +464,9 @@ int main(int argc, char** argv) {
                   state.y, state.z));
               }
             }
-            //const auto& lastSolutionState = solution.states.back().first;
-            //corners.push_back(OCCUPANCY_GRID.getCoordinates(lastSolutionState.x,
-            //  lastSolutionState.y, lastSolutionState.z));
+            const auto& lastSolutionState = solution.states.back().first;
+            corners.push_back(OCCUPANCY_GRID.getCoordinates(lastSolutionState.x,
+              lastSolutionState.y, lastSolutionState.z));
             corners.push_back(targetPos);
 
 #ifdef ACT_DEBUG
@@ -699,6 +705,17 @@ int main(int argc, char** argv) {
         if(enable_svm)
           hyperplanes = svm3d(robot_boxes, OCCUPANCY_GRID._occupied_boxes);
 
+#ifdef ACT_DEBUG
+        for(unsigned int i = 0 ; i < hyperplanes.size(); i++) {
+          const auto& hp = hyperplanes[i];
+          for(const auto& pt: piece->m_controlPoints) {
+            if(hp.signedDistance(pt) > 0) {
+              cout << "[DEBUG] SVM failed for piece " << piece_idx << endl;
+            }
+          }
+        }
+#endif
+
 
 #ifdef ACT_GENERATE_OUTPUT_JSON
         json_svm_hyperplanes_of_piece_insert<double, 3U>(svm_hyperplanes_json["hyperplanes"], hyperplanes, piece_idx);
@@ -744,7 +761,7 @@ int main(int argc, char** argv) {
           auto bezptr = std::static_pointer_cast<Bezier<double, 3U>>(
             traj.getPiece(traj.numPieces() - 1));
           const VectorDIM& endpt = bezptr->m_controlPoints.back();
-          traj.extendQPPositionAt(qp, traj.totalSpan(), endpt, 100);
+          traj.extendQPPositionAt(qp, traj.totalSpan(), endpt, 10);
         } else {
           double time_forward = 0;
           double theta_factor = 0.5 / curve_count;
@@ -771,6 +788,8 @@ int main(int argc, char** argv) {
             traj.extendQPContinuityConstraint(combinedQP, qp, j, i);
           }
         }
+
+        //cout << combinedQP.H.eigenvalues() << endl;
 
         // solve
         qpOASES::QProblem problem(combinedQP.x.rows(), combinedQP.A.rows());
@@ -799,9 +818,10 @@ int main(int argc, char** argv) {
         if(simpleStatus != 0) {
           LAST_QP_FAILED[r] = true;
 #ifdef ACT_DEBUG
-          cout << "[DEBUG] QP Failed" << endl;
+          cout << "[DEBUG] iter: " << allowed_tries - tries_remaining + 1 << ", QP Failed" << endl;
 #endif
         } else {
+          cout << "[DEBUG] iter: " << allowed_tries - tries_remaining + 1 << ", QP Succeeded" << endl;
           LAST_QP_FAILED[r] = false;
         }
 

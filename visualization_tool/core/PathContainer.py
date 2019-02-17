@@ -26,5 +26,5 @@ class PathContainer(object):
         res = []
         #was evalfrom
         res.extend([x.to_marker(0,granularity=50) for x in self.trajectories if x!=None])
-        res.extend([x.to_marker() for x in self.discrete_paths if x!=None])
+        #res.extend([x.to_marker() for x in self.discrete_paths if x!=None])
         return res

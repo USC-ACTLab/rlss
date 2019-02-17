@@ -11,7 +11,8 @@ class VoronoiContainer(object):
     def update(self,voronoi_hyperplanes_key):
         for el in voronoi_hyperplanes_key:
             rid = el["robot_id"]
-            self.voronois[rid] = Voronoi(el["hyperplanes"])
+            if "hyperplanes" in el:
+                self.voronois[rid] = Voronoi(el["hyperplanes"])
 
     def get_all_markers(self):
         res = []

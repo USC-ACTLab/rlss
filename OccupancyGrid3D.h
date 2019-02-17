@@ -81,13 +81,14 @@ class OccupancyGrid3D {
     OccupancyGrid3D(const std::vector<ACT::PointCloud<T, 3> >& obstacles, T stepsize,
       T xmin = -10.0, T xmax = 10.0, T ymin = -10.0, T ymax = 10.0, T zmin = -10.0, T zmax = 10.0):
       _stepsize(stepsize), _xmin(xmin), _xmax(xmax), _ymin(ymin), _ymax(ymax), _zmin(zmin), _zmax(zmax) {
-        _grid.resize(std::ceil((_xmax - _xmin) / _stepsize));
+        _grid.resize(std::ceil((_xmax - _xmin) / _stepsize + 1));
         unsigned int xidx = 0;
         for(T x = _xmin; x < _xmax; x += _stepsize, xidx++) {
-          _grid[xidx].resize(std::ceil((_ymax - _ymin) / _stepsize));
+          _grid[xidx].resize(std::ceil((_ymax - _ymin) / _stepsize + 1));
           unsigned int yidx = 0;
           for(T y = _ymin; y < _ymax; y += _stepsize, yidx++) {
-            _grid[xidx][yidx].resize(std::ceil((_zmax - _zmin) / _stepsize), false);
+            //std::cout << yidx << " " << _grid[xidx].size() << std::endl;
+            _grid[xidx][yidx].resize(std::ceil((_zmax - _zmin) / _stepsize + 1), false);
             unsigned int zidx = 0;
             for(T z = _zmin; z < _zmax; z += _stepsize, zidx++) {
               typename ACT::PointCloud<T, 3>::VectorDIM cubemin, cubemax;
@@ -101,6 +102,7 @@ class OccupancyGrid3D {
               for(auto obs : obstacles) {
                 if(obs.convexHullIntersects(cube)) {
                   _occupied_boxes.push_back(cube);
+                  //std::cout << xidx << " " << yidx << " " << zidx << std::endl;
                   _grid[xidx][yidx][zidx] = true;
                   break;
                 }
@@ -181,6 +183,15 @@ class OccupancyGrid3D {
         }
       }
       return false;
+    }
+
+    /*
+     * Check if the occupancy grid is occupied at point x,y,z so that when a robot
+     * with radius r stays at x,y,z no cells that touches to robot are occupied
+    */
+    bool isOccupied(const Index& idx, T r) const {
+      auto coord = getCoordinates(idx);
+      return isOccupied(coord[0], coord[1], coord[2], r);
     }
 
     /*

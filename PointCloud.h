@@ -400,6 +400,17 @@ class PointCloud<T, 3U> : public PointCloudBase<T, 3U> {
       const T ystep = (ymax - ymin) / (samplesPerDimension - 1);
       const T zstep = (zmax - zmin) / (samplesPerDimension - 1);
 
+      for(T x = xmin; x <= xmax; x += xstep) {
+        for(T y = ymin; y <= ymax; y += ystep) {
+          for(T z = zmin; z <= zmax; z += zstep) {
+            const VectorDIM pt(x, y, z);
+            if(this->pointInside(pt))
+              return true;
+          }
+        }
+      }
+
+/*
       for(T y = ymin; y <= ymax; y += ystep) {
         for(T z = zmin; z <= zmax; z += zstep) {
           const VectorDIM ptm(xmin, y, z);
@@ -429,6 +440,7 @@ class PointCloud<T, 3U> : public PointCloudBase<T, 3U> {
           }
         }
       }
+*/
       return false;
     }
   private:

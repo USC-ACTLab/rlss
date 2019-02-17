@@ -90,8 +90,8 @@ public:
     , m_robotRadius(robotRadius)
     , m_goal(goal)
   {
-
-    if (!(targetStateValid = stateValid(goal))) {
+    targetStateValid = stateValid(goal);
+    if (!targetStateValid) {
       //std::cerr << "GOAL not valid! goal: " << goal.x << " " << goal.y
       //  << " " << goal.z  << std::endl;
     }
