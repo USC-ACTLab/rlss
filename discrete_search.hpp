@@ -253,9 +253,23 @@ private:
       if(m_og.isOccupied(coord(0), coord(1), coord(2), m_robotRadius)) {
         return false;
       }
+
+      using VectorDIM = Eigen::Matrix<T, 3U, 1U>;
+      using AlignedBox = Eigen::AlignedBox<T, 3U>;
+
+      static const VectorDIM rad(m_robotRadius, m_robotRadius, m_robotRadius);
+      AlignedBox robot_box(coord - rad * 1.1, coord + rad * 1.1);
+
+      for(const auto& oth_box: m_og._other_robot_boxes) {
+        if(oth_box.intersects(robot_box)) {
+          return false;
+        }
+      }
+
     } catch(const typename OccupancyGrid3D<T>::OutOfBoundsException& exp) {
       return false;
     }
+
 
     return true;
 

@@ -87,67 +87,76 @@ for b in robot_boxes:
 
 
 
+fig = plt.figure(0)
+ax = fig.add_subplot(111, projection='3d')
+
+robot_polies = copy.deepcopy(ROBOT_POLIES)
+
+for p in robot_polies:
+    ax.add_collection3d(p)
+
+obs_poly = None
+plane = None
 for idx, box in enumerate(obstacle_boxes):
-    fig = plt.figure(idx)
-    ax = fig.add_subplot(111, projection='3d')
 
-    robot_polies = copy.deepcopy(ROBOT_POLIES)
-
-    for p in robot_polies:
-        ax.add_collection3d(p)
-
+    if obs_poly != None:
+        obs_poly.remove()
 
     obs_poly = generatePoly3D(box, facecolors = 'r')
     ax.add_collection3d(obs_poly)
 
     # ax + by + cz + d = 0
-    hp = hyperplanes[idx]
-    a = hp[0]
-    b = hp[1]
-    c = hp[2]
-    dist = hp[3]
-    p1 = [-1 * a * dist, -1 * b * dist, -1 * c * dist]
-    support = [1, 0, 0]
-    dot = abs(support[0] * a + support[1] * b + support[2] * c)
-    print(dot)
-    if(dot > 0.999999):
-        support = [0, 1, 0]
+    if idx < len(hyperplanes):
+        hp = hyperplanes[idx]
+        a = hp[0]
+        b = hp[1]
+        c = hp[2]
+        dist = hp[3]
+        p1 = [-1 * a * dist, -1 * b * dist, -1 * c * dist]
+        support = [1, 0, 0]
+        dot = abs(support[0] * a + support[1] * b + support[2] * c)
+        print(dot)
+        if(dot > 0.999999):
+            support = [0, 1, 0]
 
-    d = support[0]
-    e = support[1]
-    f = support[2]
+        d = support[0]
+        e = support[1]
+        f = support[2]
 
-    pts = []
-
-
-    mult = 10;
-    v = [b*f-c*e, c*d-a*f,a*e-b*d]
-    pts.append([p1[0] + v[0] * mult, p1[1] + v[1] * mult, p1[2] + v[2] * mult])
-    d = v[0]
-    e = v[1]
-    f = v[2]
-    v = [b*f-c*e, c*d-a*f,a*e-b*d]
-    pts.append([p1[0] + v[0] * mult, p1[1] + v[1] * mult, p1[2] + v[2] * mult])
-    d = v[0]
-    e = v[1]
-    f = v[2]
-    v = [b*f-c*e, c*d-a*f,a*e-b*d]
-    pts.append([p1[0] + v[0] * mult, p1[1] + v[1] * mult, p1[2] + v[2] * mult])
-    d = v[0]
-    e = v[1]
-    f = v[2]
-    v = [b*f-c*e, c*d-a*f,a*e-b*d]
-    pts.append([p1[0] + v[0] * mult, p1[1] + v[1] * mult, p1[2] + v[2] * mult])
-
-    surfaces = [[pts[0], pts[1], pts[2], pts[3]]]
-
-    print(surfaces)
-
-    plane = Poly3DCollection(surfaces, linewidths = 1, alpha = 0.5)
-    plane.set_facecolor('g')
-
-    ax.add_collection3d(plane)
-    ax.plot([p1[0], p1[0] + a], [p1[1], p1[1] + b], [p1[2], p1[2] + c])
+        pts = []
 
 
-plt.show()
+        mult = 10;
+        v = [b*f-c*e, c*d-a*f,a*e-b*d]
+        pts.append([p1[0] + v[0] * mult, p1[1] + v[1] * mult, p1[2] + v[2] * mult])
+        d = v[0]
+        e = v[1]
+        f = v[2]
+        v = [b*f-c*e, c*d-a*f,a*e-b*d]
+        pts.append([p1[0] + v[0] * mult, p1[1] + v[1] * mult, p1[2] + v[2] * mult])
+        d = v[0]
+        e = v[1]
+        f = v[2]
+        v = [b*f-c*e, c*d-a*f,a*e-b*d]
+        pts.append([p1[0] + v[0] * mult, p1[1] + v[1] * mult, p1[2] + v[2] * mult])
+        d = v[0]
+        e = v[1]
+        f = v[2]
+        v = [b*f-c*e, c*d-a*f,a*e-b*d]
+        pts.append([p1[0] + v[0] * mult, p1[1] + v[1] * mult, p1[2] + v[2] * mult])
+
+        surfaces = [[pts[0], pts[1], pts[2], pts[3]]]
+
+        print(surfaces)
+
+        if plane!=None:
+            plane.remove()
+
+        plane = Poly3DCollection(surfaces, linewidths = 1, alpha = 0.5)
+        plane.set_facecolor('g')
+
+        ax.add_collection3d(plane)
+        #ax.plot([p1[0], p1[0] + a], [p1[1], p1[1] + b], [p1[2], p1[2] + c])
+
+    plt.show(block=False)
+    input()

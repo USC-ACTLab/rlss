@@ -176,8 +176,12 @@ class OccupancyGrid3D {
         for(GridSizeType j = idxmin.j; j<=idxmax.j; j++) {
           for(GridSizeType k = idxmin.k; k<=idxmax.k; k++) {
             Index idx(i, j, k);
-            if(isOccupied(idx)) {
-              return true;
+            try {
+              if(isOccupied(idx)) {
+                return true;
+              }
+            } catch(const OutOfBoundsException& exp) {
+
             }
           }
         }
@@ -232,64 +236,19 @@ class OccupancyGrid3D {
     * Returns the indexes that are set true in _grid,
     * and indexes that are added in occupied_boxes
     */
-    vector<pair<Index, unsigned int>> addRobot(const VectorDIM& pos, T r) {
+    void addOtherRobot(const VectorDIM& pos, T r) {
       VectorDIM rad(r, r, r);
       VectorDIM _min = pos - rad;
       VectorDIM _max = pos + rad;
-      auto minidx = getIndex(_min(0), _min(1), _min(2));
-      auto maxidx = getIndex(_max(0), _max(1), _max(2));
-
-      vector<pair<Index, unsigned int>> changes;
-
-      VectorDIM ss2(_stepsize / 2, _stepsize / 2, _stepsize / 2);
-
-      for(auto i = minidx.i; i <= maxidx.i; i++) {
-        for(auto j = minidx.j; j <= maxidx.j; j++) {
-          for(auto k = minidx.k; k <= maxidx.k; k++) {
-            if(_grid[i][j][k] == false) {
-              Index idx(i, j, k);
-              VectorDIM coord = getCoordinates(idx);
-              VectorDIM topleft(coord - ss2);
-              VectorDIM bottomright(coord + ss2);
-              AlignedBox cube(topleft, bottomright);
-
-              _occupied_boxes.push_back(cube);
-              _grid[i][j][k] = true;
-
-              changes.push_back(make_pair(idx,
-                 (unsigned int) _occupied_boxes.size() - 1));
-            }
-          }
-        }
-      }
-
-      return changes;
+      _other_robot_boxes.push_back(AlignedBox(_min, _max));
     }
 
-    /*
-    * Undoes the changes done by addRobot function
-    *
-    * Changes should be sorted in increasing order
-    * by their second members (i.e. occupied box indexes)
-    */
-    void undoRobotChanges(const vector<pair<Index, unsigned int>>& changes) {
-      for(auto it = changes.rbegin(); it != changes.rend(); it++) {
-        const auto& change = *it;
-        const auto& grididx = change.first;
-        const unsigned int boxidx = change.second;
-
-        _grid[grididx.i][grididx.j][grididx.k] = false;
-        if(boxidx == _occupied_boxes.size() - 1) {
-          _occupied_boxes.pop_back();
-        } else {
-          auto loc = _occupied_boxes.begin();
-          advance(loc, boxidx);
-          _occupied_boxes.erase(loc);
-        }
-      }
+    void clearOtherRobots() {
+      _other_robot_boxes.clear();
     }
 
     std::vector<AlignedBox> _occupied_boxes;
+    std::vector<AlignedBox> _other_robot_boxes;
 
   private:
 
