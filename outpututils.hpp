@@ -5,6 +5,7 @@
 #include "PointCloud.h"
 #include <Eigen/StdVector>
 
+using std::vector;
 using ACT::PointCloud;
 using Eigen::Hyperplane;
 using Eigen::AlignedBox;
