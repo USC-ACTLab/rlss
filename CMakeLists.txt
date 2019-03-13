@@ -1,7 +1,8 @@
 cmake_minimum_required (VERSION 3.0)
 set(CMAKE_CXX_STANDARD 14)
-set(CMAKE_CXX_FLAGS "-O3 -Wno-ignored-attributes")
-# set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DACT_DEBUG")
+# set(CMAKE_CXX_FLAGS "-O3 -Wno-ignored-attributes" CACHE STRING)
+# set(CMAKE_CXX_FLAGS_DEBUG "-g -DACT_GENERATE_OUTPUT_JSON" CACHE STRING "debug flags" FORCE)
+message("CMAKE_CXX_FLAGS_DEBUG is ${CMAKE_CXX_FLAGS_DEBUG}")
 project (ACT_TRAJ_REPLANNING)
 
 
@@ -59,4 +60,5 @@ target_link_libraries(
   stdc++fs
   qpOASES
 )
+
 target_compile_definitions(main PRIVATE ACT_GENERATE_OUTPUT_JSON ACT_DEBUG)

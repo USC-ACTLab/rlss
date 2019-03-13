@@ -135,12 +135,12 @@ int main(int argc, char** argv) {
   }
   OccupancyGrid3D<double> OCCUPANCY_GRID(OBSTACLES,
     cell_size,
-    grid_min[0] - robot_radius,
-    grid_max[0] +  robot_radius,
-    grid_min[1]- robot_radius,
-    grid_max[1]+ robot_radius,
-    grid_min[2] - robot_radius,
-    grid_max[2]+ robot_radius);
+    grid_min[0] - robot_radius * 2,
+    grid_max[0] +  robot_radius * 2,
+    grid_min[1] - robot_radius * 2,
+    grid_max[1] + robot_radius * 2,
+    grid_min[2] - robot_radius * 2,
+    grid_max[2] + robot_radius * 2);
   cout << "Occupied cell count: " << OCCUPANCY_GRID._occupied_boxes.size() << endl;
 
   /*for(unsigned int i = 1; i < OCCUPANCY_GRID.iMax() -1; i++) {
@@ -259,6 +259,7 @@ int main(int argc, char** argv) {
   double SIMULATION_DURATION = MAX_TOTAL_TIME + additional_time;
 
   for(double ct = 0; ct <= SIMULATION_DURATION; ct += dt) {
+
     cout << endl << "#######" << endl << "#### Current Time: " << ct
       << "/" << SIMULATION_DURATION << " ####" << endl << "#######" << endl;
 
@@ -285,7 +286,9 @@ int main(int argc, char** argv) {
     }
 #endif
     for(unsigned int r = 0; r < robot_count; r++) {
+#ifdef ACT_DEBUG
       cout << endl << "#### Iteration for robot " << r  << " ####"<< endl;
+#endif
 
       const auto& origtraj = ORIGINAL_TRAJECTORIES[r];
       auto& traj = TRAJECTORIES[r];
@@ -595,7 +598,7 @@ int main(int argc, char** argv) {
                 * discrete_path_total_duration;
               // duration of first piece must be at least dt
               //if(i == 0) {
-                bezptr->m_a = max(bezptr->m_a, 1.1 * dt);
+                bezptr->m_a = max(bezptr->m_a, 1.5 * dt);
               //}
             }
 #ifdef ACT_DEBUG
@@ -668,7 +671,7 @@ int main(int argc, char** argv) {
           * for voronoi!
           */
           //if(i == 0) {
-            piece->m_a = max(piece->m_a, 1.1 * dt);
+            piece->m_a = max(piece->m_a, 1.5 * dt);
           //}
         }
 #ifdef ACT_DEBUG
@@ -699,7 +702,7 @@ int main(int argc, char** argv) {
 
       // add voronoi constraints
       for(const auto& hp: VORONOI_HYPERPLANES) {
-        traj.extendQPHyperplaneConstraint(QP_init, 0, hp, false, 1);
+        traj.extendQPHyperplaneConstraint(QP_init, 0, hp, true, 1);
       }
 
 #ifdef ACT_GENERATE_OUTPUT_JSON
@@ -758,7 +761,7 @@ int main(int argc, char** argv) {
         json_svm_hyperplanes_of_piece_insert<double, 3U>(svm_hyperplanes_json["hyperplanes"], hyperplanes, piece_idx);
 #endif
         for(const auto& hp: hyperplanes) {
-          traj.extendQPHyperplaneConstraint(QP_init, piece_idx, hp, false && piece_idx == 0, 1);
+          traj.extendQPHyperplaneConstraint(QP_init, piece_idx, hp, piece_idx == 0, 1);
         }
       }
 
@@ -799,6 +802,10 @@ int main(int argc, char** argv) {
           auto bezptr = std::static_pointer_cast<Bezier<double, 3U>>(
             traj.getPiece(traj.numPieces() - 1));
           const VectorDIM& endpt = bezptr->m_controlPoints.back();
+#ifdef ACT_DEBUG
+          cout << "[DEBUG] extendQPPositionAt: " << traj.totalSpan() << " ("
+            << string_vector<double, 3U>(endpt) << ")" << endl;
+#endif
           traj.extendQPPositionAt(qp, traj.totalSpan(), endpt, 10);
         } else {
           double time_forward = 0;
@@ -807,6 +814,10 @@ int main(int argc, char** argv) {
             auto bezptr = std::static_pointer_cast<Bezier<double, 3U>>(traj.getPiece(i));
             time_forward += bezptr->m_a;
             const VectorDIM endpt = origtraj.eval(min(ct + time_forward, TOTAL_TIMES[r]), 0);
+#ifdef ACT_DEBUG
+            cout << "[DEBUG] extendQPPositionAt: " << time_forward << " ("
+              << string_vector<double, 3U>(endpt) << ")" << endl;
+#endif
             traj.extendQPPositionAt(qp, time_forward, endpt, theta_factor * (i+1));
           }
         }
@@ -827,7 +838,11 @@ int main(int argc, char** argv) {
         qpOASES::QProblem problem(combinedQP.x.rows(), combinedQP.A.rows());
         qpOASES::Options options;
         options.setToMPC();
-        options.printLevel = qpOASES::PL_LOW;
+        options.printLevel = qpOASES::PL_NONE;
+        /*options.enableRegularisation = qpOASES::BT_TRUE;
+        options.enableCholeskyRefactorisation = 1;
+        options.enableEqualities = qpOASES::BT_TRUE;
+        options.boundTolerance = 0.0001;*/
         problem.setOptions(options);
 
         qpOASES::int_t nWSR = 10000;
@@ -853,7 +868,9 @@ int main(int argc, char** argv) {
           cout << "[DEBUG] iter: " << allowed_tries - tries_remaining << ", QP Failed" << endl;
 #endif
         } else {
+#ifdef ACT_DEBUG
           cout << "[DEBUG] iter: " << allowed_tries - tries_remaining << ", QP Succeeded" << endl;
+#endif
           LAST_QP_FAILED[r] = false;
         }
 

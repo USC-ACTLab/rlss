@@ -1,4 +1,4 @@
 build/*
-build
+build*/*
 /visualization_tool/core/*.pyc
 .vscode/

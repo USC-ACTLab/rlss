@@ -258,9 +258,15 @@ private:
       using AlignedBox = Eigen::AlignedBox<T, 3U>;
 
       static const VectorDIM rad(m_robotRadius, m_robotRadius, m_robotRadius);
-      AlignedBox robot_box(coord - rad * 1.1, coord + rad * 1.1);
+      AlignedBox robot_box(coord - rad * 1.001, coord + rad * 1.001);
 
       for(const auto& oth_box: m_og._other_robot_boxes) {
+        /*T intersection_volume = oth_box.intersection(robot_box).volume();
+        T union_volume = oth_box.volume() + robot_box.volume() - intersection_volume;
+        T IoU = intersection_volume / union_volume;
+        if(IoU >= 0.001) {
+          return false;
+        }*/
         if(oth_box.intersects(robot_box)) {
           return false;
         }
