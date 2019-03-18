@@ -52,11 +52,23 @@ add_library(csv
   lib/csv/CSVparser.cpp
 )
 
+add_library(libsvm
+  lib/libsvm/svm.cpp
+)
 
 target_link_libraries(
   main
   csv
   stdc++fs
   qpOASES
+  libsvm
 )
 target_compile_definitions(main PRIVATE ACT_GENERATE_OUTPUT_JSON ACT_DEBUG)
+
+
+add_executable(
+libsvmtest
+libsvmtest.cpp
+lib/libsvm/svm.cpp
+)
+target_include_directories(libsvmtest PRIVATE lib/libsvm/)

@@ -10,3 +10,6 @@
 [submodule "ros_ws/src/crazyflie_ros"]
 	path = ros_ws/src/crazyflie_ros
 	url = https://github.com/whoenig/crazyflie_ros.git
+[submodule "lib/libsvm"]
+	path = lib/libsvm
+	url = https://github.com/cjlin1/libsvm
