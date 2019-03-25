@@ -57,7 +57,7 @@ svm_parameter createSVMParam() {
   param.kernel_type = LINEAR;
   param.degree = 3;
   param.cache_size = 64;
-  param.eps = 0.01;
+  param.eps = 0.001;
   param.C = 10000;
   param.nr_weight= 0;
   return param;
@@ -158,7 +158,7 @@ Eigen::Hyperplane<T, 3U> _16_8_seperate(
    T norm = normal.norm();
    normal /= norm;
   
-  std::cout << "Orig " << normal(0) << " " << normal(1) << " " << normal(2) << "Dist:" << _16_8_svm_solver::vars.w[3]/norm << std::endl;
+  //std::cout << "Orig " << normal(0) << " " << normal(1) << " " << normal(2) << "Dist: " << _16_8_svm_solver::vars.w[3]/norm << std::endl;
   return Hyperplane(normal, _16_8_svm_solver::vars.w[3] / norm);
 }
 
@@ -223,7 +223,7 @@ Eigen::Hyperplane<T, 3U> _64_8_seperate(
      _64_8_svm_solver::vars.w[1], _64_8_svm_solver::vars.w[2]);
    T norm = normal.norm();
    normal /= norm;
-  std::cout << "Orig " << normal(0) << " " << normal(1) << " " << normal(2) << "Dist:" << _64_8_svm_solver::vars.w[3]/norm << std::endl;
+  //std::cout << "Orig " << normal(0) << " " << normal(1) << " " << normal(2) << "Dist: " << _64_8_svm_solver::vars.w[3]/norm << std::endl;
   return Hyperplane(normal, _64_8_svm_solver::vars.w[3] / norm);
 }
 
@@ -293,8 +293,7 @@ Eigen::Hyperplane<T, 3U> _generic_seperate(
   VectorDIM normal(-normal_vect[0],-normal_vect[1],-normal_vect[2]);
   T norm = normal.norm();
   normal /= norm;
-  std::cout << "MY " << normal(0) << " " << normal(1) << " " << normal(2) << "Dist:" << rho/norm << std::endl;
-  
+  std::cout << "MY " << normal(0) << " " << normal(1) << " " << normal(2) << "Dist: " << rho/norm << std::endl;
   //deallocate memory
   for (int i=0;i<problem_size;i++) {
     delete[] x_vect[i]; //deallocate the array that each ptr refers to
@@ -407,19 +406,12 @@ vector<Eigen::Hyperplane<T, 3U> > svm3d(const vector<Eigen::AlignedBox<T, 3U>>& 
     if(robot_boxes.size() == 8) {
       // continuous case with 8 points
       hp = _64_8_seperate<T>(robot_points, obstacle_points);
-      hp  = _generic_seperate<T>(robot_points,obstacle_points);
-      exit(0);
     } else if(robot_boxes.size() == 2) {
       // discrete case
       hp = _16_8_seperate<T>(robot_points, obstacle_points);
-      hp  = _generic_seperate<T>(robot_points,obstacle_points);
-      exit(0);
     } else {
-      // generic case
       hp  = _generic_seperate<T>(robot_points,obstacle_points);
 
-      cout << "[svm3d] NOT IMPLEMENTED: " << robot_points.size() << " " << obstacle_points.size() << endl;
-      exit(0);
     }
 
     // SHIFTING

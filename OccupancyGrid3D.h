@@ -172,9 +172,9 @@ class OccupancyGrid3D {
     bool isOccupied(T x, T y, T z, T r) const {
       Index idxmin = getIndex(x-r, y-r, z-r);
       Index idxmax = getIndex(x+r, y+r, z+r);
-      for(GridSizeType i = idxmin.i; i<=idxmax.i; i++) {
-        for(GridSizeType j = idxmin.j; j<=idxmax.j; j++) {
-          for(GridSizeType k = idxmin.k; k<=idxmax.k; k++) {
+      for(GridSizeType i = idxmin.i; i<idxmax.i; i++) {
+        for(GridSizeType j = idxmin.j; j<idxmax.j; j++) {
+          for(GridSizeType k = idxmin.k; k<idxmax.k; k++) {
             Index idx(i, j, k);
             try {
               if(isOccupied(idx)) {
