@@ -22,7 +22,7 @@ class QPOASESSolver : public QPSolver<T> {
     this->cputime = dt;
    }
 
-   void solve(const QPMatrices& combinedQP, bool& success, Vector result) override {
+   void solve(const QPMatrices& combinedQP, bool& success, Vector& result) override {
      
      qpOASES::QProblem problem(combinedQP.x.rows(), combinedQP.A.rows());
       problem.setOptions(this->options);

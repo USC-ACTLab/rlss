@@ -258,7 +258,7 @@ int main(int argc, char** argv) {
 #endif
 
   double SIMULATION_DURATION = MAX_TOTAL_TIME + additional_time;
-  Eigen::Matrix<double, Eigen::Dynamic, 1> qpResult;
+  Eigen::Matrix<double, Eigen::Dynamic, 1> qpResult[robot_count];
   for(double ct = 0; ct <= SIMULATION_DURATION; ct += dt) {
 
     cout << endl << "#######" << endl << "#### Current Time: " << ct
@@ -286,7 +286,9 @@ int main(int argc, char** argv) {
         frame_json["occupied_cells"] = json_occupied_cells<double, 3U>(OCCUPANCY_GRID._occupied_boxes);
     }
 #endif
+    
     for(unsigned int r = 0; r < robot_count; r++) {
+        
 #ifdef ACT_DEBUG
       cout << endl << "#### Iteration for robot " << r  << " ####"<< endl;
 #endif
@@ -825,10 +827,7 @@ int main(int argc, char** argv) {
 
         // merge matrices
         QPMatrices combinedQP = traj.combineQPMatrices(qp);
-        if (qpResult.size()!=combinedQP.x.size()){
-          qpResult.resize(combinedQP.x.size());
-          // #TODO : verify if copy is not needed here
-        }        
+
       
         // add continuity constraints
         for(unsigned int i = 0; i <= max_continuity; i++) {
@@ -837,9 +836,16 @@ int main(int argc, char** argv) {
           }
         }
 
+        if (qpResult[r].size()!=combinedQP.x.size()){
+          qpResult[r].resize(combinedQP.x.size());
+          for (unsigned int i=0;i<combinedQP.x.size();++i){
+            qpResult[r][i] = combinedQP.x[i];
+          }
+        }        
+
         QPOASESSolver<double> qpSolver(set_max_time,dt);
         bool qp_succeded = false;
-        qpSolver.solve(combinedQP, qp_succeded, qpResult);
+        qpSolver.solve(combinedQP, qp_succeded, qpResult[r]);
         //cout << combinedQP.H.eigenvalues() << endl;
         
         if(!qp_succeded) {
@@ -857,7 +863,7 @@ int main(int argc, char** argv) {
 
         // load
         if(true || !LAST_QP_FAILED[r]) {
-          combinedQP.x = qpResult;
+          combinedQP.x = qpResult[r];
           //problem.getPrimalSolution(combinedQP.x.data());
           traj.loadControlPoints(combinedQP, qp);
           // check dynamic limits
