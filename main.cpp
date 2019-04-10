@@ -23,6 +23,7 @@
 #include <memory>
 #include "qpOASES.hpp"
 #include "outpututils.hpp"
+#include "QPOASESSolver.h"
 
 
 namespace fs = std::experimental::filesystem;
@@ -257,7 +258,7 @@ int main(int argc, char** argv) {
 #endif
 
   double SIMULATION_DURATION = MAX_TOTAL_TIME + additional_time;
-
+  Eigen::Matrix<double, Eigen::Dynamic, 1> qpResult;
   for(double ct = 0; ct <= SIMULATION_DURATION; ct += dt) {
 
     cout << endl << "#######" << endl << "#### Current Time: " << ct
@@ -824,7 +825,11 @@ int main(int argc, char** argv) {
 
         // merge matrices
         QPMatrices combinedQP = traj.combineQPMatrices(qp);
-
+        if (qpResult.size()!=combinedQP.x.size()){
+          qpResult.resize(combinedQP.x.size());
+          // #TODO : verify if copy is not needed here
+        }        
+      
         // add continuity constraints
         for(unsigned int i = 0; i <= max_continuity; i++) {
           for(unsigned int j = 0; j < traj.numPieces() - 1; j++) {
@@ -832,37 +837,12 @@ int main(int argc, char** argv) {
           }
         }
 
+        QPOASESSolver<double> qpSolver(set_max_time,dt);
+        bool qp_succeded = false;
+        qpSolver.solve(combinedQP, qp_succeded, qpResult);
         //cout << combinedQP.H.eigenvalues() << endl;
-
-        // solve
-        qpOASES::QProblem problem(combinedQP.x.rows(), combinedQP.A.rows());
-        qpOASES::Options options;
-        options.setToMPC();
-        options.printLevel = qpOASES::PL_NONE;
-        /*options.enableRegularisation = qpOASES::BT_TRUE;
-        options.enableCholeskyRefactorisation = 1;
-        options.enableEqualities = qpOASES::BT_TRUE;
-        options.boundTolerance = 0.0001;*/
-        problem.setOptions(options);
-
-        qpOASES::int_t nWSR = 10000;
-        qpOASES::real_t cputime = dt;
-
-        qpOASES::returnValue ret =
-          problem.init(
-            combinedQP.H.data(),
-            combinedQP.g.data(),
-            combinedQP.A.data(),
-            combinedQP.lbX.data(),
-            combinedQP.ubX.data(),
-            combinedQP.lbA.data(),
-            combinedQP.ubA.data(),
-            nWSR,
-            set_max_time ? &cputime: NULL,
-            combinedQP.x.data()
-          );
-        qpOASES::int_t simpleStatus = qpOASES::getSimpleStatus(ret);
-        if(simpleStatus != 0) {
+        
+        if(!qp_succeded) {
           LAST_QP_FAILED[r] = true;
 #ifdef ACT_DEBUG
           cout << "[DEBUG] iter: " << allowed_tries - tries_remaining << ", QP Failed" << endl;
@@ -877,7 +857,8 @@ int main(int argc, char** argv) {
 
         // load
         if(true || !LAST_QP_FAILED[r]) {
-          problem.getPrimalSolution(combinedQP.x.data());
+          combinedQP.x = qpResult;
+          //problem.getPrimalSolution(combinedQP.x.data());
           traj.loadControlPoints(combinedQP, qp);
           // check dynamic limits
 
