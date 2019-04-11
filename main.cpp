@@ -837,10 +837,12 @@ int main(int argc, char** argv) {
 
         if (qpResult.size()!=combinedQP.x.size()){
           qpResult.resize(combinedQP.x.size());
-        }   
-        QPOASESSolver<double> qpSolver(set_max_time,dt);
-        bool qp_succeded = false;
-        qpSolver.solve(combinedQP, qp_succeded, qpResult);
+        }
+        
+        QPOASESOptions qp_options = QPOASESOptions(set_max_time,dt,1000);
+        QPOASESSolver<double> qpSolver(qp_options);
+        bool qp_succeded = qpSolver.solve(combinedQP, qpResult);
+        
         if (qp_succeded) {
             combinedQP.x = qpResult;
         }

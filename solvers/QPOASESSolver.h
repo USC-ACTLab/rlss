@@ -2,8 +2,19 @@
 #include "QPSolver.h"
 #include "spline.h"
 
-template<class T>
+struct QPOASESOptions {
+  bool set_max_time;
+  qpOASES::real_t cputime; 
+  qpOASES::int_t nWSR;
 
+  QPOASESOptions(bool set_max_time, qpOASES::real_t cputime, qpOASES::int_t nWSR){
+    this->set_max_time = set_max_time;
+    this-> cputime = cputime;
+    this-> nWSR = nWSR;
+  }
+};
+
+template<class T>
 class QPOASESSolver : public QPSolver<T> {
    private:
    using QPMatrices = typename Spline<T, 3U>::QPMatrices;
@@ -14,16 +25,16 @@ class QPOASESSolver : public QPSolver<T> {
    qpOASES::int_t nWSR;
 
    public:
-   QPOASESSolver(bool set_max_time, double dt) {
-    this->set_max_time = set_max_time;
+   QPOASESSolver(QPOASESOptions opt) {
+    this->set_max_time = opt.set_max_time;
     this->options.setToMPC();
     this->options.printLevel = qpOASES::PL_NONE;
-    this->nWSR = 10000;
-    this->cputime = dt;
+    this->nWSR = opt.nWSR;
+    this->cputime = opt.cputime;
    }
 
-   void solve(const QPMatrices& combinedQP, bool& success, Vector& result) override {
-     
+   bool solve(const QPMatrices& combinedQP, Vector& result) override {
+     assert(result.rows()==combinedQP.x.rows());
      qpOASES::QProblem problem(combinedQP.x.rows(), combinedQP.A.rows());
       problem.setOptions(this->options);
         qpOASES::returnValue ret =
@@ -40,8 +51,36 @@ class QPOASESSolver : public QPSolver<T> {
             combinedQP.x.data()
           );
         qpOASES::int_t simpleStatus = qpOASES::getSimpleStatus(ret);
-        success = simpleStatus == 0;
-        qpOASES::int_t res_written = problem.getPrimalSolution(result.data());
-
+        bool success = simpleStatus == 0;
+        problem.getPrimalSolution(result.data());
+        return success;
    };
+
+   bool getSetMaxTime(){
+     return this->set_max_time;
+   }
+
+   void setSetMaxTime(bool smt){
+     this->set_max_time = smt;
+   }
+
+   qpOASES::real_t getCputime(){
+     return this->cputime;
+   }
+
+   void setCputime( qpOASES::real_t tm){
+     this->cputime = tm;
+   }
+
+   qpOASES::int_t getNWSR(){
+     return this->nWSR;
+   }
+
+   void setNWSR(qpOASES::int_t nwsr){
+     this->nWSR = nwsr;
+   }
+
+
+
+
 };
