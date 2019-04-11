@@ -41,7 +41,7 @@ class QPOASESSolver : public QPSolver<T> {
           );
         qpOASES::int_t simpleStatus = qpOASES::getSimpleStatus(ret);
         success = simpleStatus == 0;
-        problem.getPrimalSolution(result.data());
+        qpOASES::int_t res_written = problem.getPrimalSolution(result.data());
 
    };
 };

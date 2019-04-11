@@ -827,8 +827,7 @@ int main(int argc, char** argv) {
 
         // merge matrices
         QPMatrices combinedQP = traj.combineQPMatrices(qp);
-
-      
+        
         // add continuity constraints
         for(unsigned int i = 0; i <= max_continuity; i++) {
           for(unsigned int j = 0; j < traj.numPieces() - 1; j++) {
@@ -838,14 +837,14 @@ int main(int argc, char** argv) {
 
         if (qpResult[r].size()!=combinedQP.x.size()){
           qpResult[r].resize(combinedQP.x.size());
-          for (unsigned int i=0;i<combinedQP.x.size();++i){
-            qpResult[r][i] = combinedQP.x[i];
-          }
-        }        
-
+        }   
         QPOASESSolver<double> qpSolver(set_max_time,dt);
         bool qp_succeded = false;
         qpSolver.solve(combinedQP, qp_succeded, qpResult[r]);
+        if (qp_succeded) {
+            combinedQP.x = qpResult[r];
+        }
+        
         //cout << combinedQP.H.eigenvalues() << endl;
         
         if(!qp_succeded) {
@@ -863,8 +862,6 @@ int main(int argc, char** argv) {
 
         // load
         if(true || !LAST_QP_FAILED[r]) {
-          combinedQP.x = qpResult[r];
-          //problem.getPrimalSolution(combinedQP.x.data());
           traj.loadControlPoints(combinedQP, qp);
           // check dynamic limits
 
