@@ -258,7 +258,7 @@ int main(int argc, char** argv) {
 #endif
 
   double SIMULATION_DURATION = MAX_TOTAL_TIME + additional_time;
-  Eigen::Matrix<double, Eigen::Dynamic, 1> qpResult[robot_count];
+  Eigen::Matrix<double, Eigen::Dynamic, 1> qpResult;
   for(double ct = 0; ct <= SIMULATION_DURATION; ct += dt) {
 
     cout << endl << "#######" << endl << "#### Current Time: " << ct
@@ -835,14 +835,14 @@ int main(int argc, char** argv) {
           }
         }
 
-        if (qpResult[r].size()!=combinedQP.x.size()){
-          qpResult[r].resize(combinedQP.x.size());
+        if (qpResult.size()!=combinedQP.x.size()){
+          qpResult.resize(combinedQP.x.size());
         }   
         QPOASESSolver<double> qpSolver(set_max_time,dt);
         bool qp_succeded = false;
-        qpSolver.solve(combinedQP, qp_succeded, qpResult[r]);
+        qpSolver.solve(combinedQP, qp_succeded, qpResult);
         if (qp_succeded) {
-            combinedQP.x = qpResult[r];
+            combinedQP.x = qpResult;
         }
         
         //cout << combinedQP.H.eigenvalues() << endl;
