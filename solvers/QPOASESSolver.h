@@ -6,11 +6,13 @@ struct QPOASESOptions {
   bool set_max_time;
   qpOASES::real_t cputime; 
   qpOASES::int_t nWSR;
+  qpOASES::Options qpOptions;
 
-  QPOASESOptions(bool set_max_time, qpOASES::real_t cputime, qpOASES::int_t nWSR){
+  QPOASESOptions(bool set_max_time, qpOASES::real_t cputime, qpOASES::int_t nWSR, qpOASES::Options qpOptions){
     this->set_max_time = set_max_time;
     this-> cputime = cputime;
     this-> nWSR = nWSR;
+    this-> qpOptions = qpOptions;
   }
 };
 
@@ -27,8 +29,7 @@ class QPOASESSolver : public QPSolver<T> {
    public:
    QPOASESSolver(QPOASESOptions opt) {
     this->set_max_time = opt.set_max_time;
-    this->options.setToMPC();
-    this->options.printLevel = qpOASES::PL_NONE;
+    this->options = opt.qpOptions;
     this->nWSR = opt.nWSR;
     this->cputime = opt.cputime;
    }

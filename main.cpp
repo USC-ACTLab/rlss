@@ -838,8 +838,10 @@ int main(int argc, char** argv) {
         if (qpResult.size()!=combinedQP.x.size()){
           qpResult.resize(combinedQP.x.size());
         }
-        
-        QPOASESOptions qp_options = QPOASESOptions(set_max_time,dt,1000);
+        qpOASES::Options options;
+        options.setToMPC();
+        options.printLevel = qpOASES::PL_NONE;
+        QPOASESOptions qp_options = QPOASESOptions(set_max_time,dt,1000, options);
         QPOASESSolver<double> qpSolver(qp_options);
         bool qp_succeded = qpSolver.solve(combinedQP, qpResult);
         
