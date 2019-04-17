@@ -34,7 +34,7 @@ main
 main.cpp
 ${SVM_CPP_FILES}
 )
-target_include_directories(main PRIVATE lib)
+target_include_directories(main PRIVATE lib solvers)
 
 add_executable(
 svmtest
