@@ -1,6 +1,6 @@
 import json
-from Trajectory import Trajectory
-from DiscretePath import DiscretePath
+from core.Trajectory import Trajectory
+from core.DiscretePath import DiscretePath
 
 class PathContainer(object):
 

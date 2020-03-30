@@ -1,9 +1,9 @@
-from PathContainer import PathContainer
-from ObstacleContainer import ObstacleContainer
-from OccupiedCellsContainer import OccupiedCellsContainer
-from RobotContainer import RobotContainer
-from VoronoiContainer import VoronoiContainer
-from SVMContainer import SVMContainer
+from core.PathContainer import PathContainer
+from core.ObstacleContainer import ObstacleContainer
+from core.OccupiedCellsContainer import OccupiedCellsContainer
+from core.RobotContainer import RobotContainer
+from core.VoronoiContainer import VoronoiContainer
+from core.SVMContainer import SVMContainer
 from visualization_msgs.msg import MarkerArray
 from rospy import Duration
 """

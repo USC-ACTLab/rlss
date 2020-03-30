@@ -44,6 +44,6 @@ if __name__=="__main__":
     with open("../data/samplex.json",'r') as fl:
         js = json.load(fl)
         oc = DiscretePath(js["frames"][0]["trajectories"][0]["discrete_path"])
-        print oc.to_marker()
+        print(oc.to_marker())
 
 

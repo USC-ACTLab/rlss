@@ -1,5 +1,5 @@
 cmake_minimum_required (VERSION 3.0)
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 # set(CMAKE_CXX_FLAGS "-O3 -Wno-ignored-attributes" CACHE STRING)
 # set(CMAKE_CXX_FLAGS_DEBUG "-g -DACT_GENERATE_OUTPUT_JSON" CACHE STRING "debug flags" FORCE)
 message("CMAKE_CXX_FLAGS_DEBUG is ${CMAKE_CXX_FLAGS_DEBUG}")
@@ -7,7 +7,8 @@ project (ACT_TRAJ_REPLANNING)
 
 
 
-add_subdirectory(lib/qpOASES)
+# add_subdirectory(lib/qpOASES)
+add_subdirectory(lib/qp_wrappers)
 
 set(
 SVM_CPP_FILES
@@ -58,7 +59,7 @@ target_link_libraries(
   main
   csv
   stdc++fs
-  qpOASES
+  qp_wrappers
 )
 
 target_compile_definitions(main PRIVATE ACT_GENERATE_OUTPUT_JSON ACT_DEBUG)

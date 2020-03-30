@@ -10,3 +10,6 @@
 [submodule "ros_ws/src/crazyflie_ros"]
 	path = ros_ws/src/crazyflie_ros
 	url = https://github.com/whoenig/crazyflie_ros.git
+[submodule "lib/qp_wrappers"]
+	path = lib/qp_wrappers
+	url = git@github.com:baskinburak/qp_wrappers.git

@@ -1,4 +1,4 @@
-from Robot import Robot
+from core.Robot import Robot
 import json
 
 class RobotContainer(object):
@@ -27,5 +27,5 @@ if __name__=="__main__":
     with open("../data/samplex.json",'r') as fl:
         js = json.load(fl)
         rb = RobotContainer(js["frames"][0]["robot_positions"],5,0.5)
-        print rb.get_all_markers()
+        print(rb.get_all_markers())
     

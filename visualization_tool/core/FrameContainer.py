@@ -1,5 +1,5 @@
 
-from Frame import Frame
+from core.Frame import Frame
 import json
 
 """
@@ -33,4 +33,4 @@ class FrameContainer(object):
 if __name__=="__main__":
     fc = FrameContainer("/home/alpcevikel/mr-trajectory-replanning/visualization_tool/data/samplex.json")
     fr,tm = fc.getFrame(0)
-    print fr.toMarkerArray()
+    print(fr.toMarkerArray())

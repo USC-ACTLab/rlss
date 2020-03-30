@@ -1,4 +1,4 @@
-from Hyperplane import Hyperplane
+from core.Hyperplane import Hyperplane
 
 class Voronoi(object):
     def __init__(self,hyperplanes_key):

@@ -23,7 +23,8 @@
 #include <memory>
 #include "qpOASES.hpp"
 #include "outpututils.hpp"
-#include "QPOASESSolver.h"
+// #include "QPOASESSolver.h"
+#include <qp_wrappers/all.hpp>
 
 
 namespace fs = std::experimental::filesystem;
@@ -41,7 +42,16 @@ using std::ofstream;
 using nlohmann::json;
 
 
+template<typename ProblemType, typename InitialGuessType>
+void save_problem(const ProblemType& problem, const InitialGuessType& initial_guess, std::string path) {
+  static int problem_count = 0;
+  std::ofstream of(path + "/" + std::to_string(problem_count));
+  of << problem;
 
+  of.precision(std::numeric_limits<double>::max_digits10);
+  of << initial_guess;
+  problem_count++;
+}
 
 
 int main(int argc, char** argv) {
@@ -108,6 +118,12 @@ int main(int argc, char** argv) {
 
   const double step = 0.01; // general purpose step
 
+
+  qp_wrappers::qpoases::solver qpoases;
+  qp_wrappers::cplex::solver cplex;
+  qp_wrappers::gurobi::solver gurobi;
+  qp_wrappers::cgal::solver cgal;
+  qp_wrappers::osqp::solver osqp;
 
 #ifdef ACT_STATISTICS
   json stats;
@@ -256,9 +272,8 @@ int main(int argc, char** argv) {
   }
   output_json["frame_dt"] = output_frame_dt;
 #endif
-
   double SIMULATION_DURATION = MAX_TOTAL_TIME + additional_time;
-  Eigen::Matrix<double, Eigen::Dynamic, 1> qpResult;
+  // Eigen::Matrix<double, Eigen::Dynamic, 1> qpResult;
   for(double ct = 0; ct <= SIMULATION_DURATION; ct += dt) {
 
     cout << endl << "#######" << endl << "#### Current Time: " << ct
@@ -835,16 +850,69 @@ int main(int argc, char** argv) {
           }
         }
 
-        if (qpResult.size()!=combinedQP.x.size()){
-          qpResult.resize(combinedQP.x.size());
-        }
+        // if (qpResult.size()!=combinedQP.x.size()){
+        //   qpResult.resize(combinedQP.x.size());
+        // }
         
-        QPOASESSolver<double> qpSolver(set_max_time,dt);
-        bool qp_succeded = qpSolver.solve(combinedQP, qpResult);
+        // QPOASESSolver<double> qpSolver(set_max_time,dt);
+        // bool qp_succeded = qpSolver.solve(combinedQP, qpResult);
         
-        if (qp_succeded) {
-            combinedQP.x = qpResult;
+
+        qp_wrappers::qp<double> problem(0, 0);
+        const_cast<qp_wrappers::qp<double>::Matrix&>(problem.Q()) = combinedQP.H; 
+        const_cast<qp_wrappers::qp<double>::Vector&>(problem.c()) = combinedQP.g;
+        const_cast<qp_wrappers::qp<double>::Matrix&>(problem.A()) = combinedQP.A;
+        const_cast<qp_wrappers::qp<double>::Vector&>(problem.lb()) = combinedQP.lbA;
+        const_cast<qp_wrappers::qp<double>::Vector&>(problem.ub()) = combinedQP.ubA;
+        const_cast<qp_wrappers::qp<double>::Vector&>(problem.lbx()) = combinedQP.lbX;
+        const_cast<qp_wrappers::qp<double>::Vector&>(problem.ubx()) = combinedQP.ubX;
+
+        if(tries_remaining == allowed_tries-1 && r == 0)
+          save_problem(problem, combinedQP.x, "/home/baskin/problems");
+
+        // qp_wrappers::qp<double>::Vector qpoases_solution;
+        // qp_wrappers::return_type qpoases_return = qpoases.solve(problem, qpoases_solution, combinedQP.x);
+        // bool qp_succeded = false;
+        // if(qpoases_return == qp_wrappers::success) {
+        //   std::cout << "qpOASES succeeeded" << std::endl;
+        //   // auto qpoases_veritication = problem.verify(qpoases_solution);
+        //   // std::cout << "qpOASES verification: " << qpoases_veritication << std::endl;
+        //   qp_succeded = true;
+        //   combinedQP.x = qpoases_solution;
+        // } else {
+        //   std::cout << "qpOASES failed" << std::endl;
+        // }
+
+        qp_wrappers::qp<double>::Vector cplex_solution;
+        qp_wrappers::return_type cplex_return = cplex.solve(problem, cplex_solution);
+        bool qp_succeded = false;
+        if(cplex_return == qp_wrappers::success) {
+          std::cout << "cplex succeeeded" << std::endl;
+          // auto cplex_veritication = problem.verify(cplex_solution);
+          // std::cout << "cplex verification: " << cplex_veritication << std::endl;
+          qp_succeded = true;
+          combinedQP.x = cplex_solution;
+        } else {
+          std::cout << "cplex failed" << std::endl;
         }
+
+
+        // qp_wrappers::qp<double>::Vector gurobi_solution;
+        // qp_wrappers::return_type gurobi_return = gurobi.solve(problem, gurobi_solution);
+        // bool qp_succeded = false;
+        // if(gurobi_return == qp_wrappers::success) {
+        //   std::cout << "gurobi succeeeded" << std::endl;
+        //   // auto gurobi_veritication = problem.verify(gurobi_solution);
+        //   // std::cout << "gurobi verification: " << gurobi_veritication << std::endl;
+        //   qp_succeded = true;
+        //   combinedQP.x = gurobi_solution;
+        // } else {
+        //   std::cout << "gurobi failed" << std::endl;
+        // }
+
+        // int u; std::cin >> u;
+
+
         
         //cout << combinedQP.H.eigenvalues() << endl;
         

@@ -1,5 +1,5 @@
 import json
-from Obstacle import Obstacle
+from core.Obstacle import Obstacle
 
 class ObstacleContainer(object):
 
@@ -19,4 +19,4 @@ if __name__=="__main__":
     with open("../data/samplex.json",'r') as fl:
         js = json.load(fl)
         oc = ObstacleContainer(js["frames"][0]["obstacles"])
-        print oc.get_all_markers()
+        print(oc.get_all_markers())

@@ -3,7 +3,7 @@ import rospy
 import sys, select, termios, tty
 import select
 from bisect import bisect_right
-from FrameContainer import FrameContainer
+from core.FrameContainer import FrameContainer
 from visualization_msgs.msg import MarkerArray
 class Simulator (object):
 
@@ -27,16 +27,16 @@ class Simulator (object):
         self.ct = target_time
         self.cur_frame = -1
         self.frame = target_ind
-        print "Time has been set to: {0}, with index {1}".format(target_time,target_ind)
+        print("Time has been set to: {0}, with index {1}".format(target_time,target_ind))
     
     def treat_input(self,line):
         line = line.strip()
         if line=='p':
             self.play = not self.play
             if self.play:
-                print "PLAYING"
+                print("PLAYING")
             else: 
-                print "PAUSED"
+                print("PAUSED")
         elif ' ' in line and 't' in line:
             p1,p2 = line.split(' ')
             try:
@@ -44,11 +44,11 @@ class Simulator (object):
                     p2 = float(p2)
                     self.setTime(p2)
                 else:
-                    print "Input not found"
+                    print("Input not found")
             except:
-                print "Input not float"
+                print("Input not float")
         else:
-            print  "Input not found"
+            print("Input not found")
         self.last_work_time = time()
 
     def update_frame(self): 

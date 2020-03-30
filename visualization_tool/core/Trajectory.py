@@ -1,4 +1,4 @@
-from CurvePiece import CurvePiece
+from core.CurvePiece import CurvePiece
 import csv
 import bezier
 import numpy as np

@@ -1,4 +1,4 @@
-from SVM import SVM
+from core.SVM import SVM
 
 class SVMContainer(object):
 

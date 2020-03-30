@@ -1,4 +1,4 @@
-from Voronoi import Voronoi
+from core.Voronoi import Voronoi
 
 class VoronoiContainer(object):
 

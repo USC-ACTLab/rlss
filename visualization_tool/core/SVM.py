@@ -1,4 +1,4 @@
-from Hyperplane import Hyperplane
+from core.Hyperplane import Hyperplane
 from collections import defaultdict
 
 class SVM(object):
