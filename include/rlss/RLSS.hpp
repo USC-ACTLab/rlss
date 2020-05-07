@@ -2,6 +2,8 @@
 #define RLSS_RLSS_HPP
 
 #include <rlss/OccupancyGrid.hpp>
+#include <rlss/internal/SVM.hpp>
+#include <rlss/internal/Util.hpp>
 #include <splx/curve/PiecewiseCurve.hpp>
 #include <splx/opt/PiecewiseCurveQPGenerator.hpp>
 #include <Eigen/Geometry>
@@ -118,71 +120,6 @@ private:
     std::vector<T> m_theta_position_at;
 
 
-    static StdVectorVectorDIM cornerPoints(const AlignedBox& box) const {
-        StdVectorVectorDIM pts(1<<DIM);
-        for(unsigned int i = 0; i < (1<<DIM); i++) {
-            for(unsigned int d = 0; d < DIM; d++) {
-                pts[i](d) = (i & (1<<d)) ? box.min()(d) : box.max()(d);
-            }
-        }
-        return pts
-    }
-
-    Hyperplane svm(const StdVectorVectorDIM& first, 
-                   const StdVectorVectorDIM& second) {
-        QPWrappers::Problem svm_qp(DIM + 1);
-        Matrix Q(DIM+1, DIM+1);
-        Q.setIdentity();
-        Q(DIM, DIM) = 0;
-
-        svm_qp.add_Q(Q);
-
-        for(const VectorDIM& pt : first) {
-            Row coeff(DIM+1);
-            coeff.setZero();
-
-            for(unsigned int d = 0; d < DIM; d++) {
-                coeff(d) = pt(d);
-            }
-            coeff(DIM) = 1;
-
-            svm_qp.add_constraint(coeff, std::numeric_limits<T>::lowest(), -1);
-        }
-
-        for(const VectorDIM& pt : first) {
-            Row coeff(DIM+1);
-            coeff.setZero();
-
-            for(unsigned int d = 0; d < DIM; d++) {
-                coeff(d) = pt(d);
-            }
-            coeff(DIM) = 1;
-
-            svm_qp.add_constraint(coeff, 1, std::numeric_limits<T>::max());
-        }
-
-        QPWrappers::CPLEX cplex;
-        Vector result(DIM+1);
-        auto ret = cplex.init(svm_qp, result);
-        Hyperplane hp;
-
-        if(ret == QPWrappers::OptReturnType::Optimal) {
-            for(unsigned int d = 0; d < DIM; d++) {
-                hp.normal()(d) = result(d);
-            }
-            hp.offset() = result(DIM);
-        } else {
-            throw std::runtime_error(
-                absl::StrCat(
-                    "svm not feasible"
-                )
-            );
-        }
-
-        return hp;
-        
-    }
-
     static std::vector<Hyperplane> robotSafetyHyperplanes(
         const AlignedBox& robot_collision_shape
         const std::vector<AlignedBox>& other_robot_collision_shapes) const {
@@ -190,13 +127,15 @@ private:
         std::vector<Hyperplane> hyperplanes;
         
         StdVectorVectorDIM robot_points 
-            = this->cornerPoints(robot_collision_shape);
+            = rlss::internal::cornerPoints(robot_collision_shape);
 
         for(const auto& oth_collision_shape: other_robot_collision_shapes) {
             StdVectorVectorDIM oth_points 
-                = this->cornerPoints(oth_collision_shape);
+                = rlss::internal::cornerPoints(oth_collision_shape);
 
-            hyperplanes.push_back(this->svm(robot_points, oth_points));
+
+            Hyperplane svm_hp = rlss::internal::svm(robot_points, oth_points);
+            hyperplanes.push_back(svm_hp);
         }
 
         return hyperplanes;
