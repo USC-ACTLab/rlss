@@ -1,9 +1,17 @@
+function(generate_test testnamebase)
 add_executable(
-    internal_Util_test
-    tests/internal_Util_test.cpp
+    ${testnamebase}
+    tests/${testnamebase}.cpp
 )
+
 target_link_libraries(
-    internal_Util_test
+    ${testnamebase} PUBLIC
     rlss
 )
-add_test(NAME internal_Util_test COMMAND internal_Util_test)
+
+add_test(NAME ${testnamebase} COMMAND ${testnamebase})
+
+endfunction(generate_test)
+
+generate_test(internal_Util_test)
+generate_test(internal_SVM_test)

@@ -6,6 +6,7 @@
 #include <qp_wrappers/problem.hpp>
 #include <qp_wrappers/cplex.hpp>
 #include <rlss/internal/Util.hpp>
+#include <absl/strings/str_cat.h>
 
 namespace rlss {
 
@@ -21,14 +22,15 @@ Hyperplane<T, DIM> svm(
     const StdVectorVectorDIM<T,DIM>& f, 
     const StdVectorVectorDIM<T,DIM>& s) {
 
-    QPWrappers::Problem svm_qp(DIM + 1);
-    Matrix Q(DIM+1, DIM+1);
+    QPWrappers::Problem<T> svm_qp(DIM + 1);
+    Matrix<T> Q(DIM+1, DIM+1);
     Q.setIdentity();
+    Q *= 2;
     Q(DIM, DIM) = 0;
 
     svm_qp.add_Q(Q);
 
-    for(const VectorDIM& pt : f) {
+    for(const VectorDIM<T,DIM>& pt : f) {
         Row<T> coeff(DIM+1);
         coeff.setZero();
 
@@ -40,7 +42,7 @@ Hyperplane<T, DIM> svm(
         svm_qp.add_constraint(coeff, std::numeric_limits<T>::lowest(), -1);
     }
 
-    for(const VectorDIM& pt : s) {
+    for(const VectorDIM<T,DIM>& pt : s) {
         Row<T> coeff(DIM+1);
         coeff.setZero();
 
@@ -52,7 +54,8 @@ Hyperplane<T, DIM> svm(
         svm_qp.add_constraint(coeff, 1, std::numeric_limits<T>::max());
     }
 
-    QPWrappers::CPLEX cplex;
+    QPWrappers::CPLEX::Engine<T> cplex;
+    cplex.setFeasibilityTolerance(1e-9);
     Vector<T> result(DIM+1);
     auto ret = cplex.init(svm_qp, result);
     Hyperplane<T, DIM> hp;
