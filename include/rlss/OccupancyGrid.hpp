@@ -7,17 +7,31 @@
 #include <absl/strings/str_cat.h>
 #include <queue>
 #include <Eigen/StdVector>
+#include <boost/functional/hash/hash.hpp>
+#include <rlss/internal/Util.hpp>
 
 namespace rlss {
 
 template<typename T, unsigned int DIM>
 class OccupancyGrid {
+public:
     using VectorDIM = Eigen::Vector<T, DIM>;
     using VectorlliDIM = Eigen::Vector<long long int, DIM>; 
     using AlignedBox = Eigen::AlignedBox<T, DIM>;
+    using StdVectorVectorDIM = rlss::internal::StdVectorVectorDIM<T, DIM>;
 
     using Coordinate = VectorDIM;
     using Index = VectorlliDIM;
+
+    struct IndexHasher {
+        std::size_t operator()(const Index& idx) const noexcept {
+            std::size_t seed = 0;
+            for(unsigned int d = 0; d < DIM; d++) {
+                boost::hash_combine(seed, idx(d));
+            }
+            return seed;
+        }
+    };
 
     OccupancyGrid(Coordinate step_size): m_step_size(step_size) {
 
@@ -31,9 +45,12 @@ class OccupancyGrid {
         for(unsigned int d = 0; d < DIM; d++) {
             idx(d) = std::llround((coord(d) / m_step_size(d)) - 0.5);
         }
-        return idx
+        return idx;
     }
 
+    /*
+    * get the center coordinate of the cell with the given index
+    */
     Coordinate getCenter(const Index& idx) const {
         Coordinate center;
         for(unsigned int d = 0; d < DIM; d++) {
@@ -42,6 +59,9 @@ class OccupancyGrid {
         return center;
     }
 
+    /*
+    * get the center coordinate of the cell that contains the given coordinate
+    */
     Coordinate getCenter(const Coordinate& coord) const {
         return this->getCenter(this->getIndex(coord));
     }
@@ -107,16 +127,66 @@ class OccupancyGrid {
         return this->fillOccupancy(this->getIndex(min), this->getIndex(max));
     }
 
-    void isOccupied(const Index& idx) const {
+    bool isOccupied(const Index& idx) const {
         return m_grid.find(idx) != m_grid.end();
     }
 
-    void isOccupied(const Coordinate& coord) const {
+    bool isOccupied(const Coordinate& coord) const {
         return this->isOccupied(this->getIndex(coord));
+    }
+
+    bool isOccupied(const AlignedBox& box) const {
+        Index min = this->getIndex(box.min());
+        Index max = this->getIndex(box.max());
+
+        std::queue<Index> indexes;
+        indexes.push(min);
+        while(!indexes.empty()) {
+            const Index& occ = indexes.front();
+            if(this->isOccupied(occ))
+                return true;
+
+            for(unsigned int d = 0; d < DIM; d++) {
+                occ(d)++;
+                if(occ(d) <= max(d)) {
+                    indexes.push(occ);
+                }
+                occ(d)--;
+            }
+            indexes.pop();
+        }
+
+        return false;
+
+    }
+
+    bool isOccupied(const StdVectorVectorDIM& ch) {
+        VectorDIM min = ch[0];
+        VectorDIM max = ch[0];
+        for(const auto& v : ch) {
+            for(unsigned int d = 0; d < DIM; d++) {
+                min(d) = std::min(min(d), v(d));
+                max(d) = std::max(max(d), v(d));
+            }
+        }
+        return this->isOccupied(AlignedBox(min, max));
     }
 
     void addObstacle(const AlignedBox& box) {
         this->fillOccupancy(box.min(), box.max());
+    }
+
+    void addObstacle(const StdVectorVectorDIM& ch) {
+        VectorDIM min = ch[0];
+        VectorDIM max = ch[0];
+        for(const auto& v : ch) {
+            for(unsigned int d = 0; d < DIM; d++) {
+                min(d) = std::min(min(d), v(d));
+                max(d) = std::max(max(d), v(d));
+            }
+        }
+
+        this->addObstacle(AlignedBox(min, max));
     }
 
     void addTemporaryObstacle(const AlignedBox& box) {
@@ -124,6 +194,19 @@ class OccupancyGrid {
             = this->fillOccupancy(box.min(), box.max());
 
         m_temporary_occupancy.insert(newly_filled.begin(), newly_filled.end());
+    }
+
+    void addTemporaryObstacle(const StdVectorVectorDIM& ch) {
+        VectorDIM min = ch[0];
+        VectorDIM max = ch[0];
+        for(const auto& v : ch) {
+            for(unsigned int d = 0; d < DIM; d++) {
+                min(d) = std::min(min(d), v(d));
+                max(d) = std::max(max(d), v(d));
+            }
+        }
+
+        this->addTemporaryObstacle(AlignedBox(min, max));
     }
 
     void clearTemporaryObstacles() {
@@ -146,7 +229,7 @@ class OccupancyGrid {
 
 private:
     Coordinate m_step_size;
-    std::unordered_set<Index> m_grid;
+    std::unordered_set<Index, IndexHasher> m_grid;
 
     std::vector<Index> m_temporary_occupancy;
 }; // class OccupancyGrid

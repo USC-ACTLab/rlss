@@ -1,3 +1,6 @@
 [submodule "third_party/splx"]
 	path = third_party/splx
 	url = https://github.com/USC-ACTLab/splx
+[submodule "third_party/libMultiRobotPlanning"]
+	path = third_party/libMultiRobotPlanning
+	url = https://github.com/whoenig/libMultiRobotPlanning

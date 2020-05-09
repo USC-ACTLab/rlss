@@ -15,3 +15,5 @@ endfunction(generate_test)
 
 generate_test(internal_Util_test)
 generate_test(internal_SVM_test)
+generate_test(OccupancyGrid_test)
+generate_test(internal_DiscreteSearch_test)

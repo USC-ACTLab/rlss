@@ -10,7 +10,9 @@
 #include <Eigen/StdVector>
 #include <qp_wrappers/problem.hpp>
 #include <qp_wrappers/cplex.hpp>
+#include <rlss/CollisionShapes/CollisionShape.hpp>
 #include <limits>
+#include <optional>
 
 namespace rlss {
 
@@ -48,38 +50,122 @@ public:
         return m_original_trajectory;
     }
 
-    static AlignedBox collisionShape(
-            const AlignedBox& box, const VectorDIM& position
-    ) const {
-        return AlignedBox(box.min() + position, box.max() + position);
-    }
-
-    AlignedBox collisionShape(const VectorDIM& position) const {
-        return this->collisionShape(m_collision_box, position);
-    }
 
     // plan for the current_time.
-    PiecewiseCurve plan(
+    std::optional<PiecewiseCurve> plan(
         T current_time, 
         const StdVectorVectorDIM& current_robot_state,
-        const std::vector<AlignedBox>& other_robot_collision_shapes) {
-    
+        const std::vector<StdVectorVectorDIM>& 
+                    other_robot_collision_shape_convex_hulls) {
+
         std::vector<Hyperplane> robot_safety_hyperplanes 
                 = robotSafetyHyperplanes(
-                        this->collisionShape(current_robot_state[0]),
-                        other_robot_collision_shapes);
+                        current_robot_state[0],
+                        other_robot_collision_shape_convex_hulls);
 
-        for(const auto& bbox: other_robot_collision_shapes) {
-            m_occupancy_grid.addTemporaryObstacle(bbox);
+        for(const auto& ch: other_robot_collision_shape_convex_hulls) {
+            m_occupancy_grid.addTemporaryObstacle(ch);
         }
+
+
+        T target_time_in_original_trajectory;
+        bool target_time_valid = false;
+
+        if(current_time + m_planning_horizon > m_original_trajectory.maxParameter()) {
+            target_time_in_original_trajectory = m_original_trajectory.maxParameter();
+            target_time_valid 
+                = m_occupancy_grid.isOccupied(
+                            m_collision_shape->boundingBox(
+                                        m_original_trajectory.eval(
+                                            target_time_in_original_trajectory, 
+                                            0
+                                        )
+                            )
+            );
+
+            while(!target_time_valid && target_time_in_original_trajectory >= 0) {
+                target_time_in_original_trajectory -= m_search_step;
+                target_time_valid 
+                    = m_occupancy_grid.isOccupied(
+                                m_collision_shape->boundingBox(
+                                            m_original_trajectory.eval(
+                                                target_time_in_original_trajectory, 
+                                                0
+                                            )
+                                )
+                );
+            }
+        } else {
+            target_time_in_original_trajectory = current_time + m_planning_horizon;
+            target_time_valid 
+                = m_occupancy_grid.isOccupied(
+                            m_collision_shape->boundingBox(
+                                        m_original_trajectory.eval(
+                                            target_time_in_original_trajectory, 
+                                            0
+                                        )
+                            )
+            );
+            
+            bool forward_search = true;
+            bool forward_doable = true;
+            bool backward_doable = true;
+            unsigned int step = 1;
+            while(!target_time_valid && (forward_doable || backward_doable)) {
+                if(forward_search && forward_doable) {
+                    target_time_in_original_trajectory += step*m_search_step;
+                    forward_search = false;
+                    if(target_time_in_original_trajectory > m_original_trajectory.maxParameter()) {
+                        forward_doable = false;
+                        continue;
+                    }
+                } else if(!forward_search && backward_doable) {
+                    target_time_in_original_trajectory -= step * m_search_step;
+                    forward_search = true;
+                    step++;
+                    if(target_time_in_original_trajectory < 0) {
+                        backward_doable = false;
+                        continue;
+                    }
+                }
+
+                if((!forward_search && forward_doable) || (forward_search && backward_doable)) {
+                    target_time_valid
+                        = m_occupancy_grid.isOccupied(
+                                    m_collision_shape->boundingBox(
+                                                m_original_trajectory.eval(
+                                                    target_time_in_original_trajectory, 
+                                                    0
+                                                )
+                                    )
+                    );
+                }
+            }
+        }
+    
+        if(!target_time_valid) {
+            return std::nullopt;
+        }
+
+        StdVectorVectorDIM path = discreteSearch(
+                                    current_robot_state[0], 
+                                    m_original_trajectory.eval(
+                                        target_time_in_original_trajectory, 
+                                        0
+                                    ),
+                                    m_occupancy_grid,
+                                    m_workspace,
+                                    m_collision_shape
+        );
+
 
         m_occupancy_grid.clearTemporaryObstacles();
     }
 
 private:
 
-    // collision box of the robot when CoM is at 0.
-    AlignedBox m_collision_box; 
+    // collision shape of the robot
+    std::shared_ptr<CollisionShape> m_collision_shape; 
 
     // occupancy grid as seen by the robot
     _OccupancyGrid m_occupancy_grid;
@@ -92,6 +178,8 @@ private:
     // durations of the pieces can be adjusted by the algorithm.
     PiecewiseCurveQPGenerator m_qp_generator;
 
+
+
     // robots must stay in this workspace
     AlignedBox m_workspace;
 
@@ -103,6 +191,9 @@ private:
 
     // maximum velocity of obstacles in the environment
     T m_max_obstacle_velocity;
+
+    // parameter search step on curves for collision checking operations.
+    T m_search_step;
 
     // plan should be continous up to this degree
     unsigned int m_continuity_upto;
@@ -120,22 +211,43 @@ private:
     std::vector<T> m_theta_position_at;
 
 
-    static std::vector<Hyperplane> robotSafetyHyperplanes(
-        const AlignedBox& robot_collision_shape
-        const std::vector<AlignedBox>& other_robot_collision_shapes) const {
+    // shift hyperplane hp creating hyperplane shp
+    // such that whenever the center_of_mass of the robot
+    // is to the negative side of the shp, 
+    // the ch_points (convex hull points) of collision shape of the
+    // robot is to the negative side of the hyperplane hp.
+    Hyperplane shiftHyperplane(const VectorDIM& center_of_mass, 
+                               const StdVectorVectorDIM& ch_points, 
+                               const Hyperplane& hp) const {
+        Hyperplane shp {hp.normal(), hp.offset()};
+
+        T offset = std::numeric_limits<T>::max();
+        for(const auto& pt : ch_points) {
+            shp.offset() 
+                = std::min(offset, hp.normal().dot(center_of_mass - pt));
+        }
+
+        return shp;
+    }
+
+    std::vector<Hyperplane> robotSafetyHyperplanes(
+        const VectorDIM& robot_position,
+        const std::vector<StdVectorVectorDIM>& 
+                other_robot_collision_shape_convex_hulls) const {
 
         std::vector<Hyperplane> hyperplanes;
         
         StdVectorVectorDIM robot_points 
-            = rlss::internal::cornerPoints(robot_collision_shape);
+            = m_collision_shape->convexHullPoints(robot_position);
 
-        for(const auto& oth_collision_shape: other_robot_collision_shapes) {
-            StdVectorVectorDIM oth_points 
-                = rlss::internal::cornerPoints(oth_collision_shape);
-
-
-            Hyperplane svm_hp = rlss::internal::svm(robot_points, oth_points);
-            hyperplanes.push_back(svm_hp);
+        for(const auto& oth_collision_shape: other_robot_collision_shape_convex_hulls) {
+            Hyperplane svm_hp = rlss::internal::svm(robot_points, oth_collision_shape);
+            Hyperplane svm_shifted = this->shiftHyperplane(
+                                        robot_position, 
+                                        robot_points, 
+                                        svm_hp
+            );
+            hyperplanes.push_back(svm_shifted);
         }
 
         return hyperplanes;

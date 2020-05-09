@@ -4,17 +4,21 @@ project(rlss)
 set(CMAKE_CXX_STANDARD 17)
 
 add_subdirectory(third_party/splx)
+find_package(Boost REQUIRED)
 
 add_library(rlss INTERFACE)
 target_include_directories(
     rlss INTERFACE
     include
+    ${Boost_INCLUDE_DIRS}
+    third_party/libMultiRobotPlanning/include
 )
 
 target_link_libraries(
     rlss INTERFACE
     splx
     qp_wrappers
+    ${Boost_LIBRARIES}
 )
 
 if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
