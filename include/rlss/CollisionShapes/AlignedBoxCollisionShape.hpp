@@ -2,28 +2,30 @@
 #define RLSS_COLLISIONSHAPES_ALIGNED_BOX_HPP
 
 #include <rlss/CollisionShapes/CollisionShape.hpp>
+#include <rlss/internal/Util.hpp>
 
 namespace rlss {
 
 template<typename T, unsigned int DIM>
-class AlignedBoxCollisionShape : CollisionShape<T, DIM> {
+class AlignedBoxCollisionShape : public CollisionShape<T, DIM> {
 public:
     using Base = CollisionShape<T, DIM>;
-    using VectorDIM = Base::VectorDIM;
-    using StdVectorVectorDIM = Base::StdVectorVectorDIM:
-    using AlignedBox = rlss::AlignedBox<T, DIM>;
+    using VectorDIM = typename Base::VectorDIM;
+    using StdVectorVectorDIM = typename Base::StdVectorVectorDIM;
+    using AlignedBox = rlss::internal::AlignedBox<T, DIM>;
 
     AlignedBoxCollisionShape(const AlignedBox& abox) : m_collision_box(abox) {
 
     }
 
+
     StdVectorVectorDIM convexHullPoints(const VectorDIM& com) const override {
         AlignedBox box(m_collision_box.min() + com, m_collision_box.max() + com);
-        return rlss::internal::cornerPoints(box);
+        return rlss::internal::cornerPoints<T, DIM>(box);
     }
 
     AlignedBox boundingBox(const VectorDIM& com) const override {
-        return AlignedBox box(m_collision_box.min() + com, m_collision_box.max() + com);
+        return AlignedBox(m_collision_box.min() + com, m_collision_box.max() + com);
     }
 
 private:

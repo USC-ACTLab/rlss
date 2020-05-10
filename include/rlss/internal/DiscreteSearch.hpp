@@ -35,12 +35,15 @@ std::optional<StdVectorVectorDIM<T, DIM>> discreteSearch(
     struct State {
         Index idx;
         Index dir;
-        State(Index i) : idx(i), dir(Index::Zeros()) {}
+        State(Index i) : idx(i), dir(Index::Zero()) {}
         State(Index i, Index d) : idx(i), dir(d) {}
+        bool operator==(const State& rhs) const {
+            return idx == rhs.idx && dir == rhs.dir;
+        }
     };
 
     struct StateHasher {
-        std::size_t operator()(const State& s) {
+        std::size_t operator()(const State& s) const {
             std::size_t seed = 0;
             for(unsigned int d = 0; d < DIM; d++) {
                 boost::hash_combine(seed, s.idx(d));
@@ -59,7 +62,7 @@ std::optional<StdVectorVectorDIM<T, DIM>> discreteSearch(
     public:
         Environment(
             const OccupancyGrid& occ, 
-            const AlignedBox* works, 
+            const AlignedBox& works, 
             std::shared_ptr<CollisionShape> cols,
             const Index& goal
             )
@@ -85,30 +88,30 @@ std::optional<StdVectorVectorDIM<T, DIM>> discreteSearch(
                 neighbors) {
             neighbors.clear();
 
-            if(s.dir == VectorDIM::Zero()) {
+            if(s.dir == Index::Zero()) {
                 for(unsigned int d = 0; d < DIM; d++) {
-                    Index dir = Index::Zeros();
+                    Index dir = Index::Zero();
                     dir(d) = 1;
                     Index idx = s.idx + dir;
-                    if(this->indexValid(idx)) {
+                    if(this->actionValid(s.idx, idx)) {
                         neighbors.emplace_back(State(idx, dir), Action::FORWARD, 1);
                     }
 
                     dir(d) = -1;
                     idx = s.idx + dir;
-                    if(this->stateValid(idx)) {
+                    if(this->actionValid(s.idx, idx)) {
                         neighbors.emplace_back(State(idx, dir), Action::FORWARD, 1);
                     }
                 }
             } else {
                 Index idx = s.idx + s.dir;
-                if(this->indexValid(idx)) {
+                if(this->actionValid(s.idx, idx)) {
                     neighbors.emplace_back(State(idx, s.dir), Action::FORWARD, 1);
                 }
 
                 for(unsigned int d = 0; d < DIM; d++) {
                     if(s.dir(d) == 0) {
-                        Index dir = Index::Zeros();
+                        Index dir = Index::Zero();
                         dir(d) = 1;
                         neighbors.emplace_back(State(s.idx, dir), Action::ROTATE, 1);
                         dir(d) = -1;
@@ -123,15 +126,37 @@ std::optional<StdVectorVectorDIM<T, DIM>> discreteSearch(
         void onDiscover(const State& /*s*/, int /*fScore*/, int /*gScore*/) {}
 
     public:
+        bool actionValid(const Index& from_idx, const Index& to_idx) {
+            Coordinate from_center = m_occupancy_grid.getCenter(from_idx);
+            Coordinate to_center = m_occupancy_grid.getCenter(to_idx);
+
+            AlignedBox from_box = m_collision_shape->boundingBox(from_center);
+            AlignedBox to_box = m_collision_shape->boundingBox(to_center);
+
+            from_box.extend(to_box);
+
+            StdVectorVectorDIM from_pts = rlss::internal::cornerPoints<T, DIM>(from_box);
+
+            for(const auto& pt : from_pts) {
+                if(!m_workspace.contains(pt))
+                    return false;
+            }
+
+            return !m_occupancy_grid.isOccupied(from_box);
+        }
+
         bool indexValid(const Index& idx) {
             Coordinate center = m_occupancy_grid.getCenter(idx);
-            StdVectorVectorDIM robot_pts = m_collision_shape->convexHullPoints(center);
+            AlignedBox robot_box = m_collision_shape->boundingBox(center);
+
+            StdVectorVectorDIM robot_pts = rlss::internal::cornerPoints<T, DIM>(robot_box);
+
             for(const auto& pt : robot_pts) {
                 if(!m_workspace.contains(pt))
                     return false;
             }
 
-            return !m_occupancy_grid.isOccupied(robot_pts);
+            return !m_occupancy_grid.isOccupied(robot_box);
         }
 
     private:
@@ -159,7 +184,7 @@ std::optional<StdVectorVectorDIM<T, DIM>> discreteSearch(
                 segments.push_back(occupancy_grid.getCenter(solution.states[i+1].first.idx));
             }
         }
-        segments.push_back(occupancy_grid.getCenter(solution.back().first.idx));
+        segments.push_back(occupancy_grid.getCenter(solution.states.back().first.idx));
         return segments;
     }
 

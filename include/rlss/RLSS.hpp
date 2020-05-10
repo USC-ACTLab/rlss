@@ -55,16 +55,16 @@ public:
     std::optional<PiecewiseCurve> plan(
         T current_time, 
         const StdVectorVectorDIM& current_robot_state,
-        const std::vector<StdVectorVectorDIM>& 
-                    other_robot_collision_shape_convex_hulls) {
+        const std::vector<AlignedBox>& 
+                    other_robot_collision_shape_bounding_boxes) {
 
         std::vector<Hyperplane> robot_safety_hyperplanes 
                 = robotSafetyHyperplanes(
                         current_robot_state[0],
-                        other_robot_collision_shape_convex_hulls);
+                        other_robot_collision_shape_bounding_boxes);
 
-        for(const auto& ch: other_robot_collision_shape_convex_hulls) {
-            m_occupancy_grid.addTemporaryObstacle(ch);
+        for(const auto& bbox: other_robot_collision_shape_bounding_boxes) {
+            m_occupancy_grid.addTemporaryObstacle(bbox);
         }
 
 
@@ -148,10 +148,12 @@ public:
         }
 
         StdVectorVectorDIM path = discreteSearch(
-                                    current_robot_state[0], 
-                                    m_original_trajectory.eval(
-                                        target_time_in_original_trajectory, 
-                                        0
+                                    m_occupancy_grid.getIndex(current_robot_state[0]), 
+                                    m_occupancy_grid.getIndex(
+                                        m_original_trajectory.eval(
+                                            target_time_in_original_trajectory, 
+                                            0
+                                        )
                                     ),
                                     m_occupancy_grid,
                                     m_workspace,
@@ -232,16 +234,18 @@ private:
 
     std::vector<Hyperplane> robotSafetyHyperplanes(
         const VectorDIM& robot_position,
-        const std::vector<StdVectorVectorDIM>& 
-                other_robot_collision_shape_convex_hulls) const {
+        const std::vector<AlignedBox>& 
+                other_robot_collision_shape_bounding_boxes) const {
 
         std::vector<Hyperplane> hyperplanes;
         
         StdVectorVectorDIM robot_points 
-            = m_collision_shape->convexHullPoints(robot_position);
+            = m_collision_shape->boundingBox(robot_position);
 
-        for(const auto& oth_collision_shape: other_robot_collision_shape_convex_hulls) {
+        for(const auto& oth_collision_shape_bbox: other_robot_collision_shape_bounding_boxes) {
+            StdVectorVectorDIM oth_points = rlss::internal::cornerPoints(oth_collision_shape_bbox);
             Hyperplane svm_hp = rlss::internal::svm(robot_points, oth_collision_shape);
+
             Hyperplane svm_shifted = this->shiftHyperplane(
                                         robot_position, 
                                         robot_points, 

@@ -104,7 +104,7 @@ public:
         std::queue<Index> occupied_indexes;
         occupied_indexes.push(min);
         while(!occupied_indexes.empty()) {
-            const Index& occ = occupied_indexes.front();
+            Index& occ = occupied_indexes.front();
             if(!this->isOccupied(occ)) {
                 filled_indexes.push_back(occ);
                 this->setOccupancy(occ);
@@ -127,7 +127,15 @@ public:
         return this->fillOccupancy(this->getIndex(min), this->getIndex(max));
     }
 
-    bool isOccupied(const Index& idx) const {
+    bool isOccupied(const Index& idx) const {        
+        AlignedBox idxBox = this->toBox(idx);
+
+        for(const auto& bbox: m_temporary_obstacles) {
+            if(bbox.intersects(idxBox)) {
+                return true;
+            }
+        }
+
         return m_grid.find(idx) != m_grid.end();
     }
 
@@ -142,7 +150,7 @@ public:
         std::queue<Index> indexes;
         indexes.push(min);
         while(!indexes.empty()) {
-            const Index& occ = indexes.front();
+            Index& occ = indexes.front();
             if(this->isOccupied(occ))
                 return true;
 
@@ -160,60 +168,16 @@ public:
 
     }
 
-    bool isOccupied(const StdVectorVectorDIM& ch) {
-        VectorDIM min = ch[0];
-        VectorDIM max = ch[0];
-        for(const auto& v : ch) {
-            for(unsigned int d = 0; d < DIM; d++) {
-                min(d) = std::min(min(d), v(d));
-                max(d) = std::max(max(d), v(d));
-            }
-        }
-        return this->isOccupied(AlignedBox(min, max));
-    }
-
     void addObstacle(const AlignedBox& box) {
         this->fillOccupancy(box.min(), box.max());
     }
 
-    void addObstacle(const StdVectorVectorDIM& ch) {
-        VectorDIM min = ch[0];
-        VectorDIM max = ch[0];
-        for(const auto& v : ch) {
-            for(unsigned int d = 0; d < DIM; d++) {
-                min(d) = std::min(min(d), v(d));
-                max(d) = std::max(max(d), v(d));
-            }
-        }
-
-        this->addObstacle(AlignedBox(min, max));
-    }
-
     void addTemporaryObstacle(const AlignedBox& box) {
-        std::vector<Index> newly_filled 
-            = this->fillOccupancy(box.min(), box.max());
-
-        m_temporary_occupancy.insert(newly_filled.begin(), newly_filled.end());
-    }
-
-    void addTemporaryObstacle(const StdVectorVectorDIM& ch) {
-        VectorDIM min = ch[0];
-        VectorDIM max = ch[0];
-        for(const auto& v : ch) {
-            for(unsigned int d = 0; d < DIM; d++) {
-                min(d) = std::min(min(d), v(d));
-                max(d) = std::max(max(d), v(d));
-            }
-        }
-
-        this->addTemporaryObstacle(AlignedBox(min, max));
+        m_temporary_obstacles.push_back(box);
     }
 
     void clearTemporaryObstacles() {
-        for(const auto& idx : m_temporary_occupancy) {
-            m_grid.erase(idx);
-        }
-        m_temporary_occupancy.clear();
+        m_temporary_obstacles.clear();
     }
 
     AlignedBox toBox(const Index& idx) const {
@@ -231,7 +195,7 @@ private:
     Coordinate m_step_size;
     std::unordered_set<Index, IndexHasher> m_grid;
 
-    std::vector<Index> m_temporary_occupancy;
+    std::vector<AlignedBox> m_temporary_obstacles;
 }; // class OccupancyGrid
 
 } // namespace rlss

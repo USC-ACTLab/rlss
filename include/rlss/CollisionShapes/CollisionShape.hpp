@@ -11,7 +11,7 @@ public:
     using StdVectorVectorDIM = rlss::internal::StdVectorVectorDIM<T, DIM>;
     using AlignedBox = rlss::internal::AlignedBox<T, DIM>;
 
-    virtual ~CollisionShape() = 0;
+    virtual ~CollisionShape() = default;
 
     // get the points on the convex hull of the collision shape
     // at given center of mass
