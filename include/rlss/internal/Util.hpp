@@ -3,6 +3,8 @@
 
 #include <Eigen/Geometry>
 #include <boost/functional/hash/hash_fwd.hpp>
+#include <memory>
+#include <Eigen/Dense>
 
 namespace rlss {
 
@@ -52,6 +54,9 @@ public:
         return seed;
     }
 };
+
+
+
 
 } // namespace internal
 

@@ -13,6 +13,7 @@
 #include <rlss/CollisionShapes/CollisionShape.hpp>
 #include <limits>
 #include <optional>
+#include <rlss/internal/BFS.hpp>
 
 namespace rlss {
 
@@ -30,11 +31,12 @@ public:
     using Hyperplane = Eigen::Hyperplane<T, DIM>;
     using Vector = Eigen::Matrix<T, Eigen::Dynamic, 1>;
     using Matrix = Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>;
-    using CollisionShape = CollisionShape<T, DIM>;
+    using CollisionShape = rlss::CollisionShape<T, DIM>;
 
     using StdVectorVectorDIM 
         = std::vector<VectorDIM, Eigen::aligned_allocator<VectorDIM>>;
 
+    using UnorderedIndexSet = typename OccupancyGrid::UnorderedIndexSet;
 
     PiecewiseCurve& getOriginalTrajectory() {
         return m_original_trajectory;
@@ -272,7 +274,13 @@ private:
             const OccupancyGrid& occupancy_grid,
             T current_time) const 
     {
-        
+        UnorderedIndexSet reachable_indices 
+                = rlss::internal::BFS<T, DIM>(
+                        current_position, 
+                        occupancy_grid, 
+                        m_workspace,
+                        m_collision_shape
+        );
     }
 
     // shift hyperplane hp creating hyperplane shp

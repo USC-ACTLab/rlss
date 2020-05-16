@@ -9,6 +9,7 @@
 #include <Eigen/StdVector>
 #include <boost/functional/hash/hash.hpp>
 #include <rlss/internal/Util.hpp>
+#include <rlss/CollisionShapes/CollisionShape.hpp>
 
 namespace rlss {
 
@@ -203,6 +204,60 @@ private:
 
     std::vector<AlignedBox> m_temporary_obstacles;
 }; // class OccupancyGrid
+
+
+namespace internal {
+
+/*
+* Returns whether the segment from 'from' to 'to' is valid, i.e., the robot
+* with the given 'collision_shape' is collision free with the obstacles in
+* the 'grid' and is contained in the 'workspace'
+*/
+template<typename T, unsigned int DIM>
+bool segmentValid(
+    const OccupancyGrid<T, DIM>& grid,
+    const AlignedBox<T, DIM>& workspace, 
+    const VectorDIM<T, DIM>& from, 
+    const VectorDIM<T, DIM>& to,
+    std::shared_ptr<CollisionShape<T, DIM>> collision_shape)
+{
+    using AlignedBox = AlignedBox<T, DIM>;
+    using OccupancyGrid = OccupancyGrid<T, DIM>;
+
+    AlignedBox from_box = collision_shape->boundingBox(from);
+    AlignedBox to_box = collision_shape->boundingBox(to);
+
+    to_box.extend(from_box);
+
+    return workspace.contains(to_box) && !grid.isOccupied(to_box);
+}
+
+template<typename T, unsigned int DIM>
+bool segmentValid(
+    const OccupancyGrid<T, DIM>& grid,
+    const AlignedBox<T, DIM>& workspace,
+    const VectorDIM<T, DIM>& from,
+    const typename OccupancyGrid<T, DIM>::Index& to,
+    std::shared_ptr<CollisionShape<T, DIM>> collision_shape
+) {
+    auto to_center = grid.getCenter(to);
+    return segmentValid(grid, workspace, from, to_center, collision_shape);
+}
+
+template<typename T, unsigned int DIM>
+bool segmentValid(
+    const OccupancyGrid<T, DIM>& grid,
+    const AlignedBox<T, DIM>& workspace,
+    const typename OccupancyGrid<T, DIM>::Index& from,
+    const typename OccupancyGrid<T, DIM>::Index& to,
+    std::shared_ptr<CollisionShape<T, DIM>> collision_shape
+) {
+    auto from_center = grid.getCenter(from);
+    auto to_center = grid.getCenter(to);
+    return segmentValid(grid, workspace, from_center, to_center, collision_shape);
+}
+
+}
 
 } // namespace rlss
 
