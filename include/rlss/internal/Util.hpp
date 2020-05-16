@@ -2,6 +2,7 @@
 #define RLSS_INTERNAL_UTIL_HPP
 
 #include <Eigen/Geometry>
+#include <boost/functional/hash/hash_fwd.hpp>
 
 namespace rlss {
 
@@ -39,6 +40,18 @@ StdVectorVectorDIM<T, DIM> cornerPoints(const AlignedBox<T, DIM>& box) {
     }
     return pts;
 }
+
+template<typename T, unsigned int DIM>
+class VectorDIMHasher {
+public:
+    std::size_t operator()(const VectorDIM<T, DIM>& vec) const {
+        std::size_t seed = 0;
+        for(unsigned int d = 0; d < DIM; d++) {
+            boost::hash_combine(seed, vec(d));
+        }
+        return seed;
+    }
+};
 
 } // namespace internal
 

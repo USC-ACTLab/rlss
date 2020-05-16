@@ -26,14 +26,14 @@ TEST_CASE("discrete search in 2d", "internal::DiscreteSearch") {
 
     auto al_collision_shape = std::make_shared<AlignedBoxCollisionShape>(AlignedBox(VectorDIM(-0.35, -0.35), VectorDIM(0.35, 0.35)));
     auto collision_shape = std::static_pointer_cast<CollisionShape>(al_collision_shape);
-    Index start_idx(1,1);
-    Index goal_idx(7,7);
+    Coordinate start_position(0.74,0.75);
+    Coordinate goal_position(3.76,3.75);
 
     AlignedBox workspace(VectorDIM(0, 0), VectorDIM(4.5, 4.5));
 
     auto result = rlss::internal::discreteSearch<double, 2U>(
-                            start_idx, 
-                            goal_idx, 
+                            start_position, 
+                            goal_position, 
                             grid, 
                             workspace, 
                             collision_shape
@@ -43,12 +43,10 @@ TEST_CASE("discrete search in 2d", "internal::DiscreteSearch") {
 
     StdVectorVectorDIM result_vector = *result;
 
-    REQUIRE(result_vector.size() == 3);
-    REQUIRE((result_vector[0] - VectorDIM(0.75, 0.75)).squaredNorm() < 1e-9);
-    REQUIRE((result_vector[1] - VectorDIM(3.75, 0.75)).squaredNorm() < 1e-9);
-    REQUIRE((result_vector[2] - VectorDIM(3.75, 3.75)).squaredNorm() < 1e-9);
-}
 
-TEST_CASE("discrete search in 3d", "internal::DiscreteSearch") {
-    
+    REQUIRE(result_vector.size() == 4);
+    REQUIRE((result_vector[0] - VectorDIM(0.74, 0.75)).squaredNorm() < 1e-9);
+    REQUIRE((result_vector[1] - VectorDIM(1.25, 0.75)).squaredNorm() < 1e-9);
+    REQUIRE((result_vector[2] - VectorDIM(3.75, 0.75)).squaredNorm() < 1e-9);
+    REQUIRE((result_vector[3] - VectorDIM(3.76, 3.75)).squaredNorm() < 1e-9);
 }

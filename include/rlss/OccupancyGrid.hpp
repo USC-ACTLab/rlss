@@ -23,6 +23,12 @@ public:
     using Coordinate = VectorDIM;
     using Index = VectorlliDIM;
 
+    using UnorderedIndexSet 
+            = std::unordered_set<
+                    Index, 
+                    rlss::internal::VectorDIMHasher<long long int, DIM>
+            >;
+
     struct IndexHasher {
         std::size_t operator()(const Index& idx) const noexcept {
             std::size_t seed = 0;

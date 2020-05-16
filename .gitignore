@@ -2,3 +2,6 @@ build/*
 build*/*
 /visualization_tool/core/*.pyc
 .vscode/
+.clangd/
+compile_commands.json
+.clangd/*
