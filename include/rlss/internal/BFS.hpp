@@ -20,10 +20,10 @@ typename OccupancyGrid<T, DIM>::UnorderedIndexSet BFS(
 ) {
     using VectorDIM = VectorDIM<T, DIM>;
     using AlignedBox = AlignedBox<T, DIM>;
-    using _OccupancyGrid = OccupancyGrid<T, DIM>;
-    using Coordinate = typename _OccupancyGrid::Coordinate;
-    using Index = typename _OccupancyGrid::Index;
-    using UnorderedIndexSet = typename OccupancyGrid<T, DIM>::UnorderedIndexSet;
+    using OccupancyGrid = OccupancyGrid<T, DIM>;
+    using Coordinate = typename OccupancyGrid::Coordinate;
+    using Index = typename OccupancyGrid::Index;
+    using UnorderedIndexSet = typename OccupancyGrid::UnorderedIndexSet;
 
     Index start_idx = occupancy_grid.getIndex(start_position);
     AlignedBox start_box = collision_shape->boundingBox(start_position);

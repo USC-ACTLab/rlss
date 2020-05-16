@@ -1,3 +1,5 @@
+add_custom_target(build_rlss_tests)
+
 function(generate_test testnamebase)
 add_executable(
     ${testnamebase}
@@ -10,8 +12,9 @@ target_link_libraries(
 )
 
 add_test(NAME ${testnamebase} COMMAND ${testnamebase})
-
+add_dependencies(build_rlss_tests ${testnamebase})
 endfunction(generate_test)
+
 
 generate_test(internal_Util_test)
 generate_test(internal_SVM_test)

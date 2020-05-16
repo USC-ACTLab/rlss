@@ -36,7 +36,7 @@ std::optional<StdVectorVectorDIM<T, DIM>> discreteSearch(
     struct State {
         Coordinate position;
         Index dir;
-        State(Coordinate c) : position(c), dir(Index::Zero()) {}
+        explicit State(Coordinate c) : position(c), dir(Index::Zero()) {}
         State(Coordinate c, Index d) : position(c), dir(d) {}
         bool operator==(const State& rhs) const {
             return position == rhs.position && dir == rhs.dir;
