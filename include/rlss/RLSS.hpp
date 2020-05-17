@@ -116,107 +116,6 @@ public:
 
         return resulting_curve;
 
-
-        // T target_time_in_original_trajectory;
-        // bool target_time_valid = false;
-
-        // if(current_time + m_planning_horizon > m_original_trajectory.maxParameter()) {
-        //     target_time_in_original_trajectory = m_original_trajectory.maxParameter();
-        //     target_time_valid 
-        //         = m_occupancy_grid.isOccupied(
-        //                     m_collision_shape->boundingBox(
-        //                                 m_original_trajectory.eval(
-        //                                     target_time_in_original_trajectory, 
-        //                                     0
-        //                                 )
-        //                     )
-        //     );
-
-        //     while(!target_time_valid && target_time_in_original_trajectory >= 0) {
-        //         target_time_in_original_trajectory -= m_search_step;
-        //         target_time_valid 
-        //             = m_occupancy_grid.isOccupied(
-        //                         m_collision_shape->boundingBox(
-        //                                     m_original_trajectory.eval(
-        //                                         target_time_in_original_trajectory, 
-        //                                         0
-        //                                     )
-        //                         )
-        //         );
-        //     }
-        // } else {
-        //     target_time_in_original_trajectory = current_time + m_planning_horizon;
-        //     target_time_valid 
-        //         = m_occupancy_grid.isOccupied(
-        //                     m_collision_shape->boundingBox(
-        //                                 m_original_trajectory.eval(
-        //                                     target_time_in_original_trajectory, 
-        //                                     0
-        //                                 )
-        //                     )
-        //     );
-            
-        //     bool forward_search = true;
-        //     bool forward_doable = true;
-        //     bool backward_doable = true;
-        //     unsigned int step = 1;
-        //     while(!target_time_valid && (forward_doable || backward_doable)) {
-        //         if(forward_search && forward_doable) {
-        //             target_time_in_original_trajectory += step*m_search_step;
-        //             forward_search = false;
-        //             if(target_time_in_original_trajectory > m_original_trajectory.maxParameter()) {
-        //                 forward_doable = false;
-        //                 continue;
-        //             }
-        //         } else if(!forward_search && backward_doable) {
-        //             target_time_in_original_trajectory -= step * m_search_step;
-        //             forward_search = true;
-        //             step++;
-        //             if(target_time_in_original_trajectory < 0) {
-        //                 backward_doable = false;
-        //                 continue;
-        //             }
-        //         }
-
-        //         if((!forward_search && forward_doable) || (forward_search && backward_doable)) {
-        //             target_time_valid
-        //                 = m_occupancy_grid.isOccupied(
-        //                             m_collision_shape->boundingBox(
-        //                                         m_original_trajectory.eval(
-        //                                             target_time_in_original_trajectory, 
-        //                                             0
-        //                                         )
-        //                             )
-        //             );
-        //         }
-        //     }
-        // }
-    
-        // if(!target_time_valid) {
-        //     return std::nullopt;
-        // }
-
-        // StdVectorVectorDIM path = discreteSearch(
-        //                             m_occupancy_grid.getIndex(current_robot_state[0]), 
-        //                             m_occupancy_grid.getIndex(
-        //                                 m_original_trajectory.eval(
-        //                                     target_time_in_original_trajectory, 
-        //                                     0
-        //                                 )
-        //                             ),
-        //                             m_occupancy_grid,
-        //                             m_workspace,
-        //                             m_collision_shape
-        // );
-
-
-        // m_qp_generator.resetProblem();
-
-        // if(m_qp_generator.numPieces() > path.size() - 1) {
-        //     path = rlss::internal::bestSplitSegments<T, DIM>(path);
-        // }
-
-        // m_occupancy_grid.clearTemporaryObstacles();
     }
 
 private:
@@ -318,7 +217,7 @@ private:
                         <= m_original_trajectory.maxParameter()
                     || target_time - step_count * m_search_step >= 0)
         ) {
-            bool candidate_target_time = target_time;
+            T candidate_target_time = target_time;
             if(forward) {
                 candidate_target_time += step_count * m_search_step;
             } else {
@@ -370,7 +269,24 @@ private:
             return std::nullopt;
         }
 
-        return make_pair(target_position, target_time);
+        T actual_horizon = target_time - current_time;
+        actual_horizon = std::max(
+            actual_horizon,
+            m_safe_upto
+        );
+
+        for(const auto& [d, l]: m_max_derivative_magnitudes) {
+            if(d == 1) {
+                // what is the time required if we go straight with
+                // maximum velocity?
+                actual_horizon = std::max(
+                    actual_horizon,
+                    (target_position - current_position).norm() / l
+                );
+            }
+        }
+
+        return make_pair(target_position, actual_horizon);
     }
 
     // shift hyperplane hp creating hyperplane shp
