@@ -67,6 +67,31 @@ public:
     }
 
     /*
+     * Get neighbors of the index
+     */
+    static std::vector<Index> getNeighbors(const Index& idx) {
+        std::vector<Index> res;
+        Index dir = Index::Zero();
+
+        for(unsigned int d = 0; d < DIM; d++) {
+            for(const long long int& i : {-1, 1}) {
+                dir(d) = i;
+                res.push_back(idx + dir);
+            }
+            dir(d) = 0;
+        }
+
+        return res;
+    }
+
+    /*
+     * Get neighbors of the index that the coordinate is in
+     */
+    std::vector<Index> getNeighbors(const Coordinate& coord) const {
+        return this->getNeighbors(this->getIndex(coord));
+    }
+
+    /*
     * get the center coordinate of the cell that contains the given coordinate
     */
     Coordinate getCenter(const Coordinate& coord) const {
@@ -208,11 +233,49 @@ private:
 
 namespace internal {
 
-/*
-* Returns whether the segment from 'from' to 'to' is valid, i.e., the robot
-* with the given 'collision_shape' is collision free with the obstacles in
-* the 'grid' and is contained in the 'workspace'
-*/
+template<typename T, unsigned int DIM>
+bool segmentValid(
+    const OccupancyGrid<T, DIM>& grid,
+    const AlignedBox<T, DIM>& workspace,
+    const AlignedBox<T, DIM>& from_box,
+    const AlignedBox<T, DIM>& to_box
+) {
+    using AlignedBox = AlignedBox<T, DIM>;
+
+    AlignedBox to_box_copy = to_box;
+    to_box_copy.extend(from_box);
+
+    return workspace.contains(to_box_copy) && !grid.isOccupied(to_box_copy);
+}
+
+template<typename T, unsigned int DIM>
+bool segmentValid(
+    const OccupancyGrid<T, DIM>& grid,
+    const AlignedBox<T, DIM>& workspace,
+    const AlignedBox<T, DIM>& from_box,
+    const VectorDIM<T, DIM>& to,
+    std::shared_ptr<CollisionShape<T, DIM>> collision_shape
+) {
+    using AlignedBox = AlignedBox<T, DIM>;
+    using OccupancyGrid = OccupancyGrid<T, DIM>;
+
+    AlignedBox to_box = collision_shape->boundingBox(to);
+
+    return segmentValid<T, DIM>(grid, workspace, from_box, to_box);
+}
+
+template<typename T, unsigned int DIM>
+bool segmentValid(
+        const OccupancyGrid<T, DIM>& grid,
+        const AlignedBox<T, DIM>& workspace,
+        const AlignedBox<T, DIM>& from_box,
+        const typename OccupancyGrid<T, DIM>::Index& to,
+        std::shared_ptr<CollisionShape<T, DIM>> collision_shape
+) {
+    auto to_center = grid.getCenter(to);
+    return segmentValid<T, DIM>(grid, workspace, from_box, to_center, collision_shape);
+}
+
 template<typename T, unsigned int DIM>
 bool segmentValid(
     const OccupancyGrid<T, DIM>& grid,
@@ -225,11 +288,8 @@ bool segmentValid(
     using OccupancyGrid = OccupancyGrid<T, DIM>;
 
     AlignedBox from_box = collision_shape->boundingBox(from);
-    AlignedBox to_box = collision_shape->boundingBox(to);
 
-    to_box.extend(from_box);
-
-    return workspace.contains(to_box) && !grid.isOccupied(to_box);
+    return segmentValid<T, DIM>(grid, workspace, from_box, to, collision_shape);
 }
 
 template<typename T, unsigned int DIM>
@@ -241,7 +301,7 @@ bool segmentValid(
     std::shared_ptr<CollisionShape<T, DIM>> collision_shape
 ) {
     auto to_center = grid.getCenter(to);
-    return segmentValid(grid, workspace, from, to_center, collision_shape);
+    return segmentValid<T, DIM>(grid, workspace, from, to_center, collision_shape);
 }
 
 template<typename T, unsigned int DIM>
@@ -254,7 +314,7 @@ bool segmentValid(
 ) {
     auto from_center = grid.getCenter(from);
     auto to_center = grid.getCenter(to);
-    return segmentValid(grid, workspace, from_center, to_center, collision_shape);
+    return segmentValid<T, DIM>(grid, workspace, from_center, to_center, collision_shape);
 }
 
 }

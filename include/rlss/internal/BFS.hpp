@@ -29,76 +29,52 @@ typename OccupancyGrid<T, DIM>::UnorderedIndexSet BFS(
     AlignedBox start_box = collision_shape->boundingBox(start_position);
 
     UnorderedIndexSet reachable;
-    UnorderedIndexSet visited;
     std::queue<Index> q;
 
-
-    AlignedBox to_box = collision_shape->boundingBox(
-        occupancy_grid.getCenter(start_idx)
-    );
-    to_box.extend(start_box);
-
-    if(!occupancy_grid.isOccupied(to_box) && workspace.contains(to_box)) {
+    if(rlss::internal::segmentValid<T, DIM>(
+            occupancy_grid,
+            workspace,
+            start_box,
+            start_idx,
+            collision_shape))
+    {
         q.push(start_idx);
-        visited.insert(start_idx);
+        reachable.insert(start_idx);
     }
 
-    Index idx = Index::Zero();
-    for(unsigned int i = 0; i < DIM; i++) {
-        idx(i) = 1;
-        Index nw_idx = start_idx + idx;
-        AlignedBox to_box = collision_shape->boundingBox(
-                                occupancy_grid.getCenter(nw_idx)
-        );
-
-        to_box.extend(start_box);
-
-        if(!occupancy_grid.isOccupied(to_box) && workspace.contains(to_box)) {
-            q.push(nw_idx);
-            visited.insert(nw_idx);
-        }
-
-        idx(i) = -1;
-        nw_idx = start_idx + idx;
-        to_box = collision_shape->boundingBox(
-                                occupancy_grid.getCenter(nw_idx)
-        );
-
-        to_box.extend(start_box);
-
-        if(!occupancy_grid.isOccupied(to_box) && workspace.contains(to_box)) {
-            q.push(nw_idx);
-            visited.insert(nw_idx);
+    std::vector<Index> start_neighbors = occupancy_grid.getNeighbors(start_idx);
+    for(const auto& neigh_idx : start_neighbors) {
+        if(rlss::internal::segmentValid<T, DIM>(
+                occupancy_grid,
+                workspace,
+                start_box,
+                neigh_idx,
+                collision_shape))
+        {
+            q.push(neigh_idx);
+            reachable.insert(neigh_idx);
         }
     }
 
     while(!q.empty()) {
         Index& fr = q.front();
-        AlignedBox from_box = collision_shape->boundingBox(
-            occupancy_grid.getCenter(fr)
+        std::vector<Index> neighbors = occupancy_grid.getNeighbors(fr);
+        AlignedBox fr_box = collision_shape->boundingBox(
+                occupancy_grid.getCenter(fr)
         );
-
-        reachable.insert(fr);
-
-        Index dir = Index::Zero();
-        for(unsigned int j = 0; j < DIM; j++) {
-            for(int i = -1; i < 2; i+=2) {
-                dir(j) = i;
-                Index new_idx = fr + dir;
-                if(visited.find(new_idx) == visited.end()) {
-                    AlignedBox to_box = collision_shape->boundingBox(
-                        occupancy_grid.getCenter(new_idx)
-                    );
-                    to_box.extend(from_box);
-                    if(!occupancy_grid.isOccupied(to_box) && workspace.contains(to_box)) {
-                        q.push(new_idx);
-                        visited.insert(new_idx);
-                    }
-                }
+        for(const auto& neigh_idx : neighbors) {
+            if(reachable.find(neigh_idx) == reachable.end()
+                && rlss::internal::segmentValid<T, DIM>(
+                    occupancy_grid,
+                    workspace,
+                    fr_box,
+                    neigh_idx,
+                    collision_shape))
+            {
+                q.push(neigh_idx);
+                reachable.insert(neigh_idx);
             }
-            dir(j) = 0; 
         }
-
         q.pop();
     }
 
