@@ -176,6 +176,11 @@ public:
     }
 
     bool isOccupied(const AlignedBox& box) const {
+        for(const auto& bbox: m_temporary_obstacles) {
+            if(bbox.intersects(box))
+                return true;
+        }
+
         Index min = this->getIndex(box.min());
         Index max = this->getIndex(box.max());
 
@@ -183,7 +188,7 @@ public:
         indexes.push(min);
         while(!indexes.empty()) {
             Index& occ = indexes.front();
-            if(this->isOccupied(occ))
+            if(m_grid.find(occ) != m_grid.end())
                 return true;
 
             for(unsigned int d = 0; d < DIM; d++) {

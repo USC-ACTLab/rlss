@@ -62,6 +62,7 @@ std::optional<StdVectorVectorDIM<T, DIM>> discreteSearch(
 
     class Environment {
     public:
+
         Environment(
             const OccupancyGrid& occ, 
             const AlignedBox& works, 
@@ -76,8 +77,10 @@ std::optional<StdVectorVectorDIM<T, DIM>> discreteSearch(
 
         int admissibleHeuristic(const State& s) {
             int h = 0;
+            Index state_idx = m_occupancy_grid.getIndex(s.position);
+            Index goal_idx = m_occupancy_grid.getIndex(m_goal);
             for(unsigned int d = 0; d < DIM; d++) {
-                h += std::abs(s.position(d) - m_goal(d));
+                h += std::abs(state_idx(d) - goal_idx(d));
             }
             return h;
         }
@@ -98,7 +101,8 @@ std::optional<StdVectorVectorDIM<T, DIM>> discreteSearch(
                 neighbors.emplace_back(
                     State(m_goal, Index::Zero()), 
                     Action::ROTATEFORWARD, 
-                    1 + (s_idx - m_occupancy_grid.getIndex(m_goal)).cwiseAbs().sum()
+                    1 + (s_idx - m_occupancy_grid.getIndex(m_goal))
+                                .cwiseAbs().sum()
                 );
             }
 
@@ -111,48 +115,31 @@ std::optional<StdVectorVectorDIM<T, DIM>> discreteSearch(
                     );
                 }
 
-                for(unsigned int i = 0; i < DIM; i++) {
-                    Index new_idx = s_idx;
-                    new_idx(i)++;
-                    Coordinate new_idx_center = m_occupancy_grid.getCenter(new_idx);
-                    if(this->actionValid(s.position, new_idx_center)) {
-                        neighbors.emplace_back(
-                            State(new_idx_center, Index::Zero()), 
-                            Action::ROTATEFORWARD,
-                            2
-                        );
-                    }
+                std::vector<Index> neigh_indexes
+                        = m_occupancy_grid.getNeighbors(s_idx);
 
-                    new_idx(i) -= 2;
-                    new_idx_center = m_occupancy_grid.getCenter(new_idx);
-                    if(this->actionValid(s.position, new_idx_center)) {
+                for(const auto& neigh_idx: neigh_indexes) {
+                    auto neigh_center = m_occupancy_grid.getCenter(neigh_idx);
+                    if(this->actionValid(s.position, neigh_center)) {
                         neighbors.emplace_back(
-                            State(new_idx_center, Index::Zero()), 
-                            Action::ROTATEFORWARD,
-                            2
+                                State(neigh_center, Index::Zero()),
+                                Action::ROTATEFORWARD,
+                                2
                         );
                     }
                 }
             } else {
                 if(s.dir == Index::Zero()) {
-                    for(unsigned int d = 0; d < DIM; d++) {
-                        Index dir = Index::Zero();
-                        dir(d) = 1;
-                        Index idx = s_idx + dir;
-                        if(this->actionValid(s_idx, idx)) {
+                    std::vector<Index> neigh_indexes
+                            = m_occupancy_grid.getNeighbors(s_idx);
+                    for(const auto& neigh_idx : neigh_indexes) {
+                        if (this->actionValid(s_idx, neigh_idx)) {
                             neighbors.emplace_back(
-                                State(m_occupancy_grid.getCenter(idx), dir), 
-                                Action::FORWARD, 
-                                1
-                            );
-                        }
-
-                        dir(d) = -1;
-                        idx = s_idx + dir;
-                        if(this->actionValid(s_idx, idx)) {
-                            neighbors.emplace_back(
-                                State(m_occupancy_grid.getCenter(idx), dir), 
-                                Action::FORWARD, 
+                                State(
+                                    m_occupancy_grid.getCenter(neigh_idx),
+                                    neigh_idx - s_idx
+                                ),
+                                Action::FORWARD,
                                 1
                             );
                         }
@@ -197,20 +184,15 @@ std::optional<StdVectorVectorDIM<T, DIM>> discreteSearch(
     public:
 
         bool actionValid(const Coordinate& start, const Coordinate& end) {
-            AlignedBox from_box = m_collision_shape->boundingBox(start);
-            AlignedBox to_box = m_collision_shape->boundingBox(end);
-
-            from_box.extend(to_box);
-
-            StdVectorVectorDIM from_pts = rlss::internal::cornerPoints<T, DIM>(from_box);
-
-            for(const auto& pt : from_pts) {
-                if(!m_workspace.contains(pt))
-                    return false;
-            }
-
-            return !m_occupancy_grid.isOccupied(from_box);
+            return rlss::internal::segmentValid<T, DIM>(
+                    m_occupancy_grid,
+                    m_workspace,
+                    start,
+                    end,
+                    m_collision_shape
+            );
         }
+
 
         bool actionValid(const Index& from_idx, const Index& to_idx) {
             Coordinate from_center = m_occupancy_grid.getCenter(from_idx);
@@ -222,15 +204,8 @@ std::optional<StdVectorVectorDIM<T, DIM>> discreteSearch(
 
         bool positionValid(const Coordinate& pos) {
             AlignedBox robot_box = m_collision_shape->boundingBox(pos);
-
-            StdVectorVectorDIM robot_pts = rlss::internal::cornerPoints<T, DIM>(robot_box);
-
-            for(const auto& pt : robot_pts) {
-                if(!m_workspace.contains(pt))
-                    return false;
-            }
-
-            return !m_occupancy_grid.isOccupied(robot_box);
+            return !m_occupancy_grid.isOccupied(robot_box)
+                    && m_workspace.contains(robot_box);
         }
 
         bool indexValid(const Index& idx) {
@@ -245,8 +220,14 @@ std::optional<StdVectorVectorDIM<T, DIM>> discreteSearch(
         const Coordinate& m_goal;
     };
 
-    Environment env(occupancy_grid, workspace, collision_shape, goal_coordinate);
-    libMultiRobotPlanning::AStar<State, Action, int, Environment, StateHasher> astar(env);
+    Environment env(
+            occupancy_grid,
+            workspace,
+            collision_shape,
+            goal_coordinate
+    );
+    libMultiRobotPlanning::AStar<State, Action, int, Environment, StateHasher>
+            astar(env);
     libMultiRobotPlanning::PlanResult<State, Action, int> solution;
 
     if(env.positionValid(start_coordinate)) {
