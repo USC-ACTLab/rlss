@@ -155,7 +155,8 @@ public:
         return filled_indexes;
     }
 
-    std::vector<Index> fillOccupancy(const Coordinate& min, const Coordinate& max) {
+    std::vector<Index> fillOccupancy(
+            const Coordinate& min, const Coordinate& max) {
         return this->fillOccupancy(this->getIndex(min), this->getIndex(max));
     }
 
@@ -266,7 +267,8 @@ bool segmentValid(
 
     AlignedBox to_box = collision_shape->boundingBox(to);
 
-    return segmentValid<T, DIM>(grid, workspace, from_box, to_box);
+    return segmentValid<T, DIM>(
+            grid, workspace, from_box, to_box);
 }
 
 template<typename T, unsigned int DIM>
@@ -278,7 +280,8 @@ bool segmentValid(
         std::shared_ptr<CollisionShape<T, DIM>> collision_shape
 ) {
     auto to_center = grid.getCenter(to);
-    return segmentValid<T, DIM>(grid, workspace, from_box, to_center, collision_shape);
+    return segmentValid<T, DIM>(
+            grid, workspace, from_box, to_center, collision_shape);
 }
 
 template<typename T, unsigned int DIM>
@@ -294,7 +297,8 @@ bool segmentValid(
 
     AlignedBox from_box = collision_shape->boundingBox(from);
 
-    return segmentValid<T, DIM>(grid, workspace, from_box, to, collision_shape);
+    return segmentValid<T, DIM>(
+            grid, workspace, from_box, to, collision_shape);
 }
 
 template<typename T, unsigned int DIM>
@@ -306,7 +310,8 @@ bool segmentValid(
     std::shared_ptr<CollisionShape<T, DIM>> collision_shape
 ) {
     auto to_center = grid.getCenter(to);
-    return segmentValid<T, DIM>(grid, workspace, from, to_center, collision_shape);
+    return segmentValid<T, DIM>(
+            grid, workspace, from, to_center, collision_shape);
 }
 
 template<typename T, unsigned int DIM>
@@ -319,8 +324,10 @@ bool segmentValid(
 ) {
     auto from_center = grid.getCenter(from);
     auto to_center = grid.getCenter(to);
-    return segmentValid<T, DIM>(grid, workspace, from_center, to_center, collision_shape);
+    return segmentValid<T, DIM>(
+            grid, workspace, from_center, to_center, collision_shape);
 }
+
 
 }
 

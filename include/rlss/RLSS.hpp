@@ -26,6 +26,7 @@ public:
     using PiecewiseCurve = splx::PiecewiseCurve<T, DIM>;
     using PiecewiseCurveQPGenerator = splx::PiecewiseCurveQPGenerator<T, DIM>; 
     using OccupancyGrid = rlss::OccupancyGrid<T, DIM>;
+    using Index = typename OccupancyGrid::Index;
     using AlignedBox = Eigen::AlignedBox<T, DIM>;
     using VectorDIM = Eigen::Matrix<T, DIM, 1>;
     using Hyperplane = Eigen::Hyperplane<T, DIM>;
@@ -246,19 +247,20 @@ private:
     // parameter search step on curves for collision checking operations.
     T m_search_step;
 
-    // plan should be continous up to this degree
+    // plan should be continuous up to this degree
     unsigned int m_continuity_upto;
     
     // duration multiplier when maximum derivative magnitude check fails.
     T m_rescaling_duration_multipler;
 
     // number of times to rescale the resulting curve when maximum derivative
-    // magnitutes are more than required
+    // magnitudes are more than required
     unsigned int m_maximum_rescaling_count;
 
     // each pair [d, lambda] denotes the lambda for integrated squared d^th
     // derivative of the curve
-    std::vector<std::pair<unsigned int, T>> m_lambda_integrated_squared_derivatives;
+    std::vector<std::pair<unsigned int, T>>
+        m_lambda_integrated_squared_derivatives;
 
     // each pair [d, l] denotes that magnitude of d^th derivative should
     // not be more than l
@@ -281,6 +283,94 @@ private:
                         m_workspace,
                         m_collision_shape
         );
+
+        T target_time = std::min(
+                current_time + m_planning_horizon,
+                m_original_trajectory.maxParameter()
+        );
+        VectorDIM target_position = m_original_trajectory.eval(target_time, 0);
+        bool target_time_valid = false;
+        std::vector<Index> neighbors = occupancy_grid.getNeighbors(
+            target_position
+        );
+        neighbors.push_back(occupancy_grid.getIndex(target_position));
+        for(const Index& neigh_idx: neighbors) {
+            if(
+                reachable_indices.find(neigh_idx) != reachable_indices.end()
+                && rlss::internal::segmentValid<T, DIM>(
+                    occupancy_grid,
+                    m_workspace,
+                    target_position,
+                    neigh_idx,
+                    m_collision_shape
+                  )
+            ) {
+                target_time_valid = true;
+                break;
+            }
+        }
+
+        bool forward = true;
+        long long int step_count = 1;
+        while(
+                !target_time_valid
+                && (target_time + step_count * m_search_step
+                        <= m_original_trajectory.maxParameter()
+                    || target_time - step_count * m_search_step >= 0)
+        ) {
+            bool candidate_target_time = target_time;
+            if(forward) {
+                candidate_target_time += step_count * m_search_step;
+            } else {
+                candidate_target_time -= step_count * m_search_step;
+            }
+
+            if(
+                candidate_target_time >= 0
+                && candidate_target_time <= m_original_trajectory.maxParameter()
+            ) {
+                VectorDIM candidate_target_position
+                    = m_original_trajectory.eval(candidate_target_time, 0);
+                std::vector<Index> neighbors = occupancy_grid.getNeighbors(
+                        candidate_target_position
+                );
+                neighbors.push_back(
+                    occupancy_grid.getIndex(candidate_target_position)
+                );
+
+                for(const Index& neigh_idx: neighbors) {
+                    if(
+                        reachable_indices.find(neigh_idx)
+                            != reachable_indices.end()
+                        && rlss::internal::segmentValid<T, DIM>(
+                            occupancy_grid,
+                            m_workspace,
+                            candidate_target_position,
+                            neigh_idx,
+                            m_collision_shape
+                        )
+                    ) {
+                        target_time = candidate_target_time;
+                        target_position = candidate_target_position;
+                        target_time_valid = true;
+                        break;
+                    }
+                }
+            }
+
+            if(forward) {
+                forward = false;
+            } else {
+                forward = true;
+                step_count++;
+            }
+        }
+
+        if(!target_time_valid) {
+            return std::nullopt;
+        }
+
+        return make_pair(target_position, target_time);
     }
 
     // shift hyperplane hp creating hyperplane shp
@@ -312,8 +402,10 @@ private:
         StdVectorVectorDIM robot_points 
             = m_collision_shape->boundingBox(robot_position);
 
-        for(const auto& oth_collision_shape_bbox: other_robot_collision_shape_bounding_boxes) {
-            StdVectorVectorDIM oth_points = rlss::internal::cornerPoints(oth_collision_shape_bbox);
+        for(const auto& oth_collision_shape_bbox:
+                    other_robot_collision_shape_bounding_boxes) {
+            StdVectorVectorDIM oth_points
+                    = rlss::internal::cornerPoints(oth_collision_shape_bbox);
             Hyperplane svm_hp = rlss::internal::svm(robot_points, oth_points);
 
             Hyperplane svm_shifted = this->shiftHyperplane(

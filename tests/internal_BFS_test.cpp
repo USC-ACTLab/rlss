@@ -10,22 +10,27 @@
 #include <unordered_set>
 
 TEST_CASE("BFS in 2D", "[bfs]") {
-    using _OccupancyGrid = rlss::OccupancyGrid<double, 2U>;
+    using OccupancyGrid = rlss::OccupancyGrid<double, 2U>;
     using AlColShape = rlss::AlignedBoxCollisionShape<double, 2U>;
     using ColShape = rlss::CollisionShape<double, 2U>;
-    using AlignedBox = typename _OccupancyGrid::AlignedBox;
-    using VectorDIM = typename _OccupancyGrid::VectorDIM;
-    using Coordinate = _OccupancyGrid::Coordinate;
-    using Index = _OccupancyGrid::Index;
-    using UnorderedIndexSet = _OccupancyGrid::UnorderedIndexSet;
+    using AlignedBox = typename OccupancyGrid::AlignedBox;
+    using VectorDIM = typename OccupancyGrid::VectorDIM;
+    using Coordinate = OccupancyGrid::Coordinate;
+    using Index = OccupancyGrid::Index;
+    using UnorderedIndexSet = OccupancyGrid::UnorderedIndexSet;
 
     auto collision_shape_al 
         = std::make_shared<AlColShape>(
-            AlignedBox(VectorDIM{-0.33, -0.33}, VectorDIM{0.33, 0.33})
+        AlignedBox(
+            VectorDIM{-0.33, -0.33},
+            VectorDIM{0.33, 0.33}
+            )
     );
-    auto collision_shape = std::static_pointer_cast<ColShape>(collision_shape_al);
+    auto collision_shape = std::static_pointer_cast<ColShape>(
+        collision_shape_al
+    );
 
-    _OccupancyGrid grid(Coordinate(0.5, 0.5));
+    OccupancyGrid grid(Coordinate(0.5, 0.5));
 
     grid.setOccupancy(Index(5, 5));
     grid.setOccupancy(Index(5, 8));

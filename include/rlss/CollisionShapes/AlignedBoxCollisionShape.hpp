@@ -20,12 +20,18 @@ public:
 
 
     StdVectorVectorDIM convexHullPoints(const VectorDIM& com) const override {
-        AlignedBox box(m_collision_box.min() + com, m_collision_box.max() + com);
+        AlignedBox box(
+            m_collision_box.min() + com,
+            m_collision_box.max() + com
+        );
         return rlss::internal::cornerPoints<T, DIM>(box);
     }
 
     AlignedBox boundingBox(const VectorDIM& com) const override {
-        return AlignedBox(m_collision_box.min() + com, m_collision_box.max() + com);
+        return AlignedBox(
+            m_collision_box.min() + com,
+            m_collision_box.max() + com
+        );
     }
 
 private:
