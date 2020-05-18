@@ -223,6 +223,21 @@ Hyperplane<T, DIM> shiftHyperplane(
     return shp;
 }
 
+/*
+* Buffer 'box' so that when center_of_mass is inside the buffered box
+* com_box corresponding to robot with center of mass 'center_of_mass'
+* is inside the 'box'
+*/
+template<typename T, unsigned int DIM>
+AlignedBox<T, DIM> bufferAlignedBox(
+    const VectorDIM<T, DIM>& center_of_mass,
+    const AlignedBox<T, DIM>& com_box,
+    const AlignedBox<T, DIM>& box
+) {
+    return AlignedBox(box.min() + (center_of_mass - com_box.min()),
+                      box.max() + (center_of_mass - com_box.max()));
+}
+
 } // namespace internal
 
 } // namespace rlss

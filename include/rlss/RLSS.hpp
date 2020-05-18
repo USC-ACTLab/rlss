@@ -1,6 +1,7 @@
 #ifndef RLSS_RLSS_HPP
 #define RLSS_RLSS_HPP
 
+#include <memory>
 #include <rlss/OccupancyGrid.hpp>
 #include <rlss/internal/SVM.hpp>
 #include <rlss/internal/Util.hpp>
@@ -41,14 +42,38 @@ public:
 
     using UnorderedIndexSet = typename OccupancyGrid::UnorderedIndexSet;
 
-    PiecewiseCurve& getOriginalTrajectory() {
-        return m_original_trajectory;
-    }
 
-    const PiecewiseCurve& getOriginalTrajectory() const {
-        return m_original_trajectory;
+    RLSS (
+        const PiecewiseCurve& orig_traj,
+        const PiecewiseCurveQPGenerator& generator,
+        std::shared_ptr<CollisionShape> col_shape,
+        const AlignedBox& workspace,
+        T planning_horizon,
+        T safe_upto,
+        T search_step,
+        unsigned int continuity_upto,
+        T rescaling_multiplier,
+        unsigned int max_rescaling_count,
+        const std::vector<std::pair<unsigned int, T>>& lambda_integrated,
+        const std::vector<T> theta_pos_at,
+        const std::vector<std::pair<unsigned int, T>>& max_d_mags
+    )
+        : m_original_trajectory(orig_traj),
+        m_qp_generator(generator),
+        m_collision_shape(col_shape),
+        m_workspace(workspace),
+        m_planning_horizon(planning_horizon),
+        m_safe_upto(safe_upto),
+        m_search_step(search_step),
+        m_continuity_upto(continuity_upto),
+        m_rescaling_duration_multipler(rescaling_multiplier),
+        m_maximum_rescaling_count(max_rescaling_count),
+        m_lambda_integrated_squared_derivatives(lambda_integrated),
+        m_theta_position_at(theta_pos_at),
+        m_max_derivative_magnitudes(max_d_mags)
+    {
+        
     }
-
 
     // plan for the current_time.
     std::optional<PiecewiseCurve> plan(
@@ -379,6 +404,14 @@ private:
         m_qp_generator.resetProblem();
         m_qp_generator.setPieceMaxParameters(durations);
 
+        // workspace constraint
+        AlignedBox ws = shiftAlignedBox(
+            VectorDIM::Zero(), 
+            m_collision_shape->boundingBox(VectorDIM::Zero()),
+            m_workspace
+        );
+        m_qp_generator.addBoundingBoxConstraint(ws);
+
         // robot to robot avoidance constraints for the first piece
         std::vector<Hyperplane> robot_to_robot_hps
                 = this->robotSafetyHyperplanes(
@@ -474,6 +507,20 @@ private:
             return m_qp_generator.extractCurve(soln);
         }
         return std::nullopt;
+    }
+
+    bool needsTemporalRescaling(const PiecewiseCurve& curve) const {
+        for(const auto& [d, l]: m_max_derivative_magnitudes) {
+            for(
+                T param = 0; 
+                param < curve.maxParameter(); 
+                param += m_search_step
+            ) {
+                if(curve.eval(param, d).norm() > l) {
+                    return true;
+                }
+            }
+        }
     }
 
     std::vector<Hyperplane> robotSafetyHyperplanes(
