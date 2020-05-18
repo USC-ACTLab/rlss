@@ -14,6 +14,9 @@
 namespace rlss {
 
 template<typename T, unsigned int DIM>
+class OccupancyGridIterator;
+
+template<typename T, unsigned int DIM>
 class OccupancyGrid {
 public:
     using VectorDIM = Eigen::Vector<T, DIM>;
@@ -24,21 +27,13 @@ public:
     using Coordinate = VectorDIM;
     using Index = VectorlliDIM;
 
+    using iterator = OccupancyGridIterator<T, DIM>;
+
     using UnorderedIndexSet 
             = std::unordered_set<
                     Index, 
                     rlss::internal::VectorDIMHasher<long long int, DIM>
             >;
-
-    struct IndexHasher {
-        std::size_t operator()(const Index& idx) const noexcept {
-            std::size_t seed = 0;
-            for(unsigned int d = 0; d < DIM; d++) {
-                boost::hash_combine(seed, idx(d));
-            }
-            return seed;
-        }
-    };
 
     OccupancyGrid(Coordinate step_size): m_step_size(step_size) {
 
@@ -228,14 +223,79 @@ public:
         return this->toBox(this->getIndex(coord));
     }
 
+    iterator begin() const {
+        return iterator(*this, 0, m_grid.begin());
+        
+    }
+
+    iterator end() const {
+        return iterator(*this, m_temporary_obstacles.size(), m_grid.end());
+    }
+
+    friend OccupancyGridIterator<T, DIM>;
 
 private:
     Coordinate m_step_size;
-    std::unordered_set<Index, IndexHasher> m_grid;
+    UnorderedIndexSet m_grid;
 
     std::vector<AlignedBox> m_temporary_obstacles;
 }; // class OccupancyGrid
 
+
+template<typename T, unsigned int DIM>
+class OccupancyGridIterator {
+public:
+    using _OccupancyGrid = OccupancyGrid<T, DIM>;
+    using UnorderedIndexSet = typename _OccupancyGrid::UnorderedIndexSet;
+    using AlignedBox = typename _OccupancyGrid::AlignedBox;
+
+    OccupancyGridIterator(
+            const _OccupancyGrid& g,
+            std::size_t temp_obs_idx,
+            typename UnorderedIndexSet::iterator occ_idx_itr
+    ):
+        grid(g),
+        temporary_obstacles_idx(temp_obs_idx),
+        occupied_idx_iterator(occ_idx_itr)
+    {
+
+    }
+
+    explicit OccupancyGridIterator(const _OccupancyGrid& g):
+        rlss::OccupancyGridIterator<T, DIM>(
+                g,
+                0,
+                grid.m_grid.begin())
+    {
+    }
+
+    AlignedBox operator*() const {
+        if(temporary_obstacles_idx < grid.m_temporary_obstacles.size()) {
+            return grid.m_temporary_obstacles[temporary_obstacles_idx];
+        } else {
+            grid.toBox(*occupied_idx_iterator);
+        }
+    }
+
+    void operator++() {
+        if(temporary_obstacles_idx < grid.m_temporary_obstacles.size()) {
+            temporary_obstacles_idx++;
+        } else {
+            occupied_idx_iterator++;
+        }
+    }
+
+    bool operator==(const OccupancyGridIterator<T, DIM>& rhs) const {
+        return rhs.temporary_obstacles_idx == this->temporary_obstacles_idx
+            && rhs.occupied_idx_iterator == this->occupied_idx_iterator;
+    }
+
+private:
+
+    const _OccupancyGrid& grid;
+    std::size_t temporary_obstacles_idx;
+    typename UnorderedIndexSet::iterator occupied_idx_iterator;
+};
 
 namespace internal {
 

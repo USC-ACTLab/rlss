@@ -8,6 +8,7 @@
 #include <queue>
 #include <functional>
 #include <stdexcept>
+#include <absl/strings/str_cat.h>
 
 namespace rlss {
 
@@ -193,6 +194,34 @@ StdVectorVectorDIM<T, DIM> bestSplitSegments(
     return  result;
 }
 
+// shift hyperplane hp creating hyperplane shp
+// such that whenever the center_of_mass of the robot
+// is to the negative side of the shp,
+// the collision shape box of the
+// robot is to the negative side of the hyperplane hp.
+// box should be the bounding box of the collision shape at given
+// center_of_mass
+template<typename T, unsigned int DIM>
+Hyperplane<T, DIM> shiftHyperplane(
+    const VectorDIM<T, DIM>& center_of_mass,
+    const AlignedBox<T, DIM>& box,
+    const Hyperplane<T, DIM>& hp
+) {
+    using Hyperplane = Hyperplane<T, DIM>;
+    using StdVectorVectorDIM = StdVectorVectorDIM<T, DIM>;
+    Hyperplane shp {hp.normal(), hp.offset()};
+
+    T offset = std::numeric_limits<T>::max();
+
+    StdVectorVectorDIM corner_points = cornerPoints<T, DIM>(box);
+
+    for(const auto& pt : corner_points) {
+        shp.offset()
+                = std::min(offset, hp.normal().dot(center_of_mass - pt));
+    }
+
+    return shp;
+}
 
 } // namespace internal
 

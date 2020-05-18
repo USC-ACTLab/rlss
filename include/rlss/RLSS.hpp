@@ -15,6 +15,7 @@
 #include <optional>
 #include <rlss/internal/BFS.hpp>
 #include <rlss/internal/DiscreteSearch.hpp>
+#include <cassert>
 
 namespace rlss {
 
@@ -57,6 +58,28 @@ public:
                     other_robot_collision_shape_bounding_boxes,
         OccupancyGrid& occupancy_grid) {
 
+        if(current_time < 0) {
+            throw std::domain_error(
+                absl::StrCat
+                (
+                    "current time can't be negative. given: ",
+                    current_time
+                )
+            );
+        }
+
+        if(current_robot_state.size() < m_continuity_upto + 1) {
+            throw std::domain_error
+            (
+                absl::StrCat
+                (
+                    "can't enforce contiuity up to degree",
+                    m_continuity_upto,
+                    " using robot state with number of elements ",
+                    current_robot_state.size()
+                )
+            );
+        }
 
         for(const auto& colbox: other_robot_collision_shape_bounding_boxes) {
             occupancy_grid.addTemporaryObstacle(colbox);
@@ -342,23 +365,115 @@ private:
         return {discrete_path, segment_durations};
     }
 
-    // shift hyperplane hp creating hyperplane shp
-    // such that whenever the center_of_mass of the robot
-    // is to the negative side of the shp, 
-    // the ch_points (convex hull points) of collision shape of the
-    // robot is to the negative side of the hyperplane hp.
-    Hyperplane shiftHyperplane(const VectorDIM& center_of_mass, 
-                               const StdVectorVectorDIM& ch_points, 
-                               const Hyperplane& hp) const {
-        Hyperplane shp {hp.normal(), hp.offset()};
+    std::optional<PiecewiseCurve> trajectoryOptimization(
+            const StdVectorVectorDIM& segments,
+            const std::vector<T>& durations,
+            const std::vector<AlignedBox>& oth_rbt_col_shape_bboxes,
+            const OccupancyGrid& occupancy_grid,
+            const StdVectorVectorDIM& current_robot_state
+    ) const {
+        assert(segments.size() == m_qp_generator.numPieces() + 1);
+        assert(durations.size() == segments.size());
+        assert(current_robot_state.size() > m_continuity_upto);
 
-        T offset = std::numeric_limits<T>::max();
-        for(const auto& pt : ch_points) {
-            shp.offset() 
-                = std::min(offset, hp.normal().dot(center_of_mass - pt));
+        m_qp_generator.resetProblem();
+        m_qp_generator.setPieceMaxParameters(durations);
+
+        // robot to robot avoidance constraints for the first piece
+        std::vector<Hyperplane> robot_to_robot_hps
+                = this->robotSafetyHyperplanes(
+                        current_robot_state[0],
+                        oth_rbt_col_shape_bboxes
+        );
+        for(const auto& hp: robot_to_robot_hps) {
+            m_qp_generator.addHyperplaneConstraintForPiece(0, hp);
         }
 
-        return shp;
+        // robot to obstacle avoidance constraints for all pieces
+        for (
+            std::size_t p_idx = 0;
+            p_idx < m_qp_generator.numPieces();
+            p_idx++
+        ) {
+            AlignedBox from_box 
+                = m_collision_shape->boundingBox(segments[p_idx]);
+            AlignedBox to_box 
+                = m_collision_shape->boundingBox(segments[p_idx+1]);
+            to_box.extend(from_box);
+
+            StdVectorVectorDIM segments_corners 
+                = rlss::internal::cornerPoints<T, DIM>(to_box);
+
+            for(
+                auto it = occupancy_grid.begin(); 
+                it != occupancy_grid.end(); 
+                it++
+            ) {
+                AlignedBox grid_box = *it;
+                StdVectorVectorDIM grid_box_corners 
+                    = rlss::internal::cornerPoints<T, DIM>(grid_box);
+                Hyperplane shp = rlss::internal::svm
+                (
+                    segments_corners,
+                    grid_box_corners
+                );
+                shp = rlss::internal::shiftHyperplane(
+                    VectorDIM::Zero(), 
+                    m_collision_shape->boundingBox(VectorDIM::Zero()), 
+                    shp
+                );
+
+                m_qp_generator.addHyperplaneConstraintForPiece(p_idx, shp);
+            }
+        }
+
+        // continuity constraints
+        for(
+            std::size_t p_idx = 0; 
+            p_idx < m_qp_generator.numPieces() - 1; 
+            p_idx++
+        ) {
+            for(unsigned int k = 0; k <= m_continuity_upto; k++) {
+                m_qp_generator.addContinuityConstraint(p_idx, k);
+            }
+        }
+
+        // initial point constraints
+        for(unsigned int k = 0; k <= m_continuity_upto; k++) {
+            m_qp_generator.addEvalConstraint(0, k, current_robot_state[k]);
+        }
+
+        // energy cost
+        for(const auto& [d, l]: m_lambda_integrated_squared_derivatives) {
+            m_qp_generator.addIntegratedSquaredDerivativeCost(d, l);
+        }
+
+        // eval cost 
+        T duration_sum_before = 0;
+        for(
+            std::size_t p_idx = 0; 
+            p_idx < m_qp_generator.numPieces(); 
+            duration_sum_before += durations[p_idx], p_idx++
+        ) {
+            m_qp_generator.addEvalCost(
+                duration_sum_before + durations[p_idx], 
+                segments[p_idx+1], 
+                m_theta_position_at[p_idx]
+            );
+        }
+
+        QPWrappers::CPLEX::Engine<T> cplex;
+        cplex.setFeasibilityTolerance(1e-9);
+
+        auto initial_guess = m_qp_generator.getDVarsForSegments(segments);
+        Vector soln;
+        auto ret = cplex.next(
+                        m_qp_generator.getProblem(), soln,  initial_guess);
+
+        if(ret == QPWrappers::OptReturnType::Optimal) {
+            return m_qp_generator.extractCurve(soln);
+        }
+        return std::nullopt;
     }
 
     std::vector<Hyperplane> robotSafetyHyperplanes(
@@ -368,8 +483,11 @@ private:
 
         std::vector<Hyperplane> hyperplanes;
         
-        StdVectorVectorDIM robot_points 
+        AlignedBox robot_box
             = m_collision_shape->boundingBox(robot_position);
+
+        StdVectorVectorDIM robot_points
+                = rlss::internal::cornerPoints<T, DIM>(robot_box);
 
         for(const auto& oth_collision_shape_bbox:
                     other_robot_collision_shape_bounding_boxes) {
@@ -377,11 +495,12 @@ private:
                     = rlss::internal::cornerPoints(oth_collision_shape_bbox);
             Hyperplane svm_hp = rlss::internal::svm(robot_points, oth_points);
 
-            Hyperplane svm_shifted = this->shiftHyperplane(
+            Hyperplane svm_shifted = rlss::internal::shiftHyperplane(
                                         robot_position, 
-                                        robot_points, 
+                                        robot_box,
                                         svm_hp
             );
+
             hyperplanes.push_back(svm_shifted);
         }
 
