@@ -5,6 +5,9 @@
 #include <boost/functional/hash/hash_fwd.hpp>
 #include <memory>
 #include <Eigen/Dense>
+#include <queue>
+#include <functional>
+#include <stdexcept>
 
 namespace rlss {
 
@@ -56,6 +59,139 @@ public:
 };
 
 
+template <typename T, unsigned int DIM>
+StdVectorVectorDIM<T, DIM> linearInterpolate(
+    const VectorDIM<T, DIM>& start,
+    const VectorDIM<T, DIM>& end,
+    std::size_t num_points
+) {
+
+    using StdVectorVectorDIM = StdVectorVectorDIM<T, DIM>;
+    using VectorDIM = VectorDIM<T, DIM>;
+
+    if(num_points < 2) {
+        throw std::domain_error(
+            absl::StrCat
+            (
+                "linear interpolate can't have less than 2 number of points",
+                " given: ",
+                num_points
+            )
+        );
+    }
+
+    StdVectorVectorDIM result(num_points);
+
+    VectorDIM step_vec = (end - start) / (num_points - 1);
+
+    result.push_back(start);
+    for(std::size_t step = 1; step < num_points - 1; step++) {
+        result.push_back(start + step * step_vec);
+    }
+    result.push_back(end);
+
+    return result;
+
+
+}
+
+template <typename T, unsigned int DIM>
+StdVectorVectorDIM<T, DIM> bestSplitSegments(
+    const StdVectorVectorDIM<T, DIM>& segments,
+    std::size_t num_pieces
+) {
+    if(num_pieces + 1 < segments.size()) {
+        throw std::domain_error(
+            absl::StrCat
+            (
+                "nothing to split since num_pieces=",
+                num_pieces,
+                "is less than current number of segments ",
+                segments.size() - 1
+            )
+        );
+    }
+
+
+    using VectorDIM = VectorDIM<T, DIM>;
+    using StdVectorVectorDIM = StdVectorVectorDIM<T, DIM>;
+
+    if(segments.size() == 1) {
+        return StdVectorVectorDIM(num_pieces + 1, segments[0]);
+    }
+
+    struct SegmentPQElem {
+        VectorDIM start;
+        VectorDIM end;
+        T length;
+        unsigned int num_pieces;
+        std::size_t segment_idx;
+
+        SegmentPQElem(const VectorDIM& s, const VectorDIM& e, std::size_t i)
+                :   start(s),
+                    end(e),
+                    length((s-e).norm()),
+                    num_pieces(1),
+                    segment_idx(i)
+        {
+
+        }
+
+        bool operator<(const SegmentPQElem& rhs) const {
+            return this->length / this->num_pieces
+                        < rhs.length / rhs.num_pieces;
+        }
+    };
+
+    std::priority_queue
+    <
+        SegmentPQElem,
+        std::vector<SegmentPQElem>,
+        std::greater<SegmentPQElem>
+    > pq;
+
+    for(std::size_t i = 0; i < segments.size()-1; i++) {
+        pq.push({segments[i], segments[i+1], i});
+    }
+
+    for(std::size_t p_count = segments.size() - 1;
+            p_count < num_pieces; p_count++) {
+        SegmentPQElem t = pq.top();
+        pq.pop();
+        t.num_pieces++;
+        pq.push(t);
+    }
+
+    std::vector<SegmentPQElem> segment_pqelems;
+    while(!pq.empty()) {
+        segment_pqelems.push_back(pq.top());
+        pq.pop();
+    }
+
+    std::sort(
+            segment_pqelems.begin(),
+            segment_pqelems.end(),
+            [] (const SegmentPQElem& lhs, const SegmentPQElem& rhs) -> bool {
+                return lhs.segment_idx < rhs.segment_idx;
+            }
+    );
+
+    StdVectorVectorDIM result;
+
+    for(const SegmentPQElem& pqelem: segment_pqelems) {
+        StdVectorVectorDIM interpolate
+            = linearInterpolate(
+                    pqelem.start,
+                    pqelem.end,
+                    pqelem.num_pieces + 1
+        );
+
+        result.insert(result.end(), interpolate.begin(), interpolate.end() - 1);
+    }
+
+    result.push_back(segments.back());
+    return  result;
+}
 
 
 } // namespace internal

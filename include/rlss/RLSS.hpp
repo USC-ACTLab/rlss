@@ -14,6 +14,7 @@
 #include <limits>
 #include <optional>
 #include <rlss/internal/BFS.hpp>
+#include <rlss/internal/DiscreteSearch.hpp>
 
 namespace rlss {
 
@@ -123,7 +124,7 @@ private:
     // collision shape of the robot
     std::shared_ptr<CollisionShape> m_collision_shape; 
 
-    // original trjaectory of the robot
+    // original trajectory of the robot
     PiecewiseCurve m_original_trajectory;
 
     // qp generator for the piecewise curve. number of pieces and their
@@ -139,9 +140,6 @@ private:
 
     // plan should be safe upto this time
     T m_safe_upto;
-
-    // maximum velocity of obstacles in the environment
-    T m_max_obstacle_velocity;
 
     // parameter search step on curves for collision checking operations.
     T m_search_step;
@@ -270,23 +268,78 @@ private:
         }
 
         T actual_horizon = target_time - current_time;
-        actual_horizon = std::max(
-            actual_horizon,
-            m_safe_upto
+        return make_pair(target_position, actual_horizon);
+    }
+
+    std::optional<std::pair<StdVectorVectorDIM, std::vector<T>>>
+    discreteSearch(
+        const VectorDIM& current_position,
+        const VectorDIM& goal_position,
+        T time_horizon,
+        const OccupancyGrid& occupancy_grid
+    ) const {
+        time_horizon = std::max(time_horizon, m_safe_upto);
+
+        std::optional<StdVectorVectorDIM> discrete_path_opt =
+                rlss::internal::discreteSearch(
+                    current_position,
+                    goal_position,
+                    occupancy_grid,
+                    m_workspace,
+                    m_collision_shape
         );
+
+        if(!discrete_path_opt) {
+            return std::nullopt;
+        }
+
+        StdVectorVectorDIM discrete_path = std::move(*discrete_path_opt);
 
         for(const auto& [d, l]: m_max_derivative_magnitudes) {
             if(d == 1) {
-                // what is the time required if we go straight with
-                // maximum velocity?
-                actual_horizon = std::max(
-                    actual_horizon,
-                    (target_position - current_position).norm() / l
-                );
+                T total_path_length = 0;
+                for(std::size_t i = 0; i < discrete_path.size() - 1; i++) {
+                    total_path_length
+                        += (discrete_path[i+1] - discrete_path[i]).norm();
+                }
+                time_horizon = std::max(time_horizon, total_path_length/l);
             }
         }
 
-        return make_pair(target_position, actual_horizon);
+        if(discrete_path.size() > m_qp_generator.numPieces() + 1) {
+            discrete_path.resize(m_qp_generator.numPieces() + 1);
+        } else if(discrete_path.size()  < m_qp_generator.numPieces() + 1) {
+            discrete_path = rlss::internal::bestSplitSegments(
+                    discrete_path,
+                    m_qp_generator.numPieces()
+            );
+        }
+
+        std::vector<T> segment_lengths(m_qp_generator.numPieces());
+        T total_path_length = 0;
+        for(std::size_t i = 0; i + 1 < discrete_path.size(); i++) {
+            segment_lengths[i]
+                    = (discrete_path[i+1] - discrete_path[i]).norm();
+            total_path_length
+                    += segment_lengths[i];
+        }
+
+
+        std::vector<T> segment_durations(m_qp_generator.numPieces(), 0);
+        for(std::size_t i = 0; i < segment_lengths.size(); i++) {
+            segment_durations[i]
+                    = time_horizon * (segment_lengths[i] / total_path_length);
+        }
+
+        if(!segment_durations.empty() && segment_durations[0] < m_safe_upto) {
+            T multiplier = m_safe_upto / segment_durations[0];
+            segment_durations[0] = m_safe_upto;
+            for(std::size_t i = 1; i < segment_durations.size(); i++) {
+                segment_durations[i] *= multiplier;
+            }
+        }
+
+        return {discrete_path, segment_durations};
     }
 
     // shift hyperplane hp creating hyperplane shp
