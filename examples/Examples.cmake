@@ -16,3 +16,4 @@ endfunction(generate_example)
 
 
 generate_example(2d_planning_simulation)
+generate_example(3d_planning_simulation)

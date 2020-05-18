@@ -234,7 +234,7 @@ AlignedBox<T, DIM> bufferAlignedBox(
     const AlignedBox<T, DIM>& com_box,
     const AlignedBox<T, DIM>& box
 ) {
-    return AlignedBox(box.min() + (center_of_mass - com_box.min()),
+    return AlignedBox<T, DIM>(box.min() + (center_of_mass - com_box.min()),
                       box.max() + (center_of_mass - com_box.max()));
 }
 

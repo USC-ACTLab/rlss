@@ -1,6 +1,7 @@
 #ifndef RLSS_OCCUPANCY_GRID_HPP
 #define RLSS_OCCUPANCY_GRID_HPP
 
+#include <limits>
 #include <unordered_set>
 #include <Eigen/Dense>
 #include <Eigen/Geometry>
@@ -10,6 +11,8 @@
 #include <boost/functional/hash/hash.hpp>
 #include <rlss/internal/Util.hpp>
 #include <rlss/CollisionShapes/CollisionShape.hpp>
+#include <qp_wrappers/problem.hpp>
+#include <qp_wrappers/cplex.hpp>
 
 namespace rlss {
 
@@ -203,6 +206,75 @@ public:
 
     void addObstacle(const AlignedBox& box) {
         this->fillOccupancy(box.min(), box.max());
+    }
+
+    // add obstacle that is the convex hull of points in pts
+    void addObstacle(const StdVectorVectorDIM& pts) {
+        using Row = rlss::internal::Row<T>;
+
+        if(pts.empty())
+            return;
+
+        AlignedBox box(pts[0], pts[0]);
+        for(const auto& pt: pts) {
+            box.extend(pt);
+        }
+
+        Index min = this->getIndex(box.min());
+        Index max = this->getIndex(box.max());
+
+        QPWrappers::CPLEX::Engine<T> cplex;
+        cplex.setFeasibilityTolerance(1e-9);
+
+
+        std::queue<Index> q;
+        q.push(min);
+        while(!q.empty()) {
+            Index& fr = q.front();
+            AlignedBox box = this->toBox(fr);
+
+            QPWrappers::Problem<T> problem(DIM + pts.size());
+            for(unsigned int d = 0; d < DIM; d++) {
+                problem.set_var_limits(d, box.min(d), box.max(d));
+            }
+            for(std::size_t i = 0; i < pts.size(); i++) {
+                problem.set_var_limits(
+                        DIM + i, 0, std::numeric_limits<T>::max());
+            }
+
+            Row coeff(DIM + pts.size());
+            coeff.setZero();
+            for(std::size_t i = 0; i < pts.size(); i++) {
+                coeff(DIM + i) = 1;
+            }
+
+            problem.add_constraint(coeff, 1, 1);
+
+            for(unsigned int d = 0; d < DIM; d++) {
+                coeff.setZero();
+                coeff(d) = -1;
+                for(std::size_t i = 0; i < pts.size(); i++) {
+                    coeff(DIM + i) = pts[i](d);
+                }
+                problem.add_constraint(coeff, 0, 0);
+            }
+
+            typename QPWrappers::CPLEX::Engine<T>::Vector result;
+            auto ret = cplex.init(problem, result);
+            if(ret == QPWrappers::OptReturnType::Optimal) {
+                this->setOccupancy(fr);
+            }
+
+            for(unsigned int d = 0; d < DIM; d++) {
+                fr(d)++;
+                if(fr(d) <= max(d)) {
+                    q.push(fr);
+                }
+                fr(d)--;
+            }
+
+            q.pop();
+        }
     }
 
     void addTemporaryObstacle(const AlignedBox& box) {
