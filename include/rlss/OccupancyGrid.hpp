@@ -132,7 +132,9 @@ public:
         std::vector<Index> filled_indexes;
 
         std::queue<Index> occupied_indexes;
+        UnorderedIndexSet visited;
         occupied_indexes.push(min);
+        visited.insert(min);
         while(!occupied_indexes.empty()) {
             Index& occ = occupied_indexes.front();
             if(!this->isOccupied(occ)) {
@@ -142,8 +144,9 @@ public:
 
             for(unsigned int d = 0; d < DIM; d++) {
                 occ(d)++;
-                if(occ(d) <= max(d)) {
+                if(occ(d) <= max(d) && visited.find(occ) == visited.end()) {
                     occupied_indexes.push(occ);
+                    visited.insert(occ);
                 }
                 occ(d)--;
             }
@@ -183,8 +186,10 @@ public:
         Index min = this->getIndex(box.min());
         Index max = this->getIndex(box.max());
 
+        UnorderedIndexSet visited;
         std::queue<Index> indexes;
         indexes.push(min);
+        visited.insert(min);
         while(!indexes.empty()) {
             Index& occ = indexes.front();
             if(m_grid.find(occ) != m_grid.end())
@@ -192,8 +197,9 @@ public:
 
             for(unsigned int d = 0; d < DIM; d++) {
                 occ(d)++;
-                if(occ(d) <= max(d)) {
+                if(occ(d) <= max(d) && visited.find(occ) == visited.end()) {
                     indexes.push(occ);
+                    visited.insert(occ);
                 }
                 occ(d)--;
             }
@@ -228,14 +234,17 @@ public:
 
 
         std::queue<Index> q;
+        UnorderedIndexSet visited;
         q.push(min);
+        visited.insert(min);
+        int idx = 0;
         while(!q.empty()) {
             Index& fr = q.front();
             AlignedBox box = this->toBox(fr);
 
             QPWrappers::Problem<T> problem(DIM + pts.size());
             for(unsigned int d = 0; d < DIM; d++) {
-                problem.set_var_limits(d, box.min(d), box.max(d));
+                problem.set_var_limits(d, box.min()(d), box.max()(d));
             }
             for(std::size_t i = 0; i < pts.size(); i++) {
                 problem.set_var_limits(
@@ -259,7 +268,7 @@ public:
                 problem.add_constraint(coeff, 0, 0);
             }
 
-            typename QPWrappers::CPLEX::Engine<T>::Vector result;
+            typename QPWrappers::Problem<T>::Vector result;
             auto ret = cplex.init(problem, result);
             if(ret == QPWrappers::OptReturnType::Optimal) {
                 this->setOccupancy(fr);
@@ -267,8 +276,9 @@ public:
 
             for(unsigned int d = 0; d < DIM; d++) {
                 fr(d)++;
-                if(fr(d) <= max(d)) {
+                if(fr(d) <= max(d) && visited.find(fr) == visited.end()) {
                     q.push(fr);
+                    visited.insert(fr);
                 }
                 fr(d)--;
             }
