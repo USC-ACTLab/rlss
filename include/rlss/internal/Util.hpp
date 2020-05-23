@@ -140,15 +140,14 @@ StdVectorVectorDIM<T, DIM> bestSplitSegments(
 
         bool operator<(const SegmentPQElem& rhs) const {
             return this->length / this->num_pieces
-                        < rhs.length / rhs.num_pieces;
+                        > rhs.length / rhs.num_pieces;
         }
     };
 
     std::priority_queue
     <
         SegmentPQElem,
-        std::vector<SegmentPQElem>,
-        std::greater<SegmentPQElem>
+        std::vector<SegmentPQElem>
     > pq;
 
     for(std::size_t i = 0; i < segments.size()-1; i++) {
@@ -181,7 +180,7 @@ StdVectorVectorDIM<T, DIM> bestSplitSegments(
 
     for(const SegmentPQElem& pqelem: segment_pqelems) {
         StdVectorVectorDIM interpolate
-            = linearInterpolate(
+            = linearInterpolate<T, DIM>(
                     pqelem.start,
                     pqelem.end,
                     pqelem.num_pieces + 1

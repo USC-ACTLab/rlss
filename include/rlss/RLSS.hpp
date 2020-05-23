@@ -75,6 +75,23 @@ public:
         
     }
 
+    unsigned int continuityUpto() const {
+        return m_continuity_upto;
+    }
+
+    const PiecewiseCurve& originalTrajectory() const {
+        return m_original_trajectory;
+    }
+
+    VectorDIM goalPosition() const {
+        return m_original_trajectory.eval(
+                m_original_trajectory.maxParameter(), 0);
+    }
+
+    std::shared_ptr<CollisionShape> collisionShape() {
+        return m_collision_shape;
+    }
+
     // plan for the current_time.
     std::optional<PiecewiseCurve> plan(
         T current_time, 
@@ -316,7 +333,7 @@ private:
         }
 
         T actual_horizon = target_time - current_time;
-        return make_pair(target_position, actual_horizon);
+        return std::make_pair(target_position, actual_horizon);
     }
 
     std::optional<std::pair<StdVectorVectorDIM, std::vector<T>>>
@@ -329,7 +346,7 @@ private:
         time_horizon = std::max(time_horizon, m_safe_upto);
 
         std::optional<StdVectorVectorDIM> discrete_path_opt =
-                rlss::internal::discreteSearch(
+                rlss::internal::discreteSearch<T, DIM>(
                     current_position,
                     goal_position,
                     occupancy_grid,
@@ -357,7 +374,7 @@ private:
         if(discrete_path.size() > m_qp_generator.numPieces() + 1) {
             discrete_path.resize(m_qp_generator.numPieces() + 1);
         } else if(discrete_path.size()  < m_qp_generator.numPieces() + 1) {
-            discrete_path = rlss::internal::bestSplitSegments(
+            discrete_path = rlss::internal::bestSplitSegments<T, DIM>(
                     discrete_path,
                     m_qp_generator.numPieces()
             );
@@ -387,7 +404,7 @@ private:
             }
         }
 
-        return {discrete_path, segment_durations};
+        return std::make_pair(discrete_path, segment_durations);
     }
 
     std::optional<PiecewiseCurve> trajectoryOptimization(
@@ -396,16 +413,16 @@ private:
             const std::vector<AlignedBox>& oth_rbt_col_shape_bboxes,
             const OccupancyGrid& occupancy_grid,
             const StdVectorVectorDIM& current_robot_state
-    ) const {
+    ) {
         assert(segments.size() == m_qp_generator.numPieces() + 1);
-        assert(durations.size() == segments.size());
+        assert(durations.size() == segments.size() - 1);
         assert(current_robot_state.size() > m_continuity_upto);
 
         m_qp_generator.resetProblem();
         m_qp_generator.setPieceMaxParameters(durations);
 
         // workspace constraint
-        AlignedBox ws = shiftAlignedBox(
+        AlignedBox ws = rlss::internal::bufferAlignedBox<T, DIM>(
             VectorDIM::Zero(), 
             m_collision_shape->boundingBox(VectorDIM::Zero()),
             m_workspace
@@ -438,19 +455,19 @@ private:
                 = rlss::internal::cornerPoints<T, DIM>(to_box);
 
             for(
-                auto it = occupancy_grid.begin(); 
+                auto it = occupancy_grid.begin();
                 it != occupancy_grid.end(); 
-                it++
+                ++it
             ) {
                 AlignedBox grid_box = *it;
                 StdVectorVectorDIM grid_box_corners 
                     = rlss::internal::cornerPoints<T, DIM>(grid_box);
-                Hyperplane shp = rlss::internal::svm
+                Hyperplane shp = rlss::internal::svm<T, DIM>
                 (
                     segments_corners,
                     grid_box_corners
                 );
-                shp = rlss::internal::shiftHyperplane(
+                shp = rlss::internal::shiftHyperplane<T, DIM>(
                     VectorDIM::Zero(), 
                     m_collision_shape->boundingBox(VectorDIM::Zero()), 
                     shp
@@ -489,7 +506,11 @@ private:
             duration_sum_before += durations[p_idx], p_idx++
         ) {
             m_qp_generator.addEvalCost(
-                duration_sum_before + durations[p_idx], 
+                std::min(
+                        duration_sum_before + durations[p_idx],
+                        m_qp_generator.maxParameter()
+                ),
+                0,
                 segments[p_idx+1], 
                 m_theta_position_at[p_idx]
             );
@@ -539,10 +560,10 @@ private:
         for(const auto& oth_collision_shape_bbox:
                     other_robot_collision_shape_bounding_boxes) {
             StdVectorVectorDIM oth_points
-                    = rlss::internal::cornerPoints(oth_collision_shape_bbox);
-            Hyperplane svm_hp = rlss::internal::svm(robot_points, oth_points);
+                    = rlss::internal::cornerPoints<T, DIM>(oth_collision_shape_bbox);
+            Hyperplane svm_hp = rlss::internal::svm<T, DIM>(robot_points, oth_points);
 
-            Hyperplane svm_shifted = rlss::internal::shiftHyperplane(
+            Hyperplane svm_shifted = rlss::internal::shiftHyperplane<T, DIM>(
                                         robot_position, 
                                         robot_box,
                                         svm_hp

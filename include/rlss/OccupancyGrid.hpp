@@ -307,7 +307,6 @@ public:
 
     iterator begin() const {
         return iterator(*this, 0, m_grid.begin());
-        
     }
 
     iterator end() const {
@@ -334,7 +333,7 @@ public:
     OccupancyGridIterator(
             const _OccupancyGrid& g,
             std::size_t temp_obs_idx,
-            typename UnorderedIndexSet::iterator occ_idx_itr
+            typename UnorderedIndexSet::const_iterator occ_idx_itr
     ):
         grid(g),
         temporary_obstacles_idx(temp_obs_idx),
@@ -359,24 +358,28 @@ public:
         }
     }
 
-    void operator++() {
+    OccupancyGridIterator<T,DIM>& operator++() {
         if(temporary_obstacles_idx < grid.m_temporary_obstacles.size()) {
             temporary_obstacles_idx++;
         } else {
             occupied_idx_iterator++;
         }
+        return *this;
     }
 
     bool operator==(const OccupancyGridIterator<T, DIM>& rhs) const {
         return rhs.temporary_obstacles_idx == this->temporary_obstacles_idx
             && rhs.occupied_idx_iterator == this->occupied_idx_iterator;
     }
+    bool operator!=(const OccupancyGridIterator<T, DIM>& rhs) const {
+        return !operator==(rhs);
+    }
 
 private:
 
     const _OccupancyGrid& grid;
     std::size_t temporary_obstacles_idx;
-    typename UnorderedIndexSet::iterator occupied_idx_iterator;
+    typename UnorderedIndexSet::const_iterator occupied_idx_iterator;
 };
 
 namespace internal {

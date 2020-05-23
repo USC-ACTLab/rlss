@@ -11,9 +11,13 @@ function(generate_example examplenamebase)
             rlss
     )
 
+    target_include_directories(
+            ${examplenamebase} PUBLIC
+            examples/third_party
+    )
+
     add_dependencies(build_rlss_examples ${examplenamebase})
 endfunction(generate_example)
-
 
 generate_example(2d_planning_simulation)
 generate_example(3d_planning_simulation)

@@ -1,10 +1,10 @@
-cmake_minimum_required(VERSION 3.1)
+cmake_minimum_required(VERSION 3.9)
 project(rlss)
 
 set(CMAKE_CXX_STANDARD 17)
 
 add_subdirectory(third_party/splx)
-find_package(Boost REQUIRED)
+find_package(Boost COMPONENTS filesystem REQUIRED)
 
 add_library(rlss INTERFACE)
 target_include_directories(
@@ -19,6 +19,7 @@ target_link_libraries(
     splx
     qp_wrappers
     ${Boost_LIBRARIES}
+    ${Boost_FILESYSTEM_LIBRARY}
 )
 
 if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
