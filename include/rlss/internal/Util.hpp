@@ -9,8 +9,50 @@
 #include <functional>
 #include <stdexcept>
 #include <absl/strings/str_cat.h>
+#include <iostream>
+#include <fstream>
 
 namespace rlss {
+
+
+#ifdef ENABLE_RLSS_DEBUG_MESSAGES
+namespace internal {
+    template<typename T>
+    void debug_message_internal(bool first, T message) {
+        if(first) {
+            std::cout << "[DEBUG] ";
+        }
+        std::cout << message << std::endl;
+    }
+
+    template<typename T, typename... Args>
+    void debug_message_internal(bool first, T message, Args... args) {
+        if(first) {
+            std::cout << "[DEBUG] ";
+        }
+        std::cout << message;
+        debug_message_internal(false, args...);
+    }
+} // namespace internal
+
+    template<typename... Args>
+    void debug_message(Args... args) {
+        internal::debug_message_internal(true, args...);
+    }
+#else
+    template<typename... Args>
+    void debug_message(Args... args) {
+
+    }
+#endif
+
+namespace debug {
+    namespace colors {
+        constexpr char RESET[] = "\033[0m";
+        constexpr char RED[] = "\033[31m";
+        constexpr char GREEN[] = "\033[32m";
+    }
+}
 
 namespace internal {
 
@@ -24,7 +66,7 @@ template<typename T, unsigned int DIM>
 using VectorDIM = Eigen::Matrix<T, DIM, 1>;
 
 template<typename T, unsigned int DIM>
-using StdVectorVectorDIM = std::vector<VectorDIM<T,DIM>, 
+using StdVectorVectorDIM = std::vector<VectorDIM<T,DIM>,
                             Eigen::aligned_allocator<VectorDIM<T,DIM>>>;
 
 template<typename T>
@@ -216,7 +258,9 @@ Hyperplane<T, DIM> shiftHyperplane(
 
     for(const auto& pt : corner_points) {
         shp.offset()
-                = std::min(offset, hp.normal().dot(center_of_mass - pt));
+                = std::min(offset,
+                           hp.normal().dot(center_of_mass - pt) + hp.offset()
+       );
     }
 
     return shp;
@@ -236,6 +280,123 @@ AlignedBox<T, DIM> bufferAlignedBox(
     return AlignedBox<T, DIM>(box.min() + (center_of_mass - com_box.min()),
                       box.max() + (center_of_mass - com_box.max()));
 }
+
+
+namespace mathematica {
+#if 1//def ENABLE_RLSS_MATHEMATICA_OUTPUT
+
+std::ofstream file("mathematica0.commands", std::ios_base::out);
+std::vector<std::string> to_draw;
+
+void add_to_draw_to_file() {
+    file << "Graphics3D[{";
+    for(std::size_t i = 0; i < to_draw.size() - 1; i++) {
+        const auto& d = to_draw[i];
+        file << d << ", ";
+    }
+    if(!to_draw.empty())
+        file << to_draw.back();
+    file << "}]" << std::endl;
+}
+
+void save_file() {
+    static int file_count = 1;
+    file.close();
+    to_draw.clear();
+    file = std::ofstream(
+            "mathematica"
+            + std::to_string(file_count)
+            + ".commands", std::ios_base::out
+    );
+    file_count++;
+}
+
+template<typename T, unsigned int DIM>
+void robot_collision_avoidance_hyperplane(
+        const Hyperplane<T, DIM>& hp) {
+
+    static int hp_count = 0;
+    std::string prefix = "rcah" + std::to_string(hp_count);
+    file << prefix << "normal = {";
+    for(unsigned int d = 0; d < DIM-1; d++) {
+        file << hp.normal()(d) << ",";
+    }
+    file << hp.normal()(DIM-1) << "};" << std::endl;
+    file << prefix << "s = (" << -hp.offset()
+         << "/Dot[" << prefix <<"normal, " << prefix <<"normal]) * "
+         << prefix << "normal;" << std::endl;
+    file << prefix << "e = " << prefix << "s + {";
+    VectorDIM<T, DIM> normal_normalized = hp.normal();
+    normal_normalized.normalize();
+
+    for(unsigned int d = 0; d < DIM - 1; d++) {
+        file << normal_normalized(d) << ", ";
+    }
+    file << normal_normalized(DIM-1) << "};" << std::endl;
+    file << prefix << "arrow = Arrow[{"
+         << prefix << "s, " << prefix << "e}];" << std::endl;
+    to_draw.push_back(std::string("{Red, ") + prefix + "arrow}");
+
+    file << prefix << "hp = Hyperplane[{";
+    for(unsigned int d = 0; d < DIM - 1; d++) {
+        file << hp.normal()(d) << ",";
+    }
+    file << hp.normal()(DIM-1) << "}, " << -hp.offset() << "];" << std::endl;
+    to_draw.push_back("{Red, Arrowheads[Large], " + prefix + "hp}");
+    hp_count++;
+}
+
+template<typename T, unsigned int DIM>
+void self_collision_box(const AlignedBox<T, DIM>& box) {
+    std::string prefix = "selfbox";
+
+    file << prefix << "= Cuboid[{";
+    for(unsigned int d = 0; d < DIM - 1; d++) {
+        file << box.min()(d) << ",";
+    }
+    file << box.min()(DIM-1) << "},{";
+    for(unsigned int d = 0; d < DIM - 1; d++) {
+        file << box.max()(d) << ",";
+    }
+    file << box.max()(DIM-1) << "}];" << std::endl;
+    to_draw.push_back("{Blue, " + prefix + "}");
+}
+
+template<typename T, unsigned int DIM>
+void other_robot_collision_box(const AlignedBox<T, DIM>& box) {
+    static int colbox_count = 0;
+    std::string prefix = "orcb" + std::to_string(colbox_count);
+
+    file << prefix << "= Cuboid[{";
+    for(unsigned int d = 0; d < DIM - 1; d++) {
+        file << box.min()(d) << ",";
+    }
+    file << box.min()(DIM-1) << "},{";
+    for(unsigned int d = 0; d < DIM - 1; d++) {
+        file << box.max()(d) << ",";
+    }
+    file << box.max()(DIM-1) << "}];" << std::endl;
+    to_draw.push_back("{Red, " + prefix + "}");
+    colbox_count++;
+}
+
+#else
+    void add_to_draw_to_file() {
+    }
+
+    void save_file() {
+    }
+
+    template<typename T, unsigned int DIM>
+    void mathematica_robot_collision_avoidance_hyperplane(
+            const Hyperplane<T, DIM>& hp) {
+    }
+
+    template<typename T, unsigned int DIM>
+    void mathematica_other_robot_collision_box(const AlignedBox<T, DIM>& box) {
+    }
+#endif
+} // namespace mathematica
 
 } // namespace internal
 

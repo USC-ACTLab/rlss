@@ -100,6 +100,40 @@ public:
                     other_robot_collision_shape_bounding_boxes,
         OccupancyGrid& occupancy_grid) {
 
+
+        debug_message("planning with...");
+        debug_message("desired time horizon: ", m_planning_horizon);
+        debug_message("replanning period: ", m_safe_upto);
+        debug_message(
+            "collision shape bounding box at 0 is [min: ",
+            m_collision_shape->boundingBox(VectorDIM::Zero()).min().transpose(),
+            ", max:",
+            m_collision_shape->boundingBox(VectorDIM::Zero()).max().transpose(),
+            "]"
+        );
+        debug_message(
+            "workspace is [min: ",
+            m_workspace.min().transpose(),
+            ", max: ",
+            m_workspace.max().transpose(),
+            "]"
+        );
+        for(std::size_t i = 0; i < current_robot_state.size(); i++) {
+            debug_message(
+                "current robot state at degree ",
+                i,
+                " is ",
+                current_robot_state[i].transpose()
+            );
+        }
+        debug_message(
+            "collision shape bounding box at current position is [min: ",
+            m_collision_shape->boundingBox(current_robot_state[0]).min().transpose(),
+            ", max:",
+            m_collision_shape->boundingBox(current_robot_state[0]).max().transpose(),
+            "]"
+        );
+
         if(current_time < 0) {
             throw std::domain_error(
                 absl::StrCat
@@ -127,6 +161,11 @@ public:
             occupancy_grid.addTemporaryObstacle(colbox);
         }
 
+        debug_message("current position is ",
+                        current_robot_state[0].transpose());
+        debug_message("current time is ", current_time);
+        debug_message("goalSelection...");
+
         std::optional<std::pair<VectorDIM, T>> goal_and_duration 
                 = this->goalSelection(current_robot_state[0],
                                       occupancy_grid,
@@ -134,10 +173,28 @@ public:
         );
 
         if(!goal_and_duration) {
+            debug_message(
+                debug::colors::RED,
+                "goalSelection failed.",
+                debug::colors::RESET
+            );
+
             occupancy_grid.clearTemporaryObstacles();
             return std::nullopt;
+        } else {
+            debug_message(
+                debug::colors::GREEN,
+                "goalSelection success.",
+                debug::colors::RESET
+            );
         }
 
+
+        debug_message("goal position: ", goal_and_duration->first.transpose());
+        debug_message("actual time horizon: ", goal_and_duration->second);
+
+
+        debug_message("discreteSearch...");
 
         std::optional<std::pair<StdVectorVectorDIM, std::vector<T>>>
              segments_and_durations =
@@ -148,16 +205,43 @@ public:
         );
 
         if(!segments_and_durations) {
+            debug_message(
+                    debug::colors::RED,
+                    "discreteSearch failed.",
+                    debug::colors::RESET
+            );
             occupancy_grid.clearTemporaryObstacles();
             return std::nullopt;
+        } else {
+            debug_message(
+                debug::colors::GREEN,
+                "discreteSearch success.",
+                debug::colors::RESET
+            );
         }
+
 
         const StdVectorVectorDIM& segments = segments_and_durations->first;
         std::vector<T>& durations = segments_and_durations->second;
 
+        assert(segments.size() == durations.size() + 1);
+
+        for(std::size_t i = 0; i < durations.size(); i++) {
+            debug_message(
+                "segment ",
+                i,
+                " is from ",
+                segments[i].transpose(),
+                " to ",
+                segments[i+1].transpose(),
+                " with duration ",
+                durations[i]
+            );
+        }
 
         std::optional<PiecewiseCurve> resulting_curve = std::nullopt;
         for(unsigned int c = 0; c < m_maximum_rescaling_count; c++) {
+            debug_message("trajectoryOptimization...");
             resulting_curve = 
                     this->trajectoryOptimization(
                         segments, 
@@ -167,19 +251,54 @@ public:
                         current_robot_state
             );
 
+            if(resulting_curve == std::nullopt) {
+                debug_message(
+                        debug::colors::RED,
+                        "trajectoryOptimization failed.",
+                        debug::colors::RESET
+                );
+            } else {
+                debug_message(
+                        debug::colors::GREEN,
+                        "trajectoryOptimization success.",
+                        debug::colors::RESET
+                );
+            }
+
             if( resulting_curve == std::nullopt 
                 || this->needsTemporalRescaling(*resulting_curve)) 
             {
+                debug_message("doing temporal rescaling...");
                 for(auto& dur : durations) {
                     dur *= m_rescaling_duration_multipler;
                 }
             } else {
+                debug_message(
+                    debug::colors::GREEN,
+                    "does not need temporal rescaling.",
+                    debug::colors::RESET
+                );
                 break; // curve is valid
             }
         }
 
         occupancy_grid.clearTemporaryObstacles();
 
+        debug_message("re-planning done.");
+        if(resulting_curve == std::nullopt) {
+            debug_message(
+                debug::colors::RED,
+                "result: fail",
+                debug::colors::RESET
+            );
+        }
+        else {
+            debug_message(
+                debug::colors::GREEN,
+                "result: success",
+                debug::colors::RESET
+            );
+        }
         return resulting_curve;
 
     }
@@ -418,6 +537,18 @@ private:
         assert(durations.size() == segments.size() - 1);
         assert(current_robot_state.size() > m_continuity_upto);
 
+        for(const auto& bbox: oth_rbt_col_shape_bboxes) {
+            debug_message(
+                "other robot collision shape bounding box is [min: ",
+                bbox.min().transpose(),
+                ", max: ",
+                bbox.max().transpose(),
+                "]"
+            );
+            internal::mathematica
+                ::other_robot_collision_box<T, DIM>(bbox);
+        }
+
         m_qp_generator.resetProblem();
         m_qp_generator.setPieceMaxParameters(durations);
 
@@ -428,6 +559,16 @@ private:
             m_workspace
         );
         m_qp_generator.addBoundingBoxConstraint(ws);
+        debug_message(
+            "buffered workspace is [min: ",
+            ws.min().transpose(),
+            ", max: ",
+            ws.max().transpose(),
+            "]"
+        );
+
+        internal::mathematica::self_collision_box<T, DIM>(
+                m_collision_shape->boundingBox(current_robot_state[0]));
 
         // robot to robot avoidance constraints for the first piece
         std::vector<Hyperplane> robot_to_robot_hps
@@ -438,6 +579,22 @@ private:
         for(const auto& hp: robot_to_robot_hps) {
             m_qp_generator.addHyperplaneConstraintForPiece(0, hp);
         }
+
+        assert(robot_to_robot_hps.size() == oth_rbt_col_shape_bboxes.size());
+
+        for(const auto& hp: robot_to_robot_hps) {
+            internal::mathematica::
+                robot_collision_avoidance_hyperplane<T, DIM>(hp);
+            debug_message(
+                "robot to robot collision avoidance hyperplane [n: ",
+                hp.normal().transpose(),
+                ", d: ",
+                hp.offset(),
+                "]"
+            );
+        }
+
+        // TODO: gogo
 
         // robot to obstacle avoidance constraints for all pieces
         for (
@@ -524,6 +681,9 @@ private:
         auto ret = cplex.next(
                         m_qp_generator.getProblem(), soln,  initial_guess);
 
+        internal::mathematica::add_to_draw_to_file();
+        internal::mathematica::save_file();
+
         if(ret == QPWrappers::OptReturnType::Optimal) {
             return m_qp_generator.extractCurve(soln);
         }
@@ -564,7 +724,7 @@ private:
             Hyperplane svm_hp = rlss::internal::svm<T, DIM>(robot_points, oth_points);
 
             Hyperplane svm_shifted = rlss::internal::shiftHyperplane<T, DIM>(
-                                        robot_position, 
+                                        robot_position,
                                         robot_box,
                                         svm_hp
             );

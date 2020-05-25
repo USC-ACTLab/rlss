@@ -223,8 +223,9 @@ int main(int argc, char* argv[]) {
     std::vector<double> trajectory_current_times(num_robots, 0);
 
     while(!allRobotsReachedFinalStates(planners, states)) {
-        std::cout << "current time: " << current_time << std::endl;
+        rlss::debug_message("starting the loop for time ", current_time, "...");
 
+        rlss::debug_message("collecting robot shapes...");
         std::vector<AlignedBox> robot_collision_boxes(num_robots);
         for(std::size_t i = 0; i < num_robots; i++) {
             robot_collision_boxes[i]
@@ -232,7 +233,7 @@ int main(int argc, char* argv[]) {
         }
 
         for(std::size_t i = 0; i < planners.size(); i++) {
-            std::cout << "robot " << i << std::endl;
+            rlss::debug_message("planning for robot ", i, "...");
             std::vector<AlignedBox> other_robot_collision_boxes
                     = robot_collision_boxes;
             other_robot_collision_boxes.erase(
@@ -247,9 +248,19 @@ int main(int argc, char* argv[]) {
             );
 
             if(curve) {
+                rlss::debug_message(
+                    rlss::debug::colors::GREEN,
+                    "planning successful.",
+                    rlss::debug::colors::RESET
+                );
                 trajectories[i] = *curve;
                 trajectory_current_times[i] = 0;
             } else {
+                rlss::debug_message(
+                    rlss::debug::colors::RED,
+                    "planning failed.",
+                    rlss::debug::colors::RESET
+                );
                 trajectory_current_times[i] += replanning_period;
             }
 

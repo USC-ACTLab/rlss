@@ -31,6 +31,24 @@ if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME AND BUILD_TESTING)
 endif()
 
 option(BUILD_RLSS_EXAMPLES "build examples of rlss" OFF)
+option(ENABLE_RLSS_DEBUG_MESSAGES "enables debug message for rlss" OFF)
+option(ENABLE_RLSS_MATHEMATICA_OUTPUT "enables debug message for rlss" OFF)
+
+if(ENABLE_RLSS_DEBUG_MESSAGES)
+    target_compile_definitions(
+            rlss
+            INTERFACE
+            ENABLE_RLSS_DEBUG_MESSAGES
+    )
+endif()
+
+if(ENABLE_RLSS_MATHEMATICA_OUTPUT)
+    target_compile_definitions(
+        rlss
+        INTERFACE
+        ENABLE_RLSS_MATHEMATICA_OUTPUT
+    )
+endif()
 
 if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME AND BUILD_RLSS_EXAMPLES)
     include(examples/Examples.cmake)
