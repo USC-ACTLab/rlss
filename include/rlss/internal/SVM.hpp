@@ -54,10 +54,10 @@ Hyperplane<T, DIM> svm(
         svm_qp.add_constraint(coeff, 1, std::numeric_limits<T>::max());
     }
 
-    QPWrappers::CPLEX::Engine<T> cplex;
-    cplex.setFeasibilityTolerance(1e-9);
+    QPWrappers::RLSS_QP_SOLVER::Engine<T> solver;
+    solver.setFeasibilityTolerance(1e-9);
     Vector<T> result(DIM+1);
-    auto ret = cplex.init(svm_qp, result);
+    auto ret = solver.init(svm_qp, result);
     Hyperplane<T, DIM> hp;
 
     if(ret == QPWrappers::OptReturnType::Optimal) {

@@ -352,9 +352,11 @@ public:
 
     AlignedBox operator*() const {
         if(temporary_obstacles_idx < grid.m_temporary_obstacles.size()) {
+//            debug_message("hop");
             return grid.m_temporary_obstacles[temporary_obstacles_idx];
         } else {
-            grid.toBox(*occupied_idx_iterator);
+//            debug_message("ba");
+            return grid.toBox(*occupied_idx_iterator);
         }
     }
 

@@ -249,17 +249,17 @@ int main(int argc, char* argv[]) {
 
             if(curve) {
                 rlss::debug_message(
-                    rlss::debug::colors::GREEN,
+                    rlss::internal::debug::colors::GREEN,
                     "planning successful.",
-                    rlss::debug::colors::RESET
+                    rlss::internal::debug::colors::RESET
                 );
                 trajectories[i] = *curve;
                 trajectory_current_times[i] = 0;
             } else {
                 rlss::debug_message(
-                    rlss::debug::colors::RED,
+                    rlss::internal::debug::colors::RED,
                     "planning failed.",
-                    rlss::debug::colors::RESET
+                    rlss::internal::debug::colors::RESET
                 );
                 trajectory_current_times[i] += replanning_period;
             }

@@ -11,9 +11,14 @@
 #include <absl/strings/str_cat.h>
 #include <iostream>
 #include <fstream>
+#include <qp_wrappers/cplex.hpp>
+#include <qp_wrappers/gurobi.hpp>
+#include <qp_wrappers/qpoases.hpp>
+#include <qp_wrappers/osqp.hpp>
+
+#define RLSS_QP_SOLVER CPLEX
 
 namespace rlss {
-
 
 #ifdef ENABLE_RLSS_DEBUG_MESSAGES
 namespace internal {
@@ -46,11 +51,13 @@ namespace internal {
     }
 #endif
 
-namespace debug {
-    namespace colors {
-        constexpr char RESET[] = "\033[0m";
-        constexpr char RED[] = "\033[31m";
-        constexpr char GREEN[] = "\033[32m";
+namespace internal {
+    namespace debug {
+        namespace colors {
+            constexpr char RESET[] = "\033[0m";
+            constexpr char RED[] = "\033[31m";
+            constexpr char GREEN[] = "\033[32m";
+        }
     }
 }
 
@@ -127,11 +134,11 @@ StdVectorVectorDIM<T, DIM> linearInterpolate(
 
     VectorDIM step_vec = (end - start) / (num_points - 1);
 
-    result.push_back(start);
+    result[0] = start;
     for(std::size_t step = 1; step < num_points - 1; step++) {
-        result.push_back(start + step * step_vec);
+        result[step] = start + step * step_vec;
     }
-    result.push_back(end);
+    result.back() = end;
 
     return result;
 
@@ -182,7 +189,7 @@ StdVectorVectorDIM<T, DIM> bestSplitSegments(
 
         bool operator<(const SegmentPQElem& rhs) const {
             return this->length / this->num_pieces
-                        > rhs.length / rhs.num_pieces;
+                        < rhs.length / rhs.num_pieces;
         }
     };
 
@@ -250,17 +257,16 @@ Hyperplane<T, DIM> shiftHyperplane(
 ) {
     using Hyperplane = Hyperplane<T, DIM>;
     using StdVectorVectorDIM = StdVectorVectorDIM<T, DIM>;
-    Hyperplane shp {hp.normal(), hp.offset()};
+    Hyperplane shp {hp.normal(), std::numeric_limits<T>::lowest()};
 
-    T offset = std::numeric_limits<T>::max();
 
     StdVectorVectorDIM corner_points = cornerPoints<T, DIM>(box);
 
     for(const auto& pt : corner_points) {
         shp.offset()
-                = std::min(offset,
-                           hp.normal().dot(center_of_mass - pt) + hp.offset()
-       );
+                = std::max(shp.offset(),
+                           hp.normal().dot(pt - center_of_mass) + hp.offset()
+        );
     }
 
     return shp;
@@ -300,6 +306,8 @@ void add_to_draw_to_file() {
 }
 
 void save_file() {
+    add_to_draw_to_file();
+
     static int file_count = 1;
     file.close();
     to_draw.clear();
@@ -335,16 +343,54 @@ void robot_collision_avoidance_hyperplane(
     file << normal_normalized(DIM-1) << "};" << std::endl;
     file << prefix << "arrow = Arrow[{"
          << prefix << "s, " << prefix << "e}];" << std::endl;
-    to_draw.push_back(std::string("{Red, ") + prefix + "arrow}");
+    to_draw.push_back(std::string("{Red, Arrowheads[Large], ") + prefix + "arrow}");
 
     file << prefix << "hp = Hyperplane[{";
     for(unsigned int d = 0; d < DIM - 1; d++) {
         file << hp.normal()(d) << ",";
     }
     file << hp.normal()(DIM-1) << "}, " << -hp.offset() << "];" << std::endl;
-    to_draw.push_back("{Red, Arrowheads[Large], " + prefix + "hp}");
+    to_draw.push_back("{Red, Opacity[0.25], " + prefix + "hp}");
     hp_count++;
 }
+
+
+
+template<typename T, unsigned int DIM>
+void obstacle_collision_avoidance_hyperplane(
+        const Hyperplane<T, DIM>& hp) {
+
+    static int hp_count = 0;
+    std::string prefix = "ocah" + std::to_string(hp_count);
+    file << prefix << "normal = {";
+    for(unsigned int d = 0; d < DIM-1; d++) {
+        file << hp.normal()(d) << ",";
+    }
+    file << hp.normal()(DIM-1) << "};" << std::endl;
+    file << prefix << "s = (" << -hp.offset()
+         << "/Dot[" << prefix <<"normal, " << prefix <<"normal]) * "
+         << prefix << "normal;" << std::endl;
+    file << prefix << "e = " << prefix << "s + {";
+    VectorDIM<T, DIM> normal_normalized = hp.normal();
+    normal_normalized.normalize();
+
+    for(unsigned int d = 0; d < DIM - 1; d++) {
+        file << normal_normalized(d) << ", ";
+    }
+    file << normal_normalized(DIM-1) << "};" << std::endl;
+    file << prefix << "arrow = Arrow[{"
+         << prefix << "s, " << prefix << "e}];" << std::endl;
+    to_draw.push_back(std::string("{Cyan, Arrowheads[Large], ") + prefix + "arrow}");
+
+    file << prefix << "hp = Hyperplane[{";
+    for(unsigned int d = 0; d < DIM - 1; d++) {
+        file << hp.normal()(d) << ",";
+    }
+    file << hp.normal()(DIM-1) << "}, " << -hp.offset() << "];" << std::endl;
+    to_draw.push_back("{Cyan, Opacity[0.25], " + prefix + "hp}");
+    hp_count++;
+}
+
 
 template<typename T, unsigned int DIM>
 void self_collision_box(const AlignedBox<T, DIM>& box) {
@@ -359,7 +405,7 @@ void self_collision_box(const AlignedBox<T, DIM>& box) {
         file << box.max()(d) << ",";
     }
     file << box.max()(DIM-1) << "}];" << std::endl;
-    to_draw.push_back("{Blue, " + prefix + "}");
+    to_draw.push_back("{Blue, Opacity[0.5], " + prefix + "}");
 }
 
 template<typename T, unsigned int DIM>
@@ -376,10 +422,54 @@ void other_robot_collision_box(const AlignedBox<T, DIM>& box) {
         file << box.max()(d) << ",";
     }
     file << box.max()(DIM-1) << "}];" << std::endl;
-    to_draw.push_back("{Red, " + prefix + "}");
+    to_draw.push_back("{Red, Opacity[0.5], " + prefix + "}");
     colbox_count++;
 }
 
+template<typename T, unsigned int DIM>
+void obstacle_collision_box(const AlignedBox<T, DIM>& box) {
+    static int colbox_count = 0;
+    std::string prefix = "ocb" + std::to_string(colbox_count);
+
+    file << prefix << "= Cuboid[{";
+    for(unsigned int d = 0; d < DIM - 1; d++) {
+        file << box.min()(d) << ",";
+    }
+    file << box.min()(DIM-1) << "},{";
+    for(unsigned int d = 0; d < DIM - 1; d++) {
+        file << box.max()(d) << ",";
+    }
+    file << box.max()(DIM-1) << "}];" << std::endl;
+    to_draw.push_back("{Pink, " + prefix + "}");
+    colbox_count++;
+}
+
+template<typename T, unsigned int DIM>
+void discrete_path(
+        const StdVectorVectorDIM<T, DIM>& segments) {
+    static int dp_count = 0;
+
+    std::string prefix = "dp" + std::to_string(dp_count);
+    file << prefix << " = Line[{";
+    for(std::size_t i = 0; i < segments.size() - 1; i++) {
+        file << "{";
+        for(unsigned int d = 0; d < DIM - 1; d++) {
+            file << segments[i][d] << ", ";
+        }
+        file << segments[i][DIM-1] << "},";
+    }
+
+    file << "{";
+    for(unsigned int d = 0; d < DIM-1; d++) {
+        file << segments.back()[d] << ", ";
+    }
+    file << segments.back()[DIM-1] << "}";
+
+    file << "}];";
+
+    to_draw.push_back("{Green, Thickness[0.0075], " + prefix + "}");
+    dp_count++;
+}
 #else
     void add_to_draw_to_file() {
     }
