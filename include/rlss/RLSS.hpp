@@ -18,6 +18,7 @@
 #include <rlss/internal/DiscreteSearch.hpp>
 #include <cassert>
 #include <rlss/internal/MathematicaWriter.hpp>
+#include <rlss/internal/LegacyJSONBuilder.hpp>
 
 namespace rlss {
 
