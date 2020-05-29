@@ -121,8 +121,16 @@ int main(int argc, char* argv[]) {
         }
 
         PiecewiseCurveQPGenerator qp_generator;
-        for(nlohmann::json plan_for_piece
-                : robot_json["plan_for_trajectory"]["pieces"]) {
+        nlohmann::json pieces_json;
+        if(config_json.contains("plan_for_trajectory")) {
+            // override robot json
+            pieces_json = config_json["plan_for_trajectory"]["pieces"];
+        } else {
+            pieces_json = robot_json["plan_for_trajectory"]["pieces"];
+        }
+
+
+        for(const nlohmann::json& plan_for_piece: pieces_json) {
             if(plan_for_piece["type"] == "BEZIER") {
                 qp_generator.addBezier(plan_for_piece["num_control_points"], 0);
             }

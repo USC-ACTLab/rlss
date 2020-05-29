@@ -30,9 +30,9 @@ if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME AND BUILD_TESTING)
     include(tests/Tests.cmake)
 endif()
 
-option(BUILD_RLSS_EXAMPLES "build examples of rlss" OFF)
-option(ENABLE_RLSS_DEBUG_MESSAGES "enables debug message for rlss" OFF)
-option(ENABLE_RLSS_MATHEMATICA_OUTPUT "enables debug message for rlss" OFF)
+option(BUILD_RLSS_EXAMPLES "build examples of rlss" ON)
+option(ENABLE_RLSS_DEBUG_MESSAGES "enables debug message for rlss" ON)
+option(ENABLE_RLSS_MATHEMATICA_OUTPUT "enables debug message for rlss" ON)
 
 if(ENABLE_RLSS_DEBUG_MESSAGES)
     target_compile_definitions(

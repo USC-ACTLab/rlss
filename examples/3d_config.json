@@ -3,5 +3,25 @@
     "obstacle_directory": "examples/inputs/3dobstacles/warehouse/",
     "case_description_directory": "examples/inputs/case_descriptions/3d/demo_1/",
     "replanning_period": 0.1,
-    "occupancy_grid_step_size": [0.4, 0.4, 0.4]
+    "occupancy_grid_step_size": [0.4, 0.4, 0.4],
+    "plan_for_trajectory": {
+        "pieces": [
+            {
+                "type": "BEZIER",
+                "num_control_points": 10
+            },
+            {
+                "type": "BEZIER",
+                "num_control_points": 10
+            },
+            {
+                "type": "BEZIER",
+                "num_control_points": 10
+            },
+            {
+                "type": "BEZIER",
+                "num_control_points": 10
+            }
+        ]
+    }
 }

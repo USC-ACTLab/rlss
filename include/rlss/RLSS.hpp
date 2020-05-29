@@ -17,6 +17,7 @@
 #include <rlss/internal/BFS.hpp>
 #include <rlss/internal/DiscreteSearch.hpp>
 #include <cassert>
+#include <rlss/internal/MathematicaWriter.hpp>
 
 namespace rlss {
 
@@ -291,12 +292,14 @@ public:
         occupancy_grid.clearTemporaryObstacles();
 
         debug_message("re-planning done.");
-        if(resulting_curve == std::nullopt) {
+        if(resulting_curve == std::nullopt
+            || this->needsTemporalRescaling(*resulting_curve)) {
             debug_message(
                 internal::debug::colors::RED,
                 "result: fail",
                 internal::debug::colors::RESET
             );
+            return std::nullopt;
         }
         else {
             debug_message(
@@ -304,8 +307,8 @@ public:
                 "result: success",
                 internal::debug::colors::RESET
             );
+            return resulting_curve;
         }
-        return resulting_curve;
 
     }
 
@@ -553,6 +556,8 @@ private:
         assert(durations.size() == segments.size() - 1);
         assert(current_robot_state.size() > m_continuity_upto);
 
+        internal::MathematicaWriter<T, DIM> mathematica;
+
         for(const auto& bbox: oth_rbt_col_shape_bboxes) {
             debug_message(
                 "other robot collision shape bounding box is [min: ",
@@ -561,14 +566,13 @@ private:
                 bbox.max().transpose(),
                 "]"
             );
-            internal::mathematica
-                ::other_robot_collision_box<T, DIM>(bbox);
+            mathematica.otherRobotCollisionBox(bbox);
         }
 
         m_qp_generator.resetProblem();
         m_qp_generator.setPieceMaxParameters(durations);
 
-        internal::mathematica::discrete_path<T, DIM>(segments);
+        mathematica.discretePath(segments);
 
         // workspace constraint
         AlignedBox ws = rlss::internal::bufferAlignedBox<T, DIM>(
@@ -587,7 +591,7 @@ private:
 
 //        std::cout << m_qp_generator.getProblem() << std::endl;
 
-        internal::mathematica::self_collision_box<T, DIM>(
+        mathematica.selfCollisionBox(
                 m_collision_shape->boundingBox(current_robot_state[0]));
 
         // robot to robot avoidance constraints for the first piece
@@ -605,8 +609,7 @@ private:
         assert(robot_to_robot_hps.size() == oth_rbt_col_shape_bboxes.size());
 
         for(const auto& hp: robot_to_robot_hps) {
-            internal::mathematica::
-                robot_collision_avoidance_hyperplane<T, DIM>(hp);
+            mathematica.robotCollisionAvoidanceHyperplane(hp);
             debug_message(
                 "robot to robot collision avoidance hyperplane [n: ",
                 hp.normal().transpose(),
@@ -654,13 +657,9 @@ private:
                 );
 
 
-                if(p_idx == 3) {
-                    internal::mathematica::obstacle_collision_box<T, DIM>(
-                            grid_box);
-                    internal::mathematica
-                        ::obstacle_collision_avoidance_hyperplane <T, DIM>(
-                            shp
-                    );
+                if(p_idx == 0) {
+                    mathematica.obstacleCollisionBox(grid_box);
+//                    mathematica.obstacleCollisionAvoidanceHyperplane(shp);
                 }
 
                 m_qp_generator.addHyperplaneConstraintForPiece(p_idx, shp);
@@ -677,6 +676,14 @@ private:
             p_idx++
         ) {
             for(unsigned int k = 0; k <= m_continuity_upto; k++) {
+                debug_message(
+                        "adding continuity constraint between piece ",
+                        p_idx,
+                        " and ",
+                        p_idx+1,
+                        " for degree ",
+                        k
+                );
                 m_qp_generator.addContinuityConstraint(p_idx, k);
             }
         }
@@ -686,6 +693,12 @@ private:
 
         // initial point constraints
         for(unsigned int k = 0; k <= m_continuity_upto; k++) {
+            debug_message(
+                    "adding initial point constraint for degree ",
+                    k,
+                    ". It should be ",
+                    current_robot_state[k].transpose()
+            );
             m_qp_generator.addEvalConstraint(0, k, current_robot_state[k]);
         }
 
@@ -694,6 +707,9 @@ private:
 
         // energy cost
         for(const auto& [d, l]: m_lambda_integrated_squared_derivatives) {
+            debug_message("adding integrated squared derivative cost for",
+                          "degree ", d, " with lambda ", l
+            );
             m_qp_generator.addIntegratedSquaredDerivativeCost(d, l);
         }
 
@@ -728,12 +744,14 @@ private:
         auto ret = solver.next(
                         m_qp_generator.getProblem(), soln,  initial_guess);
 
-        internal::mathematica::save_file();
 
         if(ret == QPWrappers::OptReturnType::Optimal) {
-            return m_qp_generator.extractCurve(soln);
+            auto result = m_qp_generator.extractCurve(soln);
+            mathematica.piecewiseCurve(result);
+            return result;
+        } else {
+            return std::nullopt;
         }
-        return std::nullopt;
     }
 
     bool needsTemporalRescaling(const PiecewiseCurve& curve) const {
@@ -743,11 +761,25 @@ private:
                 param < curve.maxParameter(); 
                 param += m_search_step
             ) {
-                if(curve.eval(param, d).norm() > l) {
+                T norm = curve.eval(param, d).norm();
+                if(norm > l) {
+                    debug_message(
+                            internal::debug::colors::RED,
+                            "norm of the ",
+                            d,
+                            "th degree of curve's derivative at ",
+                            param,
+                            " is ",
+                            norm,
+                            " while the maximum allowed is ",
+                            l,
+                            internal::debug::colors::RESET
+                    );
                     return true;
                 }
             }
         }
+        return false;
     }
 
     std::vector<Hyperplane> robotSafetyHyperplanes(
@@ -768,8 +800,6 @@ private:
             StdVectorVectorDIM oth_points
                     = rlss::internal::cornerPoints<T, DIM>(oth_collision_shape_bbox);
             Hyperplane svm_hp = rlss::internal::svm<T, DIM>(robot_points, oth_points);
-
-//            internal::mathematica::robot_collision_avoidance_hyperplane_before_shift<T, DIM>(svm_hp);
 
             Hyperplane svm_shifted = rlss::internal::shiftHyperplane<T, DIM>(
                                         robot_position,
