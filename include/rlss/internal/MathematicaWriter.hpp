@@ -81,7 +81,8 @@ namespace rlss {
             }
 
             ~MathematicaWriter() {
-                save();
+                if(file.is_open())
+                    save();
             }
 
             const std::string& fileName() const {
@@ -90,6 +91,7 @@ namespace rlss {
 
             void save() {
                 this->flushShowList();
+                debug_message("written ", filename);
                 file.close();
             }
 
