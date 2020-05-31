@@ -8,20 +8,24 @@
         "pieces": [
             {
                 "type": "BEZIER",
-                "num_control_points": 10
+                "num_control_points": 8
             },
             {
                 "type": "BEZIER",
-                "num_control_points": 10
+                "num_control_points": 8
             },
             {
                 "type": "BEZIER",
-                "num_control_points": 10
+                "num_control_points": 8
             },
             {
                 "type": "BEZIER",
-                "num_control_points": 10
+                "num_control_points": 8
             }
         ]
-    }
+    },
+    "workspace": [
+        [-10, -10, 0],
+        [10, 10, 10]
+    ]
 }

@@ -62,13 +62,13 @@
     ],
     "integrated_squared_derivative_weights": [
         [1, 1.0],
-        [2, 0.5],
+        [2, 0.8],
         [4, 0.1]
     ],
     "piece_endpoint_cost_weights": [1, 4, 16, 64],
     "collision_shape_at_zero": [
-        [-0.21, -0.21, -0.21],
-        [0.21, 0.21, 0.21]
+        [-0.15, -0.15, -0.15],
+        [0.15, 0.15, 0.15]
     ],
     "workspace": [
         [-10, -10, 0],

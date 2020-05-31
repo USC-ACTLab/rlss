@@ -26,6 +26,19 @@ namespace rlss {
                 m_frame["step"] = 0;
             }
 
+            void save(const std::string& filename) const {
+                std::ofstream file(filename, std::ios_base::out);
+                file << m_json;
+                file.close();
+                debug_message("written ", filename);
+            }
+
+            void save() const {
+                std::string filename
+                        = "json" + std::to_string(jsonbuilder::file_count++) + ".json";
+                this->save(filename);
+            }
+
             void setRobotCount(long long int count) {
                 m_json["robot_count"] = count;
             }
@@ -91,10 +104,33 @@ namespace rlss {
                 m_frame["trajectories"].push_back(trajectory_json);
             }
 
+
+
+            void addTrajectoryToCurrentFrame(
+                    std::size_t robot_id,
+                    const PiecewiseCurve& pwisecurve
+            ) {
+                nlohmann::json curves_json = this->toJSON(pwisecurve);
+
+                nlohmann::json trajectory_json;
+                trajectory_json["robot_id"] = robot_id;
+                trajectory_json["trajectory"] = curves_json;
+
+                if(m_frame.contains("trajectories")) {
+                    for(auto& traj: m_frame["trajectories"]) {
+                        if(traj["robot_id"] == robot_id) {
+                            traj = trajectory_json;
+                            return;
+                        }
+                    }
+                }
+                m_frame["trajectories"].push_back(trajectory_json);
+            }
+
             void addOccupancyGridToCurrentFrame(
                 const OccupancyGrid<T, DIM>& grid
             ) {
-                for(auto it = grid.begin(); it != grid.end(); it++) {
+                for(auto it = grid.begin(); it != grid.end(); ++it) {
                     nlohmann::json min_json = this->toJSON((*it).min());
                     nlohmann::json max_json = this->toJSON((*it).max());
                     nlohmann::json cell_json;
@@ -157,19 +193,6 @@ namespace rlss {
             }
 
 
-
-            void save(const std::string& filename) const {
-                std::ofstream file(filename, std::ios_base::out);
-                file << m_json;
-                file.close();
-                debug_message("written ", filename);
-            }
-
-            void save() const {
-                std::string filename
-                        = "json" + std::to_string(jsonbuilder::file_count++) + ".json";
-                this->save(filename);
-            }
 
         private:
             nlohmann::json m_json;
@@ -260,6 +283,13 @@ namespace rlss {
             }
 
             void nextFrame() {
+            }
+
+            void addTrajectoryToCurrentFrame(
+                std::size_t robot_id,
+                const PiecewiseCurve& pwisecurve
+            ) {
+
             }
 
             void addTrajectoryToCurrentFrame(
