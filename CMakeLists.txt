@@ -34,6 +34,7 @@ option(BUILD_RLSS_EXAMPLES "build examples of rlss" ON)
 option(ENABLE_RLSS_DEBUG_MESSAGES "enables debug message for rlss" ON)
 option(ENABLE_RLSS_MATHEMATICA_OUTPUT "enables debug message for rlss" ON)
 option(ENABLE_RLSS_LEGACY_JSON_BUILDER "enables json builder for vis  tool" ON)
+option(ENABLE_RLSS_STATISTICS "enables statistics for rlss" ON)
 
 if(ENABLE_RLSS_DEBUG_MESSAGES)
     target_compile_definitions(
@@ -56,6 +57,14 @@ if(ENABLE_RLSS_LEGACY_JSON_BUILDER)
         rlss
         INTERFACE
         ENABLE_RLSS_LEGACY_JSON_BUILDER
+    )
+endif()
+
+if(ENABLE_RLSS_STATISTICS)
+    target_compile_definitions(
+        rlss
+        INTERFACE
+        ENABLE_RLSS_STATISTICS
     )
 endif()
 

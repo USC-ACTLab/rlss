@@ -53,7 +53,7 @@ Hyperplane<T, DIM> svm(
 
         svm_qp.add_constraint(coeff, 1, std::numeric_limits<T>::max());
     }
-
+    // CPLEX, GUROBI, OSQP, qpOASES
     QPWrappers::RLSS_QP_SOLVER::Engine<T> solver;
     solver.setFeasibilityTolerance(1e-9);
     Vector<T> result(DIM+1);

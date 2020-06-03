@@ -22,8 +22,8 @@ class OccupancyGridIterator;
 template<typename T, unsigned int DIM>
 class OccupancyGrid {
 public:
-    using VectorDIM = Eigen::Vector<T, DIM>;
-    using VectorlliDIM = Eigen::Vector<long long int, DIM>; 
+    using VectorDIM = rlss::internal::VectorDIM<T, DIM>;
+    using VectorlliDIM = rlss::internal::VectorDIM<long long int, DIM>;
     using AlignedBox = Eigen::AlignedBox<T, DIM>;
     using StdVectorVectorDIM = rlss::internal::StdVectorVectorDIM<T, DIM>;
 
