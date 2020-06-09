@@ -1,7 +1,7 @@
 #ifndef RLSS_LEGACY_JSON_BUILDER_HPP
 #define RLSS_LEGACY_JSON_BUILDER_HPP
 
-#include <json.hpp>
+#include "../../../third_party/json.hpp"
 #include <rlss/internal/Util.hpp>
 #include <fstream>
 #include <splx/curve/PiecewiseCurve.hpp>

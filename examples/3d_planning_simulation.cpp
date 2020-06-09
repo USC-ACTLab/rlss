@@ -5,8 +5,8 @@
 #include <rlss/OccupancyGrid.hpp>
 #include <rlss/RLSS.hpp>
 #include <iostream>
-#include <cxxopts.hpp>
-#include <json.hpp>
+#include "../third_party/cxxopts.hpp"
+#include "../third_party/json.hpp"
 #include <fstream>
 #include <boost/filesystem.hpp>
 #include <splx/opt/PiecewiseCurveQPGenerator.hpp>
@@ -15,6 +15,7 @@
 #include <memory>
 #include <rlss/internal/LegacyJSONBuilder.hpp>
 #include <rlss/TrajectoryOptimizers/RLSSOptimizer.hpp>
+#include <rlss/TrajectoryOptimizers/RLSSSoftOptimizer.hpp>
 #include <rlss/DiscretePathSearchers/RLSSDiscretePathSearcher.hpp>
 #include <rlss/ValidityCheckers/RLSSValidityChecker.hpp>
 #include <rlss/GoalSelectors/RLSSGoalSelector.hpp>
@@ -46,7 +47,7 @@ bool allRobotsReachedFinalStates(
         const std::vector<PiecewiseCurve>& original_trajectories,
         const std::vector<StdVectorVectorDIM>& states
 ) {
-    constexpr double required_distance = 0.2;
+    constexpr double required_distance = 0.3;
     for(std::size_t i = 0; i < planners.size(); i++) {
         VectorDIM goal_position
             = original_trajectories[i].eval(
@@ -90,8 +91,8 @@ int main(int argc, char* argv[]) {
 
     std::string base_path = config_json["base_path"];
     std::string obstacle_directory = config_json["obstacle_directory"];
-    std::string case_description_directory
-            = config_json["case_description_directory"];
+    std::string robot_parameters_directory
+            = config_json["robot_parameters_directory"];
     double replanning_period = config_json["replanning_period"];
     std::vector<double> occupancy_grid_step_size
             = config_json["occupancy_grid_step_size"];
@@ -122,7 +123,7 @@ int main(int argc, char* argv[]) {
     std::vector<unsigned int> contUpto;
 
     for(auto& p:
-            fs::directory_iterator(base_path + case_description_directory)
+            fs::directory_iterator(base_path + robot_parameters_directory)
             ) {
         std::fstream robot_description(p.path().string(), std::ios_base::in);
         nlohmann::json robot_json = nlohmann::json::parse(robot_description);
@@ -169,12 +170,17 @@ int main(int argc, char* argv[]) {
         unsigned int max_rescaling_count = robot_json["max_rescaling_count"];
         double desired_time_horizon = robot_json["desired_time_horizon"];
         unsigned int continuity_upto_degree
-                = robot_json["continuity_upto_degree"];
+                = config_json.contains("continuity_upto_degree")
+                        ? config_json["continuity_upto_degree"]
+                        : robot_json["continuity_upto_degree"];
         contUpto.push_back(continuity_upto_degree);
         std::vector<std::pair<unsigned int, double>>
                 maximum_derivative_magnitudes;
         for(const std::pair<unsigned int, double>& der_mag
-                : robot_json["maximum_derivative_magnitudes"]) {
+                : (config_json.contains("maximum_derivative_magnitudes") ?
+                    config_json["maximum_derivative_magnitudes"]
+                    : robot_json["maximum_derivative_magnitudes"])
+                  ) {
             maximum_derivative_magnitudes.push_back(der_mag);
         }
         std::vector<std::pair<unsigned int, double>>
@@ -189,14 +195,26 @@ int main(int argc, char* argv[]) {
         }
 
         VectorDIM colshapemin(
-                robot_json["collision_shape_at_zero"][0][0],
-                robot_json["collision_shape_at_zero"][0][1],
-                robot_json["collision_shape_at_zero"][0][2]
+                config_json.contains("collision_shape_at_zero")
+                ? config_json["collision_shape_at_zero"][0][0]
+                : robot_json["collision_shape_at_zero"][0][0],
+                config_json.contains("collision_shape_at_zero")
+                ? config_json["collision_shape_at_zero"][0][1]
+                : robot_json["collision_shape_at_zero"][0][1],
+                config_json.contains("collision_shape_at_zero")
+                ? config_json["collision_shape_at_zero"][0][2]
+                : robot_json["collision_shape_at_zero"][0][2]
         );
         VectorDIM colshapemax(
-                robot_json["collision_shape_at_zero"][1][0],
-                robot_json["collision_shape_at_zero"][1][1],
-                robot_json["collision_shape_at_zero"][1][2]
+                config_json.contains("collision_shape_at_zero")
+                ? config_json["collision_shape_at_zero"][1][0]
+                : robot_json["collision_shape_at_zero"][1][0],
+                config_json.contains("collision_shape_at_zero")
+                ? config_json["collision_shape_at_zero"][1][1]
+                : robot_json["collision_shape_at_zero"][1][1],
+                config_json.contains("collision_shape_at_zero")
+                ? config_json["collision_shape_at_zero"][1][2]
+                : robot_json["collision_shape_at_zero"][1][2]
         );
         auto albox_col_shape = std::make_shared<AlignedBoxCollisionShape>(
                 AlignedBox(colshapemin, colshapemax));
@@ -418,9 +436,18 @@ int main(int argc, char* argv[]) {
             }
             json_builder.nextFrame();
         }
-
+        json_builder.save("legacy.json");
         current_time += replanning_period;
     }
+
+
+    rlss::internal::StatisticsStorage<double> all_stats;
+    for(const auto& planner: planners) {
+//        planner.statisticsStorage().save();
+        all_stats += planner.statisticsStorage();
+    }
+
+    all_stats.save("all_stats.json");
 
     json_builder.save();
 

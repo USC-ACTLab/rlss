@@ -1,7 +1,7 @@
 {
     "base_path": "/home/baskin/repos/rlss/",
-    "obstacle_directory": "examples/inputs/3dobstacles/warehouse/",
-    "case_description_directory": "examples/inputs/case_descriptions/3d/demo_1/",
+    "obstacle_directory": "examples/inputs/3dobstacles/warehouse_only_frame/",
+    "robot_parameters_directory": "examples/inputs/robot_parameters/3d/demo_1/",
     "replanning_period": 0.1,
     "occupancy_grid_step_size": [0.4, 0.4, 0.4],
     "plan_for_trajectory": {
@@ -27,5 +27,14 @@
     "workspace": [
         [-10, -10, 0],
         [10, 10, 10]
+    ],
+    "maximum_derivative_magnitudes": [
+        [1, 3],
+        [2, 5]
+    ],
+    "continuity_upto_degree": 2,
+    "collision_shape_at_zero": [
+        [-0.15, -0.15, -0.1],
+        [0.15, 0.15, 0.1]
     ]
 }

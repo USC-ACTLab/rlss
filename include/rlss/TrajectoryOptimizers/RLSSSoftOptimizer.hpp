@@ -1,18 +1,13 @@
-#ifndef RLSS_RLSS_OPTIMIZER_HPP
-#define RLSS_RLSS_OPTIMIZER_HPP
+#ifndef RLSS_RLSS_SOFT_OPTIMIZER_HPP
+#define RLSS_RLSS_SOFT_OPTIMIZER_HPP
 
-#include <rlss/internal/Util.hpp>
 #include <rlss/TrajectoryOptimizers/TrajectoryOptimizer.hpp>
-#include <splx/opt/PiecewiseCurveQPGenerator.hpp>
-#include <rlss/CollisionShapes/CollisionShape.hpp>
-#include <rlss/internal/SVM.hpp>
-#include <rlss/internal/MathematicaWriter.hpp>
-#include <chrono>
+#include <rlss/internal/Util.hpp>
 
 namespace rlss {
 
 template<typename T, unsigned int DIM>
-class RLSSOptimizer: public TrajectoryOptimizer<T, DIM> {
+class RLSSSoftOptimizer: public TrajectoryOptimizer<T, DIM> {
 public:
     using Base = TrajectoryOptimizer<T, DIM>;
     using StdVectorVectorDIM = typename Base::StdVectorVectorDIM;
@@ -25,23 +20,22 @@ public:
     using Hyperplane = rlss::internal::Hyperplane<T, DIM>;
     using Vector = typename PiecewiseCurveQPGenerator::Vector;
 
-    RLSSOptimizer(
-        std::shared_ptr<CollisionShape> colshape,
+    RLSSSoftOptimizer(
+            std::shared_ptr<CollisionShape> colshape,
         const PiecewiseCurveQPGenerator& qpgen,
         const AlignedBox& ws,
         unsigned int contupto,
         const std::vector<std::pair<unsigned int, T>>& lambdas,
         const std::vector<T>& thetas
-    ): m_collision_shape(colshape),
-       m_qp_generator(qpgen),
-       m_workspace(ws),
-       m_continuity_upto(contupto),
-       m_lambda_integrated_squared_derivatives(lambdas),
+        ): m_collision_shape(colshape),
+        m_qp_generator(qpgen),
+        m_workspace(ws),
+        m_continuity_upto(contupto),
+        m_lambda_integrated_squared_derivatives(lambdas),
         m_theta_position_at(thetas)
     {
 
     }
-
 
     // returns std::nullopt when optimization fails
     std::optional<PiecewiseCurve> optimize(
@@ -167,8 +161,8 @@ public:
 //                    mathematica.obstacleCollisionAvoidanceHyperplane(shp);
                     if(shp.signedDistance(current_robot_state[0]) > 0) {
                         debug_message(
-                            "distance of current point to a first piece hyperplane: ",
-                            shp.signedDistance(current_robot_state[0])
+                                "distance of current point to a first piece hyperplane: ",
+                                shp.signedDistance(current_robot_state[0])
                         );
                     }
                 }
@@ -245,15 +239,15 @@ public:
         Vector soln;
         if(m_qp_generator.getProblem().is_consistent()) {
             debug_message(
-                internal::debug::colors::GREEN,
-                "generated qp is consistent",
-                internal::debug::colors::RESET
+                    internal::debug::colors::GREEN,
+                    "generated qp is consistent",
+                    internal::debug::colors::RESET
             );
         } else {
             debug_message(
-                internal::debug::colors::RED,
-                "generated qp is not consistent",
-                internal::debug::colors::RESET
+                    internal::debug::colors::RED,
+                    "generated qp is not consistent",
+                    internal::debug::colors::RESET
             );
         }
         auto ret = solver.next(
@@ -275,7 +269,7 @@ private:
     AlignedBox m_workspace;
     unsigned int m_continuity_upto;
     std::vector<std::pair<unsigned int, T>>
-        m_lambda_integrated_squared_derivatives;
+            m_lambda_integrated_squared_derivatives;
     std::vector<T> m_theta_position_at;
 
     std::vector<Hyperplane> robotSafetyHyperplanes(
@@ -311,9 +305,8 @@ private:
 
         return hyperplanes;
     }
+}; // RLSSSoftOptimizer
 
-}; // class TrajectoryOptimizer
-
-}
+} // namespace rlss
 
 #endif // RLSS_RLSS_OPTIMIZER_HPP

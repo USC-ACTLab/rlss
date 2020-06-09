@@ -54,6 +54,7 @@ public:
         DurationStatistics duration_statistics;
         SuccessFailureStatistics sf_statistics;
 
+
         auto plan_start_time = std::chrono::steady_clock::now();
 
         debug_message("planning...");
@@ -207,7 +208,8 @@ public:
 
             duration_statistics.addTrajectoryOptimizationDuration(
                     std::chrono::duration_cast<std::chrono::microseconds>(
-                            discrete_search_end_time - discrete_search_start_time
+                            trajectory_optimization_end_time
+                            - trajectory_optimization_start_time
                     ).count()
             );
 
@@ -232,7 +234,7 @@ public:
                 auto validity_checker_start_time = std::chrono::steady_clock::now();
                 is_valid = m_validity_checker->isValid(*resulting_curve);
                 auto validity_checker_end_time = std::chrono::steady_clock::now();
-                duration_statistics.addTrajectoryOptimizationDuration(
+                duration_statistics.addValidityCheckDuration(
                         std::chrono::duration_cast<std::chrono::microseconds>(
                                 validity_checker_end_time -
                                 validity_checker_start_time
@@ -290,6 +292,10 @@ public:
             statistics_storage.add(duration_statistics);
             return resulting_curve;
         }
+    }
+
+    const StatisticsStorage& statisticsStorage() const {
+        return statistics_storage;
     }
 
 private:
