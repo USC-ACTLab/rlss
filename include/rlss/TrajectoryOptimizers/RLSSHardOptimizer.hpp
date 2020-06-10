@@ -1,5 +1,5 @@
-#ifndef RLSS_RLSS_OPTIMIZER_HPP
-#define RLSS_RLSS_OPTIMIZER_HPP
+#ifndef RLSS_RLSS_HARD_OPTIMIZER_HPP
+#define RLSS_RLSS_HARD_OPTIMIZER_HPP
 
 #include <rlss/internal/Util.hpp>
 #include <rlss/TrajectoryOptimizers/TrajectoryOptimizer.hpp>
@@ -12,7 +12,7 @@
 namespace rlss {
 
 template<typename T, unsigned int DIM>
-class RLSSOptimizer: public TrajectoryOptimizer<T, DIM> {
+class RLSSHardOptimizer: public TrajectoryOptimizer<T, DIM> {
 public:
     using Base = TrajectoryOptimizer<T, DIM>;
     using StdVectorVectorDIM = typename Base::StdVectorVectorDIM;
@@ -25,7 +25,7 @@ public:
     using Hyperplane = rlss::internal::Hyperplane<T, DIM>;
     using Vector = typename PiecewiseCurveQPGenerator::Vector;
 
-    RLSSOptimizer(
+    RLSSHardOptimizer(
         std::shared_ptr<CollisionShape> colshape,
         const PiecewiseCurveQPGenerator& qpgen,
         const AlignedBox& ws,
@@ -238,8 +238,8 @@ public:
         }
 
 
-        QPWrappers::RLSS_QP_SOLVER::Engine<T> solver;
-        solver.setFeasibilityTolerance(1e-6);
+        QPWrappers::RLSS_HARD_QP_SOLVER::Engine<T> solver;
+        solver.setFeasibilityTolerance(1e-9);
 
         auto initial_guess = m_qp_generator.getDVarsForSegments(segments);
         Vector soln;
@@ -303,4 +303,4 @@ private:
 
 }
 
-#endif // RLSS_RLSS_OPTIMIZER_HPP
+#endif // RLSS_RLSS_HARD_OPTIMIZER_HPP

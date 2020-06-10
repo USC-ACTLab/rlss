@@ -14,8 +14,9 @@
 #include <splx/curve/PiecewiseCurve.hpp>
 #include <memory>
 #include <rlss/internal/LegacyJSONBuilder.hpp>
-#include <rlss/TrajectoryOptimizers/RLSSOptimizer.hpp>
+#include <rlss/TrajectoryOptimizers/RLSSHardOptimizer.hpp>
 #include <rlss/TrajectoryOptimizers/RLSSSoftOptimizer.hpp>
+#include <rlss/TrajectoryOptimizers/RLSSHardSoftOptimizer.hpp>
 #include <rlss/DiscretePathSearchers/RLSSDiscretePathSearcher.hpp>
 #include <rlss/ValidityCheckers/RLSSValidityChecker.hpp>
 #include <rlss/GoalSelectors/RLSSGoalSelector.hpp>
@@ -33,8 +34,9 @@ using PiecewiseCurveQPGenerator
 using PiecewiseCurve = splx::PiecewiseCurve<double, 3U>;
 using Bezier = splx::Bezier<double, 3U>;
 using AlignedBox = OccupancyGrid::AlignedBox;
-using RLSSOptimizer = rlss::RLSSOptimizer<double, 3U>;
+using RLSSHardOptimizer = rlss::RLSSHardOptimizer<double, 3U>;
 using RLSSSoftOptimizer = rlss::RLSSSoftOptimizer<double, 3U>;
+using RLSSHardSoftOptimizer = rlss::RLSSHardSoftOptimizer<double, 3U>;
 using RLSSDiscretePathSearcher = rlss::RLSSDiscretePathSearcher<double, 3U>;
 using RLSSValidityChecker = rlss::RLSSValidityChecker<double, 3U>;
 using RLSSGoalSelector = rlss::RLSSGoalSelector<double, 3U>;
@@ -294,7 +296,7 @@ int main(int argc, char* argv[]) {
             = std::static_pointer_cast<DiscretePathSearcher>(
                         rlss_discrete_path_searcher);
 
-        auto rlss_optimizer = std::make_shared<RLSSOptimizer>
+        auto rlss_hard_optimizer = std::make_shared<RLSSHardOptimizer>
         (
             collision_shape,
             qp_generator,
@@ -314,10 +316,21 @@ int main(int argc, char* argv[]) {
                 piece_endpoint_cost_weights
         );
 
+        auto rlss_hard_soft_optimizer = std::make_shared<RLSSHardSoftOptimizer>
+        (
+                collision_shape,
+                qp_generator,
+                workspace,
+                continuity_upto_degree,
+                integrated_squared_derivative_weights,
+                piece_endpoint_cost_weights
+        );
+
+
         // soft or hard?
         auto trajectory_optimizer
                 = std::static_pointer_cast<TrajectoryOptimizer>(
-                        rlss_soft_optimizer);
+                        rlss_hard_soft_optimizer);
 
 
         auto rlss_validity_checker = std::make_shared<RLSSValidityChecker>

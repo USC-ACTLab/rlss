@@ -93,7 +93,7 @@ public:
                         oth_rbt_col_shape_bboxes
                 );
         for(const auto& hp: robot_to_robot_hps) {
-            m_qp_generator.addHyperplaneConstraintForPiece(0, hp);
+            m_qp_generator.addHyperplaneConstraintForPiece(0, hp, true, 10000);
             if(hp.signedDistance(current_robot_state[0]) > 0) {
                 debug_message(
                         "distance of current point to a first piece hyperplane: ",
@@ -166,7 +166,7 @@ public:
                         );
                     }
                 }
-                m_qp_generator.addHyperplaneConstraintForPiece(p_idx, shp);
+                m_qp_generator.addHyperplaneConstraintForPiece(p_idx, shp, true, 10000);
             }
         }
 
@@ -186,7 +186,7 @@ public:
                         " for degree ",
                         k
                 );
-                m_qp_generator.addContinuityConstraint(p_idx, k);
+                m_qp_generator.addContinuityConstraint(p_idx, k, true, 100000);
             }
         }
 
@@ -198,7 +198,7 @@ public:
                     ". It should be ",
                     current_robot_state[k].transpose()
             );
-            m_qp_generator.addEvalConstraint(0, k, current_robot_state[k]);
+            m_qp_generator.addEvalConstraint(0, k, current_robot_state[k], true, 1000000);
         }
 
 
@@ -233,7 +233,6 @@ public:
 
 
         auto initial_guess = m_qp_generator.getDVarsForSegments(segments);
-        Vector soln;
         auto problem = m_qp_generator.getProblem()
                             .convert_to_soft();
         debug_message("hard num vars: "
@@ -245,14 +244,23 @@ public:
         soft_initial_guess.block(0, 0, initial_guess.cols(), 1) = initial_guess;
 
 
-        QPWrappers::RLSS_QP_SOLVER::Engine<T> solver;
-        solver.setFeasibilityTolerance(1e-6);
+        QPWrappers::RLSS_SOFT_QP_SOLVER::Engine<T> solver;
+        solver.setFeasibilityTolerance(1e-9);
+        Vector soln;
         auto ret = solver.next(
                 problem, soln,  soft_initial_guess);
         debug_message("optimization return value: ", ret);
         if(ret == QPWrappers::OptReturnType::Optimal) {
-            soln = soln.block(0, 0, m_qp_generator.getProblem().num_vars(), 1);
-            auto result = m_qp_generator.extractCurve(soln);
+            debug_message("slack variables: ",
+              soln.block(m_qp_generator.getProblem().num_vars(),
+                         0,
+                         soln.rows() - m_qp_generator.getProblem().num_vars(),
+                         1).transpose()
+            );
+            Vector soln_primary
+                = soln.block(0, 0, m_qp_generator.numDecisionVariables(), 1);
+            debug_message("primary variables: ", soln_primary. transpose());
+            auto result = m_qp_generator.extractCurve(soln_primary);
             mathematica.piecewiseCurve(result);
             return result;
         } else {

@@ -2,7 +2,7 @@
 #define RLSS_RLSS_HPP
 
 #include <rlss/GoalSelectors/RLSSGoalSelector.hpp>
-#include <rlss/TrajectoryOptimizers/RLSSOptimizer.hpp>
+#include <rlss/TrajectoryOptimizers/RLSSHardOptimizer.hpp>
 #include <rlss/DiscretePathSearchers/RLSSDiscretePathSearcher.hpp>
 #include <rlss/ValidityCheckers/ValidityChecker.hpp>
 #include <rlss/internal/Util.hpp>

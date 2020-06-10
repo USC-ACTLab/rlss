@@ -17,7 +17,9 @@
 #include <qp_wrappers/osqp.hpp>
 #include <splx/curve/PiecewiseCurve.hpp>
 
-#define RLSS_QP_SOLVER qpOASES
+#define RLSS_HARD_QP_SOLVER qpOASES
+#define RLSS_SOFT_QP_SOLVER CPLEX
+#define RLSS_SVM_QP_SOLVER qpOASES
 
 namespace rlss {
 
