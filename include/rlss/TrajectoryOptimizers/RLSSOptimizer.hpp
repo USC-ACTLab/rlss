@@ -243,19 +243,6 @@ public:
 
         auto initial_guess = m_qp_generator.getDVarsForSegments(segments);
         Vector soln;
-        if(m_qp_generator.getProblem().is_consistent()) {
-            debug_message(
-                internal::debug::colors::GREEN,
-                "generated qp is consistent",
-                internal::debug::colors::RESET
-            );
-        } else {
-            debug_message(
-                internal::debug::colors::RED,
-                "generated qp is not consistent",
-                internal::debug::colors::RESET
-            );
-        }
         auto ret = solver.next(
                 m_qp_generator.getProblem(), soln,  initial_guess);
 

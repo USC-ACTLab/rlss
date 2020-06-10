@@ -232,30 +232,26 @@ public:
         }
 
 
-        QPWrappers::RLSS_QP_SOLVER::Engine<T> solver;
-        solver.setFeasibilityTolerance(1e-6);
-
         auto initial_guess = m_qp_generator.getDVarsForSegments(segments);
         Vector soln;
-        if(m_qp_generator.getProblem().is_consistent()) {
-            debug_message(
-                    internal::debug::colors::GREEN,
-                    "generated qp is consistent",
-                    internal::debug::colors::RESET
-            );
-        } else {
-            debug_message(
-                    internal::debug::colors::RED,
-                    "generated qp is not consistent",
-                    internal::debug::colors::RESET
-            );
-        }
+        auto problem = m_qp_generator.getProblem()
+                            .convert_to_soft();
+        debug_message("hard num vars: "
+                    , m_qp_generator.getProblem().num_vars()
+                    , ", soft num vars: "
+                    , problem.num_vars());
+        auto soft_initial_guess = Vector(problem.num_vars());
+        soft_initial_guess.setZero();
+        soft_initial_guess.block(0, 0, initial_guess.cols(), 1) = initial_guess;
+
+
+        QPWrappers::RLSS_QP_SOLVER::Engine<T> solver;
+        solver.setFeasibilityTolerance(1e-6);
         auto ret = solver.next(
-                m_qp_generator.getProblem(), soln,  initial_guess);
-
+                problem, soln,  soft_initial_guess);
         debug_message("optimization return value: ", ret);
-
         if(ret == QPWrappers::OptReturnType::Optimal) {
+            soln = soln.block(0, 0, m_qp_generator.getProblem().num_vars(), 1);
             auto result = m_qp_generator.extractCurve(soln);
             mathematica.piecewiseCurve(result);
             return result;

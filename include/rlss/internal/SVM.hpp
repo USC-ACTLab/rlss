@@ -58,7 +58,7 @@ Hyperplane<T, DIM> svm(
     solver.setFeasibilityTolerance(1e-9);
     Vector<T> result(DIM+1);
     auto ret = solver.init(svm_qp, result);
-    debug_message("svm optimization return value is ", ret);
+//    debug_message("svm optimization return value is ", ret);
     Hyperplane<T, DIM> hp;
 
     if(ret == QPWrappers::OptReturnType::Optimal) {
@@ -71,7 +71,7 @@ Hyperplane<T, DIM> svm(
         QPWrappers::CPLEX::Engine<T> solver;
         solver.setFeasibilityTolerance(1e-9);
         auto ret = solver.init(svm_qp, result);
-        debug_message("svm optimization CPLEX return value is ", ret);
+//        debug_message("svm optimization CPLEX return value is ", ret);
         if(ret == QPWrappers::OptReturnType::Optimal) {
             for(unsigned int d = 0; d < DIM; d++) {
                 hp.normal()(d) = result(d);
