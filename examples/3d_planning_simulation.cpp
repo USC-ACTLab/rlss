@@ -50,7 +50,7 @@ bool allRobotsReachedFinalStates(
         const std::vector<PiecewiseCurve>& original_trajectories,
         const std::vector<StdVectorVectorDIM>& states
 ) {
-    constexpr double required_distance = 0.3;
+    constexpr double required_distance = 0.1;
     for(std::size_t i = 0; i < planners.size(); i++) {
         VectorDIM goal_position
             = original_trajectories[i].eval(
@@ -170,7 +170,10 @@ int main(int argc, char* argv[]) {
 
         double search_step = robot_json["search_step"];
         double rescaling_multiplier = robot_json["rescaling_multiplier"];
-        unsigned int max_rescaling_count = robot_json["max_rescaling_count"];
+        unsigned int max_rescaling_count
+                = config_json.contains("max_rescaling_count")
+                  ? config_json["max_rescaling_count"]
+                  : robot_json["max_rescaling_count"];
         double desired_time_horizon = robot_json["desired_time_horizon"];
         unsigned int continuity_upto_degree
                 = config_json.contains("continuity_upto_degree")

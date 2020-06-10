@@ -259,6 +259,8 @@ namespace rlss {
                 soft_initial_guess.setZero();
                 soft_initial_guess.block(0, 0, initial_guess.rows(), 1) = initial_guess;
                 Vector soft_solution;
+                QPWrappers::RLSS_SOFT_QP_SOLVER::Engine<T> solver;
+                solver.setFeasibilityTolerance(1e-9);
                 auto ret = solver.next(soft_problem, soft_solution, soft_initial_guess);
                 debug_message("soft optimization return value: ", ret);
                 if(ret == QPWrappers::OptReturnType::Optimal) {
