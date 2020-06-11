@@ -4,6 +4,7 @@ project(rlss)
 set(CMAKE_CXX_STANDARD 17)
 
 add_subdirectory(third_party/splx)
+add_subdirectory(third_party/lp_wrappers)
 find_package(Boost COMPONENTS filesystem REQUIRED)
 
 add_library(rlss INTERFACE)
@@ -18,6 +19,7 @@ target_link_libraries(
     rlss INTERFACE
     splx
     qp_wrappers
+    lp_wrappers
     ${Boost_LIBRARIES}
     ${Boost_FILESYSTEM_LIBRARY}
 )

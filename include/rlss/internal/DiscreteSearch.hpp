@@ -240,12 +240,27 @@ std::optional<StdVectorVectorDIM<T, DIM>> discreteSearch(
         StdVectorVectorDIM segments;
         segments.push_back(solution.states[0].first.position);
         for(std::size_t i = 0; i < solution.actions.size(); i++) {
+            std::string action_text;
+            if(solution.actions[i].first == Action::ROTATE) {
+                action_text = "ROTATE";
+            } else if(solution.actions[i].first == Action::FORWARD) {
+                action_text = "FORWARD";
+            } else if(solution.actions[i].first == Action::ROTATEFORWARD) {
+                action_text = "ROTATEFORWARD";
+            }
+            debug_message(solution.states[i].first.position.transpose(),
+                    ",", solution.states[i].first.dir.transpose(), " > ",
+                    solution.states[i+1].first.position.transpose(), ",",
+                    solution.states[i+1].first.dir.transpose(), ", action: ",
+                      action_text);
             if(solution.actions[i].first == Action::ROTATE) {
                 segments.push_back(solution.states[i+1].first.position);
             } else if (solution.actions[i].first == Action::ROTATEFORWARD) {
-                if(i != 0)
+                if(i != 0
+                    && segments.back() != solution.states[i].first.position)
                     segments.push_back(solution.states[i].first.position);
-                if(i != solution.actions.size() - 1)
+                if(i != solution.actions.size() - 1
+                    && segments.back() != solution.states[i+1].first.position)
                     segments.push_back(solution.states[i+1].first.position);
             }
         }

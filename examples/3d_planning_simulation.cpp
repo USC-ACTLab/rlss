@@ -254,6 +254,9 @@ int main(int argc, char* argv[]) {
 
         AlignedBox workspace(workspacemin, workspacemax);
 
+        std::string optimizer = config_json.contains("optimizer")
+                        ? config_json["optimizer"] : robot_json["optimizer"];
+
         // const PiecewiseCurve& orig_traj,
         // const PiecewiseCurveQPGenerator& generator,
         // std::shared_ptr<CollisionShape> col_shape,
@@ -299,41 +302,55 @@ int main(int argc, char* argv[]) {
             = std::static_pointer_cast<DiscretePathSearcher>(
                         rlss_discrete_path_searcher);
 
-        auto rlss_hard_optimizer = std::make_shared<RLSSHardOptimizer>
-        (
-            collision_shape,
-            qp_generator,
-            workspace,
-            continuity_upto_degree,
-            integrated_squared_derivative_weights,
-            piece_endpoint_cost_weights
-        );
-
-        auto rlss_soft_optimizer = std::make_shared<RLSSSoftOptimizer>
-        (
-                collision_shape,
-                qp_generator,
-                workspace,
-                continuity_upto_degree,
-                integrated_squared_derivative_weights,
-                piece_endpoint_cost_weights
-        );
-
-        auto rlss_hard_soft_optimizer = std::make_shared<RLSSHardSoftOptimizer>
-        (
-                collision_shape,
-                qp_generator,
-                workspace,
-                continuity_upto_degree,
-                integrated_squared_derivative_weights,
-                piece_endpoint_cost_weights
-        );
-
-
-        // soft or hard?
-        auto trajectory_optimizer
-                = std::static_pointer_cast<TrajectoryOptimizer>(
-                        rlss_hard_soft_optimizer);
+        std::shared_ptr<TrajectoryOptimizer> trajectory_optimizer;
+        if(optimizer == "rlss-hard-soft") {
+            auto rlss_hard_soft_optimizer = std::make_shared<RLSSHardSoftOptimizer>
+            (
+                    collision_shape,
+                    qp_generator,
+                    workspace,
+                    continuity_upto_degree,
+                    integrated_squared_derivative_weights,
+                    piece_endpoint_cost_weights
+            );
+            trajectory_optimizer
+                    = std::static_pointer_cast<TrajectoryOptimizer>(
+                    rlss_hard_soft_optimizer);
+        } else if (optimizer == "rlss-soft") {
+            auto rlss_soft_optimizer = std::make_shared<RLSSSoftOptimizer>
+            (
+                    collision_shape,
+                    qp_generator,
+                    workspace,
+                    continuity_upto_degree,
+                    integrated_squared_derivative_weights,
+                    piece_endpoint_cost_weights
+            );
+            trajectory_optimizer
+                    = std::static_pointer_cast<TrajectoryOptimizer>(
+                    rlss_soft_optimizer);
+        } else if (optimizer == "rlss-hard") {
+            auto rlss_hard_optimizer = std::make_shared<RLSSHardOptimizer>
+            (
+                    collision_shape,
+                    qp_generator,
+                    workspace,
+                    continuity_upto_degree,
+                    integrated_squared_derivative_weights,
+                    piece_endpoint_cost_weights
+            );
+            trajectory_optimizer
+                    = std::static_pointer_cast<TrajectoryOptimizer>(
+                    rlss_hard_optimizer);
+        } else {
+            throw std::domain_error(
+                absl::StrCat(
+                    "optimizer ",
+                    optimizer,
+                    " not recognized."
+                )
+            );
+        }
 
 
         auto rlss_validity_checker = std::make_shared<RLSSValidityChecker>
@@ -478,7 +495,7 @@ int main(int argc, char* argv[]) {
 
     all_stats.save("all_stats.json");
 
-    json_builder.save();
+    json_builder.save("legacy.json");
 
     return 0;
 }

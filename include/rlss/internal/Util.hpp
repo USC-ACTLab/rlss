@@ -16,10 +16,12 @@
 #include <qp_wrappers/qpoases.hpp>
 #include <qp_wrappers/osqp.hpp>
 #include <splx/curve/PiecewiseCurve.hpp>
+#include <lp_wrappers/cplex.hpp>
 
 #define RLSS_HARD_QP_SOLVER qpOASES
 #define RLSS_SOFT_QP_SOLVER CPLEX
 #define RLSS_SVM_QP_SOLVER qpOASES
+#define RLSS_HP_PRUNING_LP_SOLVER CPLEX
 
 namespace rlss {
 
@@ -288,6 +290,59 @@ AlignedBox<T, DIM> bufferAlignedBox(
 ) {
     return AlignedBox<T, DIM>(box.min() + (center_of_mass - com_box.min()),
                       box.max() + (center_of_mass - com_box.max()));
+}
+
+/*
+ * Prunes hyperplanes h in hps such that if the space S bounded by the bounding
+ * box bbox and the hyperplane h contains the space S' bounded by the bounding
+ * box bbox and an hyperplane h' in hps (that is S' is a subset of S).
+ */
+template<typename T, unsigned int DIM>
+std::vector<Hyperplane<T, DIM>> pruneHyperplanes(
+        const std::vector<Hyperplane<T,DIM>>& hps,
+        const AlignedBox<T, DIM>& bbox) {
+
+    using Hyperplane = Hyperplane<T, DIM>;
+    using AlignedBox = AlignedBox<T, DIM>;
+    using LP = LPWrappers::Problem<T>;
+    using LPEngine = LPWrappers::RLSS_HP_PRUNING_LP_SOLVER::Engine<T>;
+    using Vector = typename LPEngine::Vector;
+
+    std::vector<Hyperplane> result;
+    LP lp(DIM, 2);
+    LPEngine solver;
+
+    for(unsigned int d = 0; d < DIM; d++) {
+        lp.set_var_limits(d, bbox.min()(d), bbox.max()(d));
+    }
+
+    Vector c(DIM);
+    for(unsigned int d = 0; d < DIM; d++) c(d) = 1;
+    lp.add_c(c);
+
+    for(const auto& hp_to_remove: hps) {
+        bool should_remove = false;
+        for(const auto& hp_to_check: hps) {
+            lp.set_constraint(0, hp_to_check.normal().transpose(),
+                    LP::minus_infinity, hp_to_check.offset());
+
+            lp.set_constraint(1, hp_to_remove.normal().transpose(),
+                              hp_to_remove.offset(), LP::infinity);
+
+            Vector soln;
+            auto ret = solver.init(lp, soln);
+            if(ret != LPWrappers::OptReturnType::Optimal) {
+                should_remove = true;
+                break;
+            }
+        }
+
+        if(!should_remove) {
+            result.push_back(hp_to_remove);
+        }
+    }
+
+    return result;
 }
 
 

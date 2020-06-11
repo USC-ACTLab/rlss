@@ -37,5 +37,6 @@
     "collision_shape_at_zero": [
         [-0.15, -0.15, -0.1],
         [0.15, 0.15, 0.1]
-    ]
+    ],
+    "optimizer": "rlss-hard"
 }

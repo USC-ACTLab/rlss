@@ -4,3 +4,6 @@
 [submodule "third_party/libMultiRobotPlanning"]
 	path = third_party/libMultiRobotPlanning
 	url = https://github.com/whoenig/libMultiRobotPlanning
+[submodule "third_party/lp_wrappers"]
+	path = third_party/lp_wrappers
+	url = https://github.com/usc-actlab/lp_wrappers

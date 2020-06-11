@@ -20,6 +20,9 @@ template<typename T, unsigned int DIM>
 class OccupancyGridIterator;
 
 template<typename T, unsigned int DIM>
+class OccupancyGridDistanceIterator;
+
+template<typename T, unsigned int DIM>
 class OccupancyGrid {
 public:
     using VectorDIM = rlss::internal::VectorDIM<T, DIM>;
@@ -31,6 +34,7 @@ public:
     using Index = VectorlliDIM;
 
     using iterator = OccupancyGridIterator<T, DIM>;
+    using distance_iterator = OccupancyGridDistanceIterator<T, DIM>;
 
     using UnorderedIndexSet 
             = std::unordered_set<
@@ -313,7 +317,17 @@ public:
         return iterator(*this, m_temporary_obstacles.size(), m_grid.end());
     }
 
+    distance_iterator begin(const AlignedBox& box, T max_distance) const {
+        return distance_iterator(*this, 0, m_grid.begin(), box, max_distance);
+    }
+
+    distance_iterator end(const AlignedBox& box, T max_distance) const {
+        return distance_iterator(*this, m_temporary_obstacles.size(),
+                m_grid.end(), box, max_distance);
+    }
+
     friend OccupancyGridIterator<T, DIM>;
+    friend OccupancyGridDistanceIterator<T, DIM>;
 
 private:
     Coordinate m_step_size;
@@ -322,6 +336,91 @@ private:
     std::vector<AlignedBox> m_temporary_obstacles;
 }; // class OccupancyGrid
 
+
+/*
+ * Iterator for occupied alignedboxes such that the distance of alignedboxes
+ * to the given box in the constructor is at most max_distance_to_max
+ */
+template<typename T, unsigned int DIM>
+class OccupancyGridDistanceIterator {
+public:
+    using _OccupancyGrid = OccupancyGrid<T, DIM>;
+    using UnorderedIndexSet = typename _OccupancyGrid::UnorderedIndexSet;
+    using AlignedBox = typename _OccupancyGrid::AlignedBox;
+
+    OccupancyGridDistanceIterator(
+            const _OccupancyGrid& g,
+            std::size_t temp_obs_idx,
+            typename UnorderedIndexSet::const_iterator occ_idx_itr,
+            const AlignedBox& bx,
+            T max_distance_to_box
+    ):
+            grid(g),
+            temporary_obstacles_idx(temp_obs_idx),
+            occupied_idx_iterator(occ_idx_itr),
+            box(bx),
+            max_distance(max_distance_to_box)
+    {
+        if((temporary_obstacles_idx < grid.m_temporary_obstacles.size()
+              || occupied_idx_iterator != grid.m_grid.end())
+              && box.exteriorDistance(*(*this)) > max_distance_to_box) {
+            operator++();
+        }
+    }
+
+    explicit OccupancyGridDistanceIterator(
+            const _OccupancyGrid& g,
+            const AlignedBox& bx,
+            T max_distance_to_box):
+            rlss::OccupancyGridIterator<T, DIM>(
+                    g,
+                    0,
+                    grid.m_grid.begin(),
+                    bx,
+                    max_distance_to_box)
+    {
+    }
+
+    AlignedBox operator*() const {
+        if(temporary_obstacles_idx < grid.m_temporary_obstacles.size()) {
+//            debug_message("hop");
+            return grid.m_temporary_obstacles[temporary_obstacles_idx];
+        } else {
+//            debug_message("ba");
+            return grid.toBox(*occupied_idx_iterator);
+        }
+    }
+
+    OccupancyGridDistanceIterator<T,DIM>& operator++() {
+        do {
+            if (temporary_obstacles_idx < grid.m_temporary_obstacles.size()) {
+                temporary_obstacles_idx++;
+            } else {
+                occupied_idx_iterator++;
+            }
+        } while((temporary_obstacles_idx < grid.m_temporary_obstacles.size()
+                 || occupied_idx_iterator != grid.m_grid.end())
+                && box.exteriorDistance(*(*this)) > max_distance);
+
+        return *this;
+    }
+
+    bool operator==(const OccupancyGridDistanceIterator<T, DIM>& rhs) const {
+        return rhs.temporary_obstacles_idx == this->temporary_obstacles_idx
+               && rhs.occupied_idx_iterator == this->occupied_idx_iterator;
+    }
+    bool operator!=(const OccupancyGridDistanceIterator<T, DIM>& rhs) const {
+        return !operator==(rhs);
+    }
+
+private:
+
+    const _OccupancyGrid& grid;
+    AlignedBox box;
+    T max_distance;
+    std::size_t temporary_obstacles_idx;
+    typename UnorderedIndexSet::const_iterator occupied_idx_iterator;
+}; // class OccupancyGridDistanceIterator
 
 template<typename T, unsigned int DIM>
 class OccupancyGridIterator {
