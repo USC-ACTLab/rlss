@@ -119,8 +119,8 @@ void generate_optimization_problem(
                     colshape
             );
 
-//    robot_to_robot_hps = internal::pruneHyperplanes<T, DIM>(
-//            robot_to_robot_hps, ws);
+    robot_to_robot_hps = internal::pruneHyperplanes<T, DIM>(
+            robot_to_robot_hps, ws);
 
     for(const auto& hp: robot_to_robot_hps) {
         qpgen.addHyperplaneConstraintForPiece(0, hp, true, 1000);
@@ -165,8 +165,8 @@ void generate_optimization_problem(
         std::vector<Hyperplane> piece_obstacle_hyperplanes;
 
         for(
-            auto it = occupancy_grid.begin();
-            it != occupancy_grid.end();
+            auto it = occupancy_grid.begin(to_box, 0.5);
+            it != occupancy_grid.end(to_box, 0.5);
             ++it
         ) {
 
@@ -189,28 +189,20 @@ void generate_optimization_problem(
             );
 
 
-            if(p_idx == 0) {
-                mathematica.obstacleCollisionBox(grid_box);
-                //                    mathematica.obstacleCollisionAvoidanceHyperplane(shp);
-                if(shp.signedDistance(current_robot_state[0]) > 0) {
-                    debug_message(
-                        "distance of current point to a first piece hyperplane: ",
-                        shp.signedDistance(current_robot_state[0])
-                    );
-                }
-            }
+            mathematica.obstacleCollisionBox(grid_box);
+
             piece_obstacle_hyperplanes.push_back(shp);
         }
 
-        //                debug_message("before prune num hyperplanes: "
-        //                        , piece_obstacle_hyperplanes.size());
-        //                piece_obstacle_hyperplanes
-        //                    = internal::pruneHyperplanes<T, DIM>(
-        //                                        piece_obstacle_hyperplanes,
-        //                                        m_workspace
-        //                 );
-        //                debug_message("after prune num hyperplanes: "
-        //                        , piece_obstacle_hyperplanes.size());
+        debug_message("before prune num hyperplanes: "
+                , piece_obstacle_hyperplanes.size());
+        piece_obstacle_hyperplanes
+            = internal::pruneHyperplanes<T, DIM>(
+                                piece_obstacle_hyperplanes,
+                                ws
+         );
+        debug_message("after prune num hyperplanes: "
+                , piece_obstacle_hyperplanes.size());
 
         for(const auto& shp: piece_obstacle_hyperplanes) {
             qpgen.addHyperplaneConstraintForPiece(p_idx, shp, true, 1000);

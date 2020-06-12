@@ -17,11 +17,12 @@
 #include <qp_wrappers/osqp.hpp>
 #include <splx/curve/PiecewiseCurve.hpp>
 #include <lp_wrappers/cplex.hpp>
+#include <lp_wrappers/gurobi.hpp>
 
 #define RLSS_HARD_QP_SOLVER qpOASES
 #define RLSS_SOFT_QP_SOLVER CPLEX
 #define RLSS_SVM_QP_SOLVER qpOASES
-#define RLSS_HP_PRUNING_LP_SOLVER CPLEX
+#define RLSS_HP_PRUNING_LP_SOLVER GUROBI
 
 namespace rlss {
 
@@ -308,7 +309,7 @@ std::vector<Hyperplane<T, DIM>> pruneHyperplanes(
     using LPEngine = LPWrappers::RLSS_HP_PRUNING_LP_SOLVER::Engine<T>;
     using Vector = typename LPEngine::Vector;
 
-    std::vector<Hyperplane> result;
+    std::vector<Hyperplane> result = hps;
     LP lp(DIM, 2);
     LPEngine solver;
 
@@ -320,27 +321,33 @@ std::vector<Hyperplane<T, DIM>> pruneHyperplanes(
     for(unsigned int d = 0; d < DIM; d++) c(d) = 1;
     lp.add_c(c);
 
-    for(const auto& hp_to_remove: hps) {
-        bool should_remove = false;
-        for(const auto& hp_to_check: hps) {
-            lp.set_constraint(0, hp_to_check.normal().transpose(),
-                    LP::minus_infinity, hp_to_check.offset());
+    for(std::size_t i = 0; i < result.size(); i++) {
+        bool should_remove_i = false;
 
-            lp.set_constraint(1, hp_to_remove.normal().transpose(),
-                              hp_to_remove.offset(), LP::infinity);
+        lp.set_constraint(1, result[i].normal().transpose(),
+                result[i].offset(), LP::infinity);
+
+        for(std::size_t j = 0; j < result.size(); j++) {
+            if(i == j) continue;
+
+            lp.set_constraint(0, result[j].normal().transpose(),
+                    LP::minus_infinity, result[j].offset());
 
             Vector soln;
             auto ret = solver.init(lp, soln);
             if(ret != LPWrappers::OptReturnType::Optimal) {
-                should_remove = true;
+                should_remove_i = true;
                 break;
             }
         }
 
-        if(!should_remove) {
-            result.push_back(hp_to_remove);
+        if(should_remove_i) {
+            std::swap(result[i], result.back());
+            result.pop_back();
+            i--;
         }
     }
+
 
     return result;
 }
