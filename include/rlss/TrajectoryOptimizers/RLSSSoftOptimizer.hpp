@@ -21,18 +21,21 @@ public:
     using Vector = typename PiecewiseCurveQPGenerator::Vector;
 
     RLSSSoftOptimizer(
-            std::shared_ptr<CollisionShape> colshape,
+        std::shared_ptr<CollisionShape> colshape,
         const PiecewiseCurveQPGenerator& qpgen,
         const AlignedBox& ws,
         unsigned int contupto,
         const std::vector<std::pair<unsigned int, T>>& lambdas,
-        const std::vector<T>& thetas
+        const std::vector<T>& thetas,
+        const std::unordered_map<std::string, std::pair<bool, T>>&
+                    soft_parameters
         ): m_collision_shape(colshape),
         m_qp_generator(qpgen),
         m_workspace(ws),
         m_continuity_upto(contupto),
         m_lambda_integrated_squared_derivatives(lambdas),
-        m_theta_position_at(thetas)
+        m_theta_position_at(thetas),
+        m_soft_parameters(soft_parameters)
     {
 
     }
@@ -59,7 +62,8 @@ public:
                 oth_rbt_col_shape_bboxes,
                 occupancy_grid,
                 current_robot_state,
-                mathematica
+                mathematica,
+                m_soft_parameters
         );
 
 
@@ -106,40 +110,8 @@ private:
     std::vector<std::pair<unsigned int, T>>
             m_lambda_integrated_squared_derivatives;
     std::vector<T> m_theta_position_at;
+    std::unordered_map<std::string, std::pair<bool, T>> m_soft_parameters;
 
-    std::vector<Hyperplane> robotSafetyHyperplanes(
-            const VectorDIM& robot_position,
-            const std::vector<AlignedBox>&
-            other_robot_collision_shape_bounding_boxes) const {
-
-        std::vector<Hyperplane> hyperplanes;
-
-        AlignedBox robot_box
-                = m_collision_shape->boundingBox(robot_position);
-
-        StdVectorVectorDIM robot_points
-                = rlss::internal::cornerPoints<T, DIM>(robot_box);
-
-        for(const auto& oth_collision_shape_bbox:
-                other_robot_collision_shape_bounding_boxes) {
-            StdVectorVectorDIM oth_points
-                    = rlss::internal::cornerPoints<T, DIM>(oth_collision_shape_bbox);
-
-
-            Hyperplane svm_hp = rlss::internal::svm<T, DIM>(robot_points, oth_points);
-
-
-            Hyperplane svm_shifted = rlss::internal::shiftHyperplane<T, DIM>(
-                    robot_position,
-                    robot_box,
-                    svm_hp
-            );
-
-            hyperplanes.push_back(svm_shifted);
-        }
-
-        return hyperplanes;
-    }
 }; // RLSSSoftOptimizer
 
 } // namespace rlss

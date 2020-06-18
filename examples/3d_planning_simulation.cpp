@@ -257,6 +257,23 @@ int main(int argc, char* argv[]) {
         std::string optimizer = config_json.contains("optimizer")
                         ? config_json["optimizer"] : robot_json["optimizer"];
 
+        // parameter -> [enabled, weight]
+        std::unordered_map<std::string, std::pair<bool, double>>
+                soft_optimization_parameters;
+        nlohmann::json sop_json
+            = config_json.contains("soft_optimization_parameters") ?
+                    config_json["soft_optimization_parameters"] :
+                    (robot_json.contains("soft_optimization_parameters") ?
+                     robot_json["soft_optimization_parameters"]
+                     : nlohmann::json());
+
+
+        for(auto it = sop_json.begin(); it != sop_json.end(); it++) {
+            soft_optimization_parameters[it.key()]
+                = std::make_pair(it.value()["enable"], it.value()["weight"]);
+        }
+
+
         // const PiecewiseCurve& orig_traj,
         // const PiecewiseCurveQPGenerator& generator,
         // std::shared_ptr<CollisionShape> col_shape,
@@ -311,7 +328,8 @@ int main(int argc, char* argv[]) {
                     workspace,
                     continuity_upto_degree,
                     integrated_squared_derivative_weights,
-                    piece_endpoint_cost_weights
+                    piece_endpoint_cost_weights,
+                    soft_optimization_parameters
             );
             trajectory_optimizer
                     = std::static_pointer_cast<TrajectoryOptimizer>(
@@ -324,7 +342,8 @@ int main(int argc, char* argv[]) {
                     workspace,
                     continuity_upto_degree,
                     integrated_squared_derivative_weights,
-                    piece_endpoint_cost_weights
+                    piece_endpoint_cost_weights,
+                    soft_optimization_parameters
             );
             trajectory_optimizer
                     = std::static_pointer_cast<TrajectoryOptimizer>(

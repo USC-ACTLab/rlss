@@ -26,18 +26,21 @@ namespace rlss {
         using Vector = typename PiecewiseCurveQPGenerator::Vector;
 
         RLSSHardSoftOptimizer(
-                std::shared_ptr<CollisionShape> colshape,
-                const PiecewiseCurveQPGenerator& qpgen,
-                const AlignedBox& ws,
-                unsigned int contupto,
-                const std::vector<std::pair<unsigned int, T>>& lambdas,
-                const std::vector<T>& thetas
+            std::shared_ptr<CollisionShape> colshape,
+            const PiecewiseCurveQPGenerator& qpgen,
+            const AlignedBox& ws,
+            unsigned int contupto,
+            const std::vector<std::pair<unsigned int, T>>& lambdas,
+            const std::vector<T>& thetas,
+            const std::unordered_map<std::string, std::pair<bool, T>>&
+                    soft_parameters
         ): m_collision_shape(colshape),
            m_qp_generator(qpgen),
            m_workspace(ws),
            m_continuity_upto(contupto),
            m_lambda_integrated_squared_derivatives(lambdas),
-           m_theta_position_at(thetas)
+           m_theta_position_at(thetas),
+           m_soft_parameters(soft_parameters)
         {
 
         }
@@ -66,7 +69,8 @@ namespace rlss {
                     oth_rbt_col_shape_bboxes,
                     occupancy_grid,
                     current_robot_state,
-                    mathematica
+                    mathematica,
+                    m_soft_parameters
             );
 
 
@@ -112,6 +116,7 @@ namespace rlss {
         std::vector<std::pair<unsigned int, T>>
                 m_lambda_integrated_squared_derivatives;
         std::vector<T> m_theta_position_at;
+        std::unordered_map<std::string, std::pair<bool, T>> m_soft_parameters;
 
     }; // class TrajectoryOptimizer
 

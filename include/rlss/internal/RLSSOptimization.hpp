@@ -63,7 +63,9 @@ void generate_optimization_problem(
     const std::vector<AlignedBox<T, DIM>>& oth_rbt_col_shape_bboxes,
     const OccupancyGrid<T, DIM>& occupancy_grid,
     const StdVectorVectorDIM<T, DIM>& current_robot_state,
-    MathematicaWriter<T, DIM>& mathematica
+    MathematicaWriter<T, DIM>& mathematica,
+    const std::unordered_map<std::string, std::pair<bool, T>>& soft_parameters
+            = std::unordered_map<std::string, std::pair<bool, T>>()
 ) {
     using VectorDIM = internal::VectorDIM<T, DIM>;
     using AlignedBox = internal::AlignedBox<T, DIM>;
@@ -119,11 +121,24 @@ void generate_optimization_problem(
                     colshape
             );
 
-    robot_to_robot_hps = internal::pruneHyperplanes<T, DIM>(
-            robot_to_robot_hps, ws);
+//    robot_to_robot_hps = internal::pruneHyperplanes<T, DIM>(
+//            robot_to_robot_hps, ws);
 
     for(const auto& hp: robot_to_robot_hps) {
-        qpgen.addHyperplaneConstraintForPiece(0, hp, true, 1000);
+        bool r2r_hyperplane_constraints_soft_enabled
+            = soft_parameters.find("robot_to_robot_hyperplane_constraints")
+                    != soft_parameters.end()
+              && soft_parameters.at("robot_to_robot_hyperplane_constraints").first;
+        T r2r_hyperplane_constraints_soft_weight =
+                r2r_hyperplane_constraints_soft_enabled
+                ? soft_parameters.at("robot_to_robot_hyperplane_constraints").second
+                : 0;
+        qpgen.addHyperplaneConstraintForPiece(
+                0,
+                hp,
+                r2r_hyperplane_constraints_soft_enabled,
+                r2r_hyperplane_constraints_soft_weight
+        );
         if(hp.signedDistance(current_robot_state[0]) > 0) {
             debug_message(
                 "distance of current point to a first piece hyperplane: ",
@@ -196,16 +211,34 @@ void generate_optimization_problem(
 
         debug_message("before prune num hyperplanes: "
                 , piece_obstacle_hyperplanes.size());
-        piece_obstacle_hyperplanes
-            = internal::pruneHyperplanes<T, DIM>(
-                                piece_obstacle_hyperplanes,
-                                ws
-         );
+//        piece_obstacle_hyperplanes
+//            = internal::pruneHyperplanes<T, DIM>(
+//                                piece_obstacle_hyperplanes,
+//                                ws
+//         );
         debug_message("after prune num hyperplanes: "
                 , piece_obstacle_hyperplanes.size());
 
         for(const auto& shp: piece_obstacle_hyperplanes) {
-            qpgen.addHyperplaneConstraintForPiece(p_idx, shp, true, 1000);
+            bool r2o_hyperplane_constraints_soft_enabled
+                = soft_parameters.find(
+                        "robot_to_obstacle_hyperplane_constraints"
+                  )
+                  != soft_parameters.end()
+                  && soft_parameters.at("robot_to_obstacle_hyperplane_constraints")
+                                        .first;
+
+            T r2o_hyperplane_constraints_soft_weight =
+                r2o_hyperplane_constraints_soft_enabled
+                ? soft_parameters.at("robot_to_obstacle_hyperplane_constraints")
+                            .second
+                : 0;
+            qpgen.addHyperplaneConstraintForPiece(
+                    p_idx,
+                    shp,
+                    r2o_hyperplane_constraints_soft_enabled,
+                    r2o_hyperplane_constraints_soft_weight
+            );
         }
     }
 
@@ -225,7 +258,25 @@ void generate_optimization_problem(
                 " for degree ",
                 k
             );
-            qpgen.addContinuityConstraint(p_idx, k, true, 10000);
+            bool continuity_constraints_soft_enabled
+                = soft_parameters.find(
+                        "continuity_constraints"
+                )
+                  != soft_parameters.end()
+                  && soft_parameters.at("continuity_constraints")
+                          .first;
+
+            T continuity_constraints_soft_weight =
+                continuity_constraints_soft_enabled
+                ? soft_parameters.at("continuity_constraints")
+                        .second
+                : 0;
+            qpgen.addContinuityConstraint(
+                p_idx,
+                k,
+                continuity_constraints_soft_enabled,
+                continuity_constraints_soft_weight
+            );
         }
     }
 
@@ -237,8 +288,26 @@ void generate_optimization_problem(
             ". It should be ",
             current_robot_state[k].transpose()
         );
-        qpgen.addEvalConstraint(0, k, current_robot_state[k],
-                                true, 100000);
+        bool initial_point_constraints_soft_enabled
+                = soft_parameters.find(
+                        "initial_point_constraints"
+                )
+                  != soft_parameters.end()
+                  && soft_parameters.at("initial_point_constraints")
+                          .first;
+
+        T initial_point_constraints_soft_weight =
+                initial_point_constraints_soft_enabled
+                ? soft_parameters.at("initial_point_constraints")
+                        .second
+                : 0;
+        qpgen.addEvalConstraint(
+                0,
+                k,
+                current_robot_state[k],
+                initial_point_constraints_soft_enabled,
+                initial_point_constraints_soft_weight
+        );
     }
 
 

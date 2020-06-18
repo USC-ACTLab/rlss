@@ -74,5 +74,23 @@
         [-10, -10, 0],
         [10, 10, 10]
     ],
-    "optimizer": "rlss-hard-soft"
+    "optimizer": "rlss-hard-soft",
+    "soft_optimization_parameters": {
+        "robot_to_robot_hyperplane_constraints": {
+            "enable": true,
+            "weight": 10000
+        },
+        "robot_to_obstacle_hyperplane_constraints": {
+            "enable": true,
+            "weight": 10000
+        },
+        "initial_point_constraints": {
+            "enable": true,
+            "weight": 100000
+        },
+        "continuity_constraints": {
+            "enable": true,
+            "weight": 1000
+        }
+    }
 }
