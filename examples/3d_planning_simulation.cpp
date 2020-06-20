@@ -273,6 +273,10 @@ int main(int argc, char* argv[]) {
                 = std::make_pair(it.value()["enable"], it.value()["weight"]);
         }
 
+        double optimization_obstacle_check_distance
+            = config_json.contains("optimization_obstacle_check_distance") ?
+                config_json["optimization_obstacle_check_distance"] :
+                robot_json["optimization_obstacle_check_distance"];
 
         // const PiecewiseCurve& orig_traj,
         // const PiecewiseCurveQPGenerator& generator,
@@ -329,7 +333,8 @@ int main(int argc, char* argv[]) {
                     continuity_upto_degree,
                     integrated_squared_derivative_weights,
                     piece_endpoint_cost_weights,
-                    soft_optimization_parameters
+                    soft_optimization_parameters,
+                    optimization_obstacle_check_distance
             );
             trajectory_optimizer
                     = std::static_pointer_cast<TrajectoryOptimizer>(
@@ -343,7 +348,8 @@ int main(int argc, char* argv[]) {
                     continuity_upto_degree,
                     integrated_squared_derivative_weights,
                     piece_endpoint_cost_weights,
-                    soft_optimization_parameters
+                    soft_optimization_parameters,
+                    optimization_obstacle_check_distance
             );
             trajectory_optimizer
                     = std::static_pointer_cast<TrajectoryOptimizer>(
@@ -356,7 +362,8 @@ int main(int argc, char* argv[]) {
                     workspace,
                     continuity_upto_degree,
                     integrated_squared_derivative_weights,
-                    piece_endpoint_cost_weights
+                    piece_endpoint_cost_weights,
+                    optimization_obstacle_check_distance
             );
             trajectory_optimizer
                     = std::static_pointer_cast<TrajectoryOptimizer>(

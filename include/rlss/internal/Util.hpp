@@ -248,6 +248,20 @@ StdVectorVectorDIM<T, DIM> bestSplitSegments(
     return  result;
 }
 
+template<typename T, unsigned int DIM>
+StdVectorVectorDIM<T, DIM> firstSegmentFix(
+    const StdVectorVectorDIM<T, DIM>& segments
+) {
+    assert(segments.size() > 1);
+
+    StdVectorVectorDIM<T, DIM> result;
+    result.push_back(segments[0]);
+    result.push_back((segments[0] + segments[1]) / 2);
+    for(std::size_t i = 1; i < segments.size(); i++) {
+        result.push_back(segments[i]);
+    }
+    return result;
+}
 // shift hyperplane hp creating hyperplane shp
 // such that whenever the center_of_mass of the robot
 // is to the negative side of the shp,

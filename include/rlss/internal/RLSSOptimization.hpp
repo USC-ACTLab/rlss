@@ -58,6 +58,7 @@ void generate_optimization_problem(
     unsigned int contupto,
     const std::vector<std::pair<unsigned int, T>>& lambdas,
     const std::vector<T>& thetas,
+    T obstacle_check_distance,
     const StdVectorVectorDIM<T, DIM>& segments,
     const std::vector<T>& durations,
     const std::vector<AlignedBox<T, DIM>>& oth_rbt_col_shape_bboxes,
@@ -180,8 +181,8 @@ void generate_optimization_problem(
         std::vector<Hyperplane> piece_obstacle_hyperplanes;
 
         for(
-            auto it = occupancy_grid.begin(to_box, 0.5);
-            it != occupancy_grid.end(to_box, 0.5);
+            auto it = occupancy_grid.begin(to_box, obstacle_check_distance);
+            it != occupancy_grid.end(to_box, obstacle_check_distance);
             ++it
         ) {
 

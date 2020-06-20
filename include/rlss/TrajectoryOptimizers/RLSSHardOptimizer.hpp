@@ -32,13 +32,15 @@ public:
         const AlignedBox& ws,
         unsigned int contupto,
         const std::vector<std::pair<unsigned int, T>>& lambdas,
-        const std::vector<T>& thetas
+        const std::vector<T>& thetas,
+        T obstacle_check_distance
     ): m_collision_shape(colshape),
        m_qp_generator(qpgen),
        m_workspace(ws),
        m_continuity_upto(contupto),
        m_lambda_integrated_squared_derivatives(lambdas),
-       m_theta_position_at(thetas)
+       m_theta_position_at(thetas),
+       m_obstacle_check_distance(obstacle_check_distance)
     {
 
     }
@@ -62,6 +64,7 @@ public:
             m_continuity_upto,
             m_lambda_integrated_squared_derivatives,
             m_theta_position_at,
+            m_obstacle_check_distance,
             segments,
             durations,
             oth_rbt_col_shape_bboxes,
@@ -96,6 +99,7 @@ private:
     std::vector<std::pair<unsigned int, T>>
         m_lambda_integrated_squared_derivatives;
     std::vector<T> m_theta_position_at;
+    T m_obstacle_check_distance;
 }; // class TrajectoryOptimizer
 
 }

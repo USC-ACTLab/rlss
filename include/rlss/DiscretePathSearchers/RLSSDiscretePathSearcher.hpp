@@ -58,7 +58,7 @@ public:
 
         StdVectorVectorDIM discrete_path = std::move(*discrete_path_opt);
 
-
+        discrete_path = rlss::internal::firstSegmentFix<T, DIM>(discrete_path);
 
         T total_path_length = 0;
         for(std::size_t i = 0; i < discrete_path.size() - 1; i++) {

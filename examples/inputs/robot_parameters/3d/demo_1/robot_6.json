@@ -74,6 +74,7 @@
         [-10, -10, 0],
         [10, 10, 10]
     ],
+    "optimization_obstacle_check_distance": 0.5,
     "optimizer": "rlss-hard-soft",
     "soft_optimization_parameters": {
         "robot_to_robot_hyperplane_constraints": {

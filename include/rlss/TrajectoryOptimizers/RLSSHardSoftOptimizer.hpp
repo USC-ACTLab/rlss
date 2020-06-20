@@ -33,14 +33,16 @@ namespace rlss {
             const std::vector<std::pair<unsigned int, T>>& lambdas,
             const std::vector<T>& thetas,
             const std::unordered_map<std::string, std::pair<bool, T>>&
-                    soft_parameters
+                    soft_parameters,
+            T obstacle_check_distance
         ): m_collision_shape(colshape),
            m_qp_generator(qpgen),
            m_workspace(ws),
            m_continuity_upto(contupto),
            m_lambda_integrated_squared_derivatives(lambdas),
            m_theta_position_at(thetas),
-           m_soft_parameters(soft_parameters)
+           m_soft_parameters(soft_parameters),
+           m_obstacle_check_distance(obstacle_check_distance)
         {
 
         }
@@ -64,6 +66,7 @@ namespace rlss {
                     m_continuity_upto,
                     m_lambda_integrated_squared_derivatives,
                     m_theta_position_at,
+                    m_obstacle_check_distance,
                     segments,
                     durations,
                     oth_rbt_col_shape_bboxes,
@@ -117,7 +120,7 @@ namespace rlss {
                 m_lambda_integrated_squared_derivatives;
         std::vector<T> m_theta_position_at;
         std::unordered_map<std::string, std::pair<bool, T>> m_soft_parameters;
-
+        T m_obstacle_check_distance;
     }; // class TrajectoryOptimizer
 
 }
