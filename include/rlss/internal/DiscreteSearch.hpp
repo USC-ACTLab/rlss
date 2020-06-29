@@ -79,10 +79,11 @@ std::optional<StdVectorVectorDIM<T, DIM>> discreteSearch(
             int h = 0;
             Index state_idx = m_occupancy_grid.getIndex(s.position);
             Index goal_idx = m_occupancy_grid.getIndex(m_goal);
-            for(unsigned int d = 0; d < DIM; d++) {
-                h += std::abs(state_idx(d) - goal_idx(d));
-            }
-            return h;
+            return (state_idx - goal_idx).norm();
+//            for(unsigned int d = 0; d < DIM; d++) {
+//                h += std::abs(state_idx(d) - goal_idx(d));
+//            }
+//            return h;
         }
 
         bool isSolution(const State& s) { return s.position == m_goal; }
@@ -102,7 +103,8 @@ std::optional<StdVectorVectorDIM<T, DIM>> discreteSearch(
                     State(m_goal, Index::Zero()), 
                     Action::ROTATEFORWARD, 
                     1 + (s_idx - m_occupancy_grid.getIndex(m_goal))
-                                .cwiseAbs().sum()
+                                  .norm()
+//                                .cwiseAbs().sum()
                 );
             }
 
