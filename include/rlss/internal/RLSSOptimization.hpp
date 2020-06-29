@@ -73,9 +73,54 @@ void generate_optimization_problem(
     using Hyperplane = internal::Hyperplane<T, DIM>;
     using StdVectorVectorDIM = internal::StdVectorVectorDIM<T, DIM>;
 
-    assert(segments.size() == qpgen.numPieces() + 1);
-    assert(durations.size() == segments.size() - 1);
-    assert(current_robot_state.size() > contupto);
+    if(segments.size() != qpgen.numPieces() + 1) {
+        throw std::domain_error(
+            absl::StrCat(
+                "number of segments is not equal to number of pieces",
+                ", number of segments: ",
+                segments.size() - 1,
+                ", number of pieces: ",
+                qpgen.numPieces()
+            )
+        );
+    }
+
+    if(durations.size() + 1 != segments.size()) {
+        throw std::domain_error(
+            absl::StrCat(
+                "number of piece durations is not equal to the number of ",
+                "segments, number of durations: ",
+                durations.size(),
+                ", number of segments: ",
+                segments.size()
+            )
+        );
+    }
+
+    if(current_robot_state.size() <= contupto) {
+        throw std::domain_error(
+            absl::StrCat(
+                "robot state size does not contain some required derivatives",
+                ", max derivative degree contained in the state: ",
+                current_robot_state.size() - 1,
+                ", continuity upto: ",
+                contupto
+            )
+        );
+    }
+
+    if(thetas.size() != qpgen.numPieces()) {
+        throw std::domain_error(
+            absl::StrCat(
+               "number of piece endpoint parameters is not equal to ",
+               "number of pieces.",
+               " number of pieces: ",
+               qpgen.numPieces(),
+               ", number of parameters: ",
+               thetas.size()
+            )
+        );
+    }
 
 
     for(const auto& bbox: oth_rbt_col_shape_bboxes) {
