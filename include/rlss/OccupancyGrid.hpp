@@ -29,6 +29,7 @@ public:
     using VectorlliDIM = rlss::internal::VectorDIM<long long int, DIM>;
     using AlignedBox = Eigen::AlignedBox<T, DIM>;
     using StdVectorVectorDIM = rlss::internal::StdVectorVectorDIM<T, DIM>;
+    using Ellipsoid = rlss::Ellipsoid<T, DIM>;
 
     using Coordinate = VectorDIM;
     using Index = VectorlliDIM;
@@ -291,6 +292,39 @@ public:
         }
     }
 
+    void addObstacle(const Ellipsoid& ell) {
+        AlignedBox bbox = ell.boundingBox();
+
+        Index min = getIndex(bbox.min());
+        Index max = getIndex(bbox.max());
+
+        std::queue<Index> q;
+        UnorderedIndexSet visited;
+        q.push(min);
+        visited.insert(min);
+        int idx = 0;
+        while(!q.empty()) {
+            Index& fr = q.front();
+            AlignedBox box = this->toBox(fr);
+
+
+            if(ell.intersects(box)) {
+                this->setOccupancy(fr);
+            }
+
+            for(unsigned int d = 0; d < DIM; d++) {
+                fr(d)++;
+                if(fr(d) <= max(d) && visited.find(fr) == visited.end()) {
+                    q.push(fr);
+                    visited.insert(fr);
+                }
+                fr(d)--;
+            }
+
+            q.pop();
+        }
+    }
+
     void addTemporaryObstacle(const AlignedBox& box) {
         m_temporary_obstacles.push_back(box);
     }
@@ -324,6 +358,10 @@ public:
     distance_iterator end(const AlignedBox& box, T max_distance) const {
         return distance_iterator(*this, m_temporary_obstacles.size(),
                 m_grid.end(), box, max_distance);
+    }
+
+    std::size_t size() const {
+        return m_grid.size();
     }
 
     friend OccupancyGridIterator<T, DIM>;

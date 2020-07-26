@@ -19,7 +19,7 @@
 #include <lp_wrappers/cplex.hpp>
 #include <lp_wrappers/gurobi.hpp>
 
-#define RLSS_HARD_QP_SOLVER qpOASES
+#define RLSS_HARD_QP_SOLVER OSQP
 #define RLSS_SOFT_QP_SOLVER CPLEX
 #define RLSS_SVM_QP_SOLVER qpOASES
 #define RLSS_HP_PRUNING_LP_SOLVER GUROBI
@@ -90,6 +90,9 @@ using Row = Eigen::Matrix<T, 1, Eigen::Dynamic>;
 
 template<typename T>
 using Matrix = Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>;
+
+template<typename T, unsigned int R, unsigned int C>
+using MatrixRC = Eigen::Matrix<T, R, C>; // row column
 
 template<typename T, unsigned int DIM>
 StdVectorVectorDIM<T, DIM> cornerPoints(const AlignedBox<T, DIM>& box) {
@@ -368,6 +371,57 @@ std::vector<Hyperplane<T, DIM>> pruneHyperplanes(
 
 
 } // namespace internal
+
+
+template<typename T, unsigned int DIM>
+class Ellipsoid {
+public:
+    using VectorDIM = rlss::internal::VectorDIM<T, DIM>;
+    using MatrixDIMDIM = rlss::internal::MatrixRC<T, DIM, DIM>;
+    using AlignedBox = rlss::internal::AlignedBox<T, DIM>;
+    using Index = Eigen::Index;
+
+    Ellipsoid(const VectorDIM& cnt, const MatrixDIMDIM& m)
+        : center(cnt), mtr(m) {
+        mtrInvSq = mtr.inverse();
+        mtrInvSq = mtrInvSq * mtrInvSq;
+
+    }
+
+    AlignedBox boundingBox() const {
+        // https://members.loria.fr/samuel.hornus/ellipsoid-bbox.html
+        VectorDIM delta;
+        for(Index r = 0; r < DIM; r++) {
+            delta(r) = mtr.row(r).norm();
+        }
+
+        debug_message(center - delta, center + delta);
+
+        return AlignedBox(center - delta, center + delta);
+    }
+
+    bool intersects(const AlignedBox& box) const {
+        if(box.contains(this->center)) {
+            return true;
+        }
+
+        auto crnr = internal::cornerPoints<T, DIM>(box);
+        for(const auto& pt: crnr) {
+            VectorDIM d = pt - center;
+            if(d.transpose() * mtrInvSq * d <= 1) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+private:
+    VectorDIM center;
+    // affine transformation matrix that transforms unit sphere
+    // at origin to the ellipsoid at origin
+    MatrixDIMDIM mtr;
+    MatrixDIMDIM mtrInvSq;
+};
 
 } // namespace rlss
 

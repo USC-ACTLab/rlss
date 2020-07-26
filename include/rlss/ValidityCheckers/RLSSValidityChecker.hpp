@@ -23,10 +23,10 @@ public:
     bool isValid(const PiecewiseCurve &curve) override {
         for(const auto& [d, l]: m_max_derivative_magnitudes) {
             for(
-                    T param = 0;
-                    param < curve.maxParameter();
-                    param += m_search_step
-                    ) {
+                T param = 0;
+                param < curve.maxParameter();
+                param += m_search_step
+            ) {
                 T norm = curve.eval(param, d).norm();
                 if(norm > l) {
                     debug_message(

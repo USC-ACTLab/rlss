@@ -20,37 +20,41 @@
 #include <rlss/DiscretePathSearchers/RLSSDiscretePathSearcher.hpp>
 #include <rlss/ValidityCheckers/RLSSValidityChecker.hpp>
 #include <rlss/GoalSelectors/RLSSGoalSelector.hpp>
+#include <random>
 
+constexpr unsigned int DIM = 3;
 
 namespace fs = boost::filesystem;
-using RLSS = rlss::RLSS<double, 3U>;
-using OccupancyGrid = rlss::OccupancyGrid<double, 3U>;
-using AlignedBoxCollisionShape = rlss::AlignedBoxCollisionShape<double, 3U>;
-using CollisionShape = rlss::CollisionShape<double, 3U>;
+using RLSS = rlss::RLSS<double, DIM>;
+using OccupancyGrid = rlss::OccupancyGrid<double, DIM>;
+using AlignedBoxCollisionShape = rlss::AlignedBoxCollisionShape<double, DIM>;
+using CollisionShape = rlss::CollisionShape<double, DIM>;
 using StdVectorVectorDIM = OccupancyGrid::StdVectorVectorDIM;
 using VectorDIM = OccupancyGrid::VectorDIM;
+using MatrixDIMDIM = rlss::internal::MatrixRC<double, DIM, DIM>;
 using PiecewiseCurveQPGenerator
-= splx::PiecewiseCurveQPGenerator<double, 3U>;
-using PiecewiseCurve = splx::PiecewiseCurve<double, 3U>;
-using Bezier = splx::Bezier<double, 3U>;
+= splx::PiecewiseCurveQPGenerator<double, DIM>;
+using PiecewiseCurve = splx::PiecewiseCurve<double, DIM>;
+using Bezier = splx::Bezier<double, DIM>;
 using AlignedBox = OccupancyGrid::AlignedBox;
-using RLSSHardOptimizer = rlss::RLSSHardOptimizer<double, 3U>;
-using RLSSSoftOptimizer = rlss::RLSSSoftOptimizer<double, 3U>;
-using RLSSHardSoftOptimizer = rlss::RLSSHardSoftOptimizer<double, 3U>;
-using RLSSDiscretePathSearcher = rlss::RLSSDiscretePathSearcher<double, 3U>;
-using RLSSValidityChecker = rlss::RLSSValidityChecker<double, 3U>;
-using RLSSGoalSelector = rlss::RLSSGoalSelector<double, 3U>;
-using TrajectoryOptimizer = rlss::TrajectoryOptimizer<double, 3U>;
-using DiscretePathSearcher = rlss::DiscretePathSearcher<double, 3U>;
-using ValidityChecker = rlss::ValidityChecker<double, 3U>;
-using GoalSelector = rlss::GoalSelector<double, 3U>;
+using Ellipsoid = rlss::Ellipsoid<double, DIM>;
+using RLSSHardOptimizer = rlss::RLSSHardOptimizer<double, DIM>;
+using RLSSSoftOptimizer = rlss::RLSSSoftOptimizer<double, DIM>;
+using RLSSHardSoftOptimizer = rlss::RLSSHardSoftOptimizer<double, DIM>;
+using RLSSDiscretePathSearcher = rlss::RLSSDiscretePathSearcher<double, DIM>;
+using RLSSValidityChecker = rlss::RLSSValidityChecker<double, DIM>;
+using RLSSGoalSelector = rlss::RLSSGoalSelector<double, DIM>;
+using TrajectoryOptimizer = rlss::TrajectoryOptimizer<double, DIM>;
+using DiscretePathSearcher = rlss::DiscretePathSearcher<double, DIM>;
+using ValidityChecker = rlss::ValidityChecker<double, DIM>;
+using GoalSelector = rlss::GoalSelector<double, DIM>;
 
 bool allRobotsReachedFinalStates(
         const std::vector<RLSS>& planners,
         const std::vector<PiecewiseCurve>& original_trajectories,
         const std::vector<StdVectorVectorDIM>& states
 ) {
-    constexpr double required_distance = 0.1;
+    constexpr double required_distance = 0.3;
     for(std::size_t i = 0; i < planners.size(); i++) {
         VectorDIM goal_position
             = original_trajectories[i].eval(
@@ -65,8 +69,10 @@ bool allRobotsReachedFinalStates(
 
 int main(int argc, char* argv[]) {
 
+    std::random_device rd;
+    std::mt19937 gen{rd()};
 
-    cxxopts::Options options("RLSS 3D", "");
+    cxxopts::Options options("RLSS", "");
     options.add_options()
             (
                     "c,config",
@@ -110,20 +116,52 @@ int main(int argc, char* argv[]) {
 
     for(auto& p: fs::directory_iterator(base_path + obstacle_directory)) {
         std::fstream obstacle_file(p.path().string(), std::ios_base::in);
-        StdVectorVectorDIM obstacle_pts;
-        VectorDIM vec;
-        while(obstacle_file >> vec(0)) {
-            obstacle_file >> vec(1) >> vec(2);
-            obstacle_pts.push_back(vec);
+        std::string type;
+        obstacle_file >> type;
+        if(type == "cvxhull") {
+            StdVectorVectorDIM obstacle_pts;
+            VectorDIM vec;
+            while (obstacle_file >> vec(0)) {
+                obstacle_file >> vec(1) >> vec(2);
+                obstacle_pts.push_back(vec);
+            }
+            occupancy_grid.addObstacle(obstacle_pts);
+        } else if(type == "ellipsoid") {
+            VectorDIM center;
+            MatrixDIMDIM mtr;
+
+            for(unsigned int i = 0; i < DIM; i++) {
+                obstacle_file >> center(i);
+            }
+
+            for(unsigned int r = 0; r < DIM; r++) {
+                for(unsigned int c = 0; c < DIM; c++) {
+                    obstacle_file >> mtr(r, c);
+                }
+            }
+            Ellipsoid ell(center, mtr);
+            occupancy_grid.addObstacle(ell);
+
         }
-        occupancy_grid.addObstacle(obstacle_pts);
     }
+
+    std::cout << "num obstacles: " << occupancy_grid.size() << std::endl;
+
 
 
     std::vector<RLSS> planners;
     std::vector<std::shared_ptr<CollisionShape>> collision_shapes;
     std::vector<PiecewiseCurve> original_trajectories;
     std::vector<unsigned int> contUpto;
+
+    // for each robot there is a vector of pairs where each pair
+    // is (degree, distribution)
+    std::vector<
+            std::vector<
+                    std::pair<unsigned int, std::normal_distribution<>
+                    >
+            >
+    > noise;
 
     for(auto& p:
             fs::directory_iterator(base_path + robot_parameters_directory)
@@ -138,7 +176,7 @@ int main(int argc, char* argv[]) {
                 Bezier piece(piece_json["duration"]);
                 for(const std::vector<double>& cpt
                         : piece_json["control_points"]) {
-                    assert(cpt.size() == 3);
+                    assert(cpt.size() == DIM);
                     piece.appendControlPoint({ cpt[0], cpt[1], cpt[2] });
                 }
                 original_trajectory.addPiece(piece);
@@ -278,19 +316,25 @@ int main(int argc, char* argv[]) {
                 config_json["optimization_obstacle_check_distance"] :
                 robot_json["optimization_obstacle_check_distance"];
 
-        // const PiecewiseCurve& orig_traj,
-        // const PiecewiseCurveQPGenerator& generator,
-        // std::shared_ptr<CollisionShape> col_shape,
-        // const AlignedBox& workspace,
-        // T planning_horizon,
-        // T safe_upto,
-        // T search_step,
-        // unsigned int continuity_upto,
-        // T rescaling_multiplier,
-        // unsigned int max_rescaling_count,
-        // const std::vector<std::pair<unsigned int, T>>& lambda_integrated,
-        // const std::vector<T> theta_pos_at,
-        // const std::vector<std::pair<unsigned int, T>>& max_d_mags
+        nlohmann::json noise_json =
+                config_json.contains("noise") ?
+                    config_json["noise"] :
+                    (robot_json.contains("noise") ?
+                        robot_json["noise"] :
+                        nlohmann::json()
+                    );
+
+        noise.push_back(
+                std::vector<
+                        std::pair<unsigned int, std::normal_distribution<>>
+                >()
+        );
+        for(const auto& n : noise_json) {
+            noise.back().emplace_back(
+                        n[0],
+                        std::normal_distribution<>(n[1], n[2])
+            );
+        }
 
         auto rlss_goal_selector = std::make_shared<RLSSGoalSelector>
         (
@@ -400,6 +444,9 @@ int main(int argc, char* argv[]) {
     }
 
     unsigned int num_robots = planners.size();
+
+    std::cout << "num robots: " << num_robots << std::endl;
+
     std::vector<StdVectorVectorDIM> states(num_robots);
     for(unsigned int i = 0; i < num_robots; i++) {
         for(unsigned int j = 0; j <= contUpto[i]; j++) {
@@ -408,7 +455,7 @@ int main(int argc, char* argv[]) {
     }
 
 
-    rlss::internal::LegacyJSONBuilder<double, 3U> json_builder;
+    rlss::internal::LegacyJSONBuilder<double, DIM> json_builder;
     json_builder.setRobotCount(num_robots);
     json_builder.setRobotRadius(
         (
@@ -489,6 +536,15 @@ int main(int argc, char* argv[]) {
                         ),
                         j
                 );
+                for(auto& n: noise[i]) {
+                    if(n.first == j) {
+                        states[i][j] += VectorDIM(
+                            n.second(gen),
+                            n.second(gen),
+                            n.second(gen)
+                        );
+                    }
+                }
             }
         }
 
