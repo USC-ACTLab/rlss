@@ -14,5 +14,39 @@ function(generate_example examplenamebase)
     add_dependencies(build_rlss_examples ${examplenamebase})
 endfunction(generate_example)
 
-generate_example(2d_planning_simulation)
-generate_example(3d_planning_simulation)
+
+add_executable(
+    2d_sim
+    examples/simulation.cpp
+)
+
+target_link_libraries(
+    2d_sim PUBLIC
+    rlss
+)
+
+target_compile_definitions(
+    2d_sim PUBLIC
+    SIMULATION_DIMENSION=2
+)
+
+add_dependencies(build_rlss_examples 2d_sim)
+
+add_executable(
+    3d_sim
+    examples/simulation.cpp
+)
+
+target_link_libraries(
+    3d_sim PUBLIC
+    rlss
+)
+
+
+target_compile_definitions(
+    3d_sim PUBLIC
+    SIMULATION_DIMENSION=3
+)
+
+
+add_dependencies(build_rlss_examples 3d_sim)

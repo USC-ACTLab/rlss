@@ -1,7 +1,7 @@
 {
     "base_path": "/home/baskin/repos/rlss/",
-    "obstacle_directory": "examples/inputs/3dobstacles/noobs/",
-    "robot_parameters_directory": "examples/inputs/robot_parameters/3d/demo_1/",
+    "obstacle_directory": "examples/inputs/obstacle_descriptions/3d/noobs",
+    "robot_parameters_directory": "examples/inputs/demo_descriptions/3d/demo_1/",
     "replanning_period": 0.1,
     "occupancy_grid_step_size": [0.4, 0.4, 0.4],
     "plan_for_trajectory": {
