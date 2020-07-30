@@ -19,7 +19,7 @@
 #include <lp_wrappers/cplex.hpp>
 #include <lp_wrappers/gurobi.hpp>
 
-#define RLSS_HARD_QP_SOLVER OSQP
+#define RLSS_HARD_QP_SOLVER qpOASES
 #define RLSS_SOFT_QP_SOLVER CPLEX
 #define RLSS_SVM_QP_SOLVER qpOASES
 #define RLSS_HP_PRUNING_LP_SOLVER GUROBI

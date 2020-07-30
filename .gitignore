@@ -11,3 +11,5 @@ cmake-build-release/
 cmake-build-release/*
 .idea/
 .idea/*
+venv/
+venv/*
