@@ -57,21 +57,25 @@ public:
 
         internal::MathematicaWriter<T, DIM> mathematica;
 
-        internal::generate_optimization_problem<T, DIM>(
-            m_qp_generator,
-            m_collision_shape,
-            m_workspace,
-            m_continuity_upto,
-            m_lambda_integrated_squared_derivatives,
-            m_theta_position_at,
-            m_obstacle_check_distance,
-            segments,
-            durations,
-            oth_rbt_col_shape_bboxes,
-            occupancy_grid,
-            current_robot_state,
-            mathematica
-        );
+        try {
+            internal::generate_optimization_problem<T, DIM>(
+                    m_qp_generator,
+                    m_collision_shape,
+                    m_workspace,
+                    m_continuity_upto,
+                    m_lambda_integrated_squared_derivatives,
+                    m_theta_position_at,
+                    m_obstacle_check_distance,
+                    segments,
+                    durations,
+                    oth_rbt_col_shape_bboxes,
+                    occupancy_grid,
+                    current_robot_state,
+                    mathematica
+            );
+        } catch(...) {
+            return std::nullopt;
+        }
 
 
         QPWrappers::RLSS_HARD_QP_SOLVER::Engine<T> solver;

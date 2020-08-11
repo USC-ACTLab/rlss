@@ -4,6 +4,7 @@ from objects.Sphere import Sphere
 from objects.PiecewiseCurve import PiecewiseCurve
 from containers.RobotShapesContainer import RobotShapesContainer
 from containers.TrajectoriesContainer import TrajectoriesContainer
+from containers.SegmentListContainer import SegmentListContainer
 import rospy
 from visualization_msgs.msg import MarkerArray
 from std_msgs.msg import ColorRGBA
@@ -16,6 +17,7 @@ class Visualizer:
         self.direction = "forward"
         self.paused = False
         self.original_trajectories_enabled = True
+        trails = SegmentListContainer()
 
         self.log = _log
         colors = [ColorRGBA(0.9019607843137255,0.09803921568627451,0.29411764705882354,1),ColorRGBA(0.23529411764705882,0.7058823529411765,0.29411764705882354,1),ColorRGBA(1.0,0.8823529411764706,0.09803921568627451,1),ColorRGBA(0.0,0.5098039215686274,0.7843137254901961,1),ColorRGBA(0.9607843137254902,0.5098039215686274,0.18823529411764706,1),ColorRGBA(0.5686274509803921,0.11764705882352941,0.7058823529411765,1),ColorRGBA(0.27450980392156865,0.9411764705882353,0.9411764705882353,1),ColorRGBA(0.9411764705882353,0.19607843137254902,0.9019607843137255,1),ColorRGBA(0.8235294117647058,0.9607843137254902,0.23529411764705882,1),ColorRGBA(0.9803921568627451,0.7450980392156863,0.8313725490196079,1),ColorRGBA(0.0,0.5019607843137255,0.5019607843137255,1),ColorRGBA(0.8627450980392157,0.7450980392156863,1.0,1),ColorRGBA(0.6666666666666666,0.43137254901960786,0.1568627450980392,1),ColorRGBA(1.0,0.9803921568627451,0.7843137254901961,1),ColorRGBA(0.5019607843137255,0.0,0.0,1),ColorRGBA(0.6666666666666666,1.0,0.7647058823529411,1),ColorRGBA(0.5019607843137255,0.5019607843137255,0.0,1),ColorRGBA(1.0,0.8431372549019608,0.7058823529411765,1),ColorRGBA(0.0,0.0,0.5019607843137255,1),ColorRGBA(0.5019607843137255,0.5019607843137255,0.5019607843137255,1),ColorRGBA(1.0,1.0,1.0,1),ColorRGBA(0.0,0.0,0.0,1)]
@@ -109,6 +111,7 @@ class Visualizer:
                     robot_id = pos_dict["robot_id"]
                     position = tuple(pos_dict["position"])
                     robot_shapes.updateRobotPosition(robot_id, position)
+                    trails.addPt(robot_id, position)
 
                 last_markers = robot_shapes.last_markers
                 new_markers = robot_shapes.toMarkerArray(robot_colors)
@@ -123,18 +126,30 @@ class Visualizer:
                     delta.removeMarker(marker)
 
 
-            # original trajectories update
-            # last_markers = original_trajectories.last_markers
-            # new_markers = original_trajectories.toMarkerArray(current_time, robot_transparent_colors)
-            # for marker in new_markers:
-            #     if marker.id in last_markers:
-            #         delta.updateMarker(last_markers[marker.id], marker)
-            #         del last_markers[marker.id]
-            #     else:
-            #         delta.addMarker(marker)
-            #
-            # for mid, marker in last_markers.items():
-            #     delta.removeMarker(marker)
+                last_markers = trails.last_markers
+                new_markers = trails.toMarkerArray(robot_colors)
+                for marker in new_markers:
+                    if marker.id in last_markers:
+                        delta.updateMarker(last_markers[marker.id], marker)
+                        del last_markers[marker.id]
+                    else:
+                        delta.addMarker(marker)
+
+                for mid, marker in last_markers.items():
+                    delta.removeMarker(marker)
+
+
+            last_markers = original_trajectories.last_markers
+            new_markers = original_trajectories.toMarkerArray(current_time, robot_transparent_colors)
+            for marker in new_markers:
+                if marker.id in last_markers:
+                    delta.updateMarker(last_markers[marker.id], marker)
+                    del last_markers[marker.id]
+                else:
+                    delta.addMarker(marker)
+
+            for mid, marker in last_markers.items():
+                delta.removeMarker(marker)
 
             self.deltas.append(delta)
             current_time += self.dt

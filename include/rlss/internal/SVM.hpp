@@ -56,7 +56,7 @@ Hyperplane<T, DIM> svm(
 
 
     QPWrappers::RLSS_SVM_QP_SOLVER::Engine<T> solver;
-    solver.setFeasibilityTolerance(1e-9);
+    solver.setFeasibilityTolerance(1e-8);
     Vector<T> result(DIM+1);
     auto ret = solver.init(svm_qp, result);
 //    debug_message("svm optimization return value is ", ret);
@@ -70,7 +70,7 @@ Hyperplane<T, DIM> svm(
     } else {
         // cplex seems more reliable for svm
         QPWrappers::CPLEX::Engine<T> solver;
-        solver.setFeasibilityTolerance(1e-9);
+        solver.setFeasibilityTolerance(1e-8);
         auto ret = solver.init(svm_qp, result);
 //        debug_message("svm optimization CPLEX return value is ", ret);
         if(ret == QPWrappers::OptReturnType::Optimal) {
@@ -79,6 +79,13 @@ Hyperplane<T, DIM> svm(
             }
             hp.offset() = result(DIM);
         } else {
+            debug_message("svm failed");
+            for(const auto& vec: f) {
+                debug_message("f", vec.transpose());
+            }
+            for(const auto& vec: s) {
+                debug_message("s", vec.transpose());
+            }
             throw std::runtime_error(
                 absl::StrCat(
                         "svm not feasible"
