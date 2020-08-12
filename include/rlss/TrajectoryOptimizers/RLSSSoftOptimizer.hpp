@@ -89,8 +89,12 @@ public:
         QPWrappers::RLSS_SOFT_QP_SOLVER::Engine<T> solver;
         solver.setFeasibilityTolerance(1e-9);
         Vector soln;
-        auto ret = solver.next(
-                problem, soln,  soft_initial_guess);
+        QPWrappers::OptReturnType ret = QPWrappers::OptReturnType::Unknown;
+        try {
+            ret = solver.next(
+                    problem, soln, soft_initial_guess);
+        } catch(...) {
+        }
         debug_message("optimization return value: ", ret);
         if(ret == QPWrappers::OptReturnType::Optimal) {
             debug_message("slack variables: ",

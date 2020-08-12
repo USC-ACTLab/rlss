@@ -85,9 +85,13 @@ namespace rlss {
             solver.setFeasibilityTolerance(1e-9);
             auto initial_guess = m_qp_generator.getDVarsForSegments(segments);
             Vector soln;
-            auto ret = solver.next(
-                    m_qp_generator.getProblem(), soln,  initial_guess);
+            QPWrappers::OptReturnType ret = QPWrappers::OptReturnType::Unknown;
 
+            try {
+                ret = solver.next(
+                        m_qp_generator.getProblem(), soln, initial_guess);
+            } catch (...) {
+            }
             debug_message("hard optimization return value: ", ret);
 
             if(ret == QPWrappers::OptReturnType::Optimal) {
@@ -102,7 +106,11 @@ namespace rlss {
                 Vector soft_solution;
                 QPWrappers::RLSS_SOFT_QP_SOLVER::Engine<T> solver;
                 solver.setFeasibilityTolerance(1e-9);
-                auto ret = solver.next(soft_problem, soft_solution, soft_initial_guess);
+                try {
+                    ret = solver.next(soft_problem, soft_solution,
+                                      soft_initial_guess);
+                } catch(...) {
+                }
                 debug_message("soft optimization return value: ", ret);
                 if(ret == QPWrappers::OptReturnType::Optimal) {
                     Vector soft_solution_primary

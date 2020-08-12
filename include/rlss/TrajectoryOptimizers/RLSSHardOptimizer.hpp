@@ -82,8 +82,12 @@ public:
         solver.setFeasibilityTolerance(1e-9);
         auto initial_guess = m_qp_generator.getDVarsForSegments(segments);
         Vector soln;
-        auto ret = solver.next(
-                m_qp_generator.getProblem(), soln,  initial_guess);
+        QPWrappers::OptReturnType ret = QPWrappers::OptReturnType::Unknown;
+        try {
+            ret = solver.next(
+                    m_qp_generator.getProblem(), soln, initial_guess);
+        } catch (...) {
+        }
 
         debug_message("optimization return value: ", ret);
 
