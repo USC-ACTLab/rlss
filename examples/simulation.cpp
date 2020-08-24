@@ -57,11 +57,12 @@ bool allRobotsReachedFinalStates(
         const std::vector<PiecewiseCurve>& original_trajectories,
         const std::vector<StdVectorVectorDIM>& states
 ) {
-    constexpr double required_distance = 0.3;
+    constexpr double required_distance = 0.1;
     for(std::size_t i = 0; i < planners.size(); i++) {
         VectorDIM goal_position
                 = original_trajectories[i].eval(
                         original_trajectories[i].maxParameter(), 0);
+
         if((goal_position - states[i][0]).squaredNorm()
            > required_distance * required_distance) {
             return false;
@@ -555,6 +556,13 @@ int main(int argc, char* argv[]) {
         }
 
         json_builder.save("vis.json");
+        rlss::internal::StatisticsStorage<double> all_stats;
+        for(const auto& planner: planners) {
+//        planner.statisticsStorage().save();
+            all_stats += planner.statisticsStorage();
+        }
+
+        all_stats.save("all_stats.json");
         current_time += replanning_period;
     }
 
@@ -567,7 +575,7 @@ int main(int argc, char* argv[]) {
 
     all_stats.save("all_stats.json");
 
-    json_builder.save("legacy.json");
+    json_builder.save("vis.json");
 
     return 0;
 }

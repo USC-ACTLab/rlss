@@ -3,7 +3,7 @@
         "pieces": [
             {
                 "type": "BEZIER",
-                "duration": 6,
+                "duration": 5,
                 "control_points": [
                     [-2, 1.5],
                     [0.05, 1.8],
@@ -55,18 +55,18 @@
     "search_step": 0.01,
     "rescaling_multiplier": 1.2,
     "max_rescaling_count": 8,
-    "desired_time_horizon": 5,
+    "desired_time_horizon": 4,
     "continuity_upto_degree": 2,
     "maximum_derivative_magnitudes": [
-        [1, 3],
-        [2, 4]
+        [1, 5],
+        [2, 7]
     ],
     "integrated_squared_derivative_weights": [
         [1, 1.0],
         [2, 0.8],
-        [4, 0.1]
+        [4, 0.5]
     ],
-    "piece_endpoint_cost_weights": [16, 16, 16, 32],
+    "piece_endpoint_cost_weights": [1, 2, 4, 8],
     "collision_shape_at_zero": [
         [-1, -0.5],
         [1, 0.5]

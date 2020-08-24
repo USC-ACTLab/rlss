@@ -1,0 +1,81 @@
+{
+    "original_trajectory": {
+        "pieces": [
+            {
+                "type": "BEZIER", 
+                "control_points": [
+                    [3.2945966807506366, -3.529501332900443, 1.213223788517952],
+                    [-3.623670611843775, -2.7286732421099744, 0.5922741955237882]
+                ], 
+                "duration": 12
+            }
+        ]
+    },
+    "plan_for_trajectory": {
+        "pieces": [
+            {
+                "type": "BEZIER",
+                "num_control_points": 8
+            },
+            {
+                "type": "BEZIER",
+                "num_control_points": 8
+            },
+            {
+                "type": "BEZIER",
+                "num_control_points": 8
+            },
+            {
+                "type": "BEZIER",
+                "num_control_points": 8
+            }
+        ]
+    },
+    "search_step": 0.01,
+    "rescaling_multiplier": 1.2,
+    "max_rescaling_count": 8,
+    "desired_time_horizon": 5,
+    "continuity_upto_degree": 2,
+    "maximum_derivative_magnitudes": [
+        [1, 10],
+        [2, 100]
+    ],
+    "integrated_squared_derivative_weights": [
+        [1, 1.0],
+        [2, 0.8],
+        [4, 0.1]
+    ],
+    "piece_endpoint_cost_weights": [1, 4, 16, 64],
+    "collision_shape_at_zero": [
+        [-0.15, -0.15, -0.15],
+        [0.15, 0.15, 0.15]
+    ],
+    "workspace": [
+        [-10, -10, 0],
+        [10, 10, 10]
+    ],
+    "optimization_obstacle_check_distance": 0.5,
+    "optimizer": "rlss-hard-soft",
+    "soft_optimization_parameters": {
+        "robot_to_robot_hyperplane_constraints": {
+            "enable": true,
+            "weight": 10000
+        },
+        "robot_to_obstacle_hyperplane_constraints": {
+            "enable": true,
+            "weight": 10000
+        },
+        "initial_point_constraints": {
+            "enable": true,
+            "weight": 100000
+        },
+        "continuity_constraints": {
+            "enable": true,
+            "weight": 1000
+        }
+    },
+    "noise": [
+        [0, 0, 0.00228682],
+        [1, 0, 0.0109302]
+    ]
+}
