@@ -55,16 +55,18 @@ using JSONBuilder = rlss::internal::JSONBuilder<double, DIM>;
 bool allRobotsReachedFinalStates(
         const std::vector<RLSS>& planners,
         const std::vector<PiecewiseCurve>& original_trajectories,
-        const std::vector<StdVectorVectorDIM>& states
+        const std::vector<StdVectorVectorDIM>& states,
+        double reach_distance
 ) {
-    constexpr double required_distance = 0.1;
     for(std::size_t i = 0; i < planners.size(); i++) {
         VectorDIM goal_position
                 = original_trajectories[i].eval(
                         original_trajectories[i].maxParameter(), 0);
 
-        if((goal_position - states[i][0]).squaredNorm()
-           > required_distance * required_distance) {
+        double dist = (goal_position - states[i][0]).norm();
+
+        if(dist > reach_distance) {
+            std::cout << "robot " << i << " distance: " << dist << std::endl;
             return false;
         }
     }
@@ -113,6 +115,7 @@ int main(int argc, char* argv[]) {
     std::string robot_parameters_directory
             = config_json["robot_parameters_directory"];
     double replanning_period = config_json["replanning_period"];
+    double reach_distance = config_json["reach_distance"];
     std::vector<double> occupancy_grid_step_size
             = config_json["occupancy_grid_step_size"];
 
@@ -174,6 +177,7 @@ int main(int argc, char* argv[]) {
     for(auto& p:
             fs::directory_iterator(base_path + robot_parameters_directory)
             ) {
+        std::cout << p.path().string() << std::endl;
         std::fstream robot_description(p.path().string(), std::ios_base::in);
         nlohmann::json robot_json = nlohmann::json::parse(robot_description);
 
@@ -470,7 +474,7 @@ int main(int argc, char* argv[]) {
 
 
     while(!allRobotsReachedFinalStates(
-            planners, original_trajectories, states)) {
+            planners, original_trajectories, states, reach_distance)) {
         rlss::debug_message("starting the loop for time ", current_time, "...");
 
         rlss::debug_message("collecting robot shapes...");
