@@ -13,3 +13,6 @@ cmake-build-release/*
 .idea/*
 venv/
 venv/*
+*mp4
+*pyc
+*jpg
