@@ -1,0 +1,47 @@
+max duration(ms): 7.128
+avg duration(ms): 1.63871
+stddev duration(ms): 0.960734
+success count: 9600
+fail count: 0
+Collision constraint violation: Vehicles 0 and 21 will be 0.0377083m apart @ t = 1.92s
+Collision constraint violation: Vehicles 1 and 33 will be 0.0665562m apart @ t = 6.88s
+Collision constraint violation: Vehicles 1 and 37 will be 0.0936318m apart @ t = 8.63s
+Collision constraint violation: Vehicles 2 and 6 will be 0.0696487m apart @ t = 2.42s
+Collision constraint violation: Vehicles 3 and 24 will be 0.0814459m apart @ t = 4.06s
+Collision constraint violation: Vehicles 3 and 41 will be 0.143719m apart @ t = 3.5s
+Collision constraint violation: Vehicles 4 and 5 will be 0.0919291m apart @ t = 2.02s
+Collision constraint violation: Vehicles 4 and 11 will be 0.138575m apart @ t = 3.02s
+Collision constraint violation: Vehicles 5 and 34 will be 0.124843m apart @ t = 8.74s
+Collision constraint violation: Vehicles 8 and 10 will be 0.123616m apart @ t = 11.13s
+Collision constraint violation: Vehicles 9 and 11 will be 0.112204m apart @ t = 2.38s
+Collision constraint violation: Vehicles 10 and 16 will be 0.126066m apart @ t = 6.06s
+Collision constraint violation: Vehicles 11 and 22 will be 0.0869376m apart @ t = 9.93s
+Collision constraint violation: Vehicles 12 and 35 will be 0.0620475m apart @ t = 7.96s
+Collision constraint violation: Vehicles 14 and 30 will be 0.0974099m apart @ t = 8.56s
+Collision constraint violation: Vehicles 15 and 26 will be 0.0418694m apart @ t = 7.03s
+Collision constraint violation: Vehicles 15 and 29 will be 0.141846m apart @ t = 13.6s
+Collision constraint violation: Vehicles 18 and 20 will be 0.0799116m apart @ t = 5.85s
+Collision constraint violation: Vehicles 19 and 26 will be 0.114638m apart @ t = 13.8s
+Collision constraint violation: Vehicles 24 and 34 will be 0.110304m apart @ t = 7.15s
+Collision constraint violation: Vehicles 30 and 39 will be 0.0946566m apart @ t = 16.46s
+Collision constraint violation: Vehicles 33 and 41 will be 0.121952m apart @ t = 2.55s
+Collision constraint violation: Vehicles 33 and 42 will be 0.113872m apart @ t = 0.49s
+Collision constraint violation: Vehicles 33 and 43 will be 0.128774m apart @ t = 4.83s
+Collision constraint violation: Vehicles 37 and 46 will be 0.0565995m apart @ t = 7.49s
+Collision constraint violation: Vehicles 38 and 40 will be 0.1401m apart @ t = 4.1s
+Collision constraint violation: Vehicles 44 and 46 will be 0.0521326m apart @ t = 6.02s
+Vehicle 0 did not reached its goal by 3.29061 m
+Vehicle 2 did not reached its goal by 6.4482 m
+Vehicle 4 did not reached its goal by 4.29374 m
+Vehicle 5 did not reached its goal by 4.38202 m
+Vehicle 6 did not reached its goal by 7.33509 m
+Vehicle 42 did not reached its goal by 3.65728 m
+Vehicle 46 did not reached its goal by 2.13916 m
+
+obstacle radius: 0.44
+robot radius: 0.1
+collision count: 20131
+total steps: 2000
+total distance: 323.6778628861207
+avg distance: 6.743288810127514
+

@@ -1,0 +1,66 @@
+{
+    "base_path": "/home/baskin/repos/rlss/",
+    "obstacle_directory": "examples/inputs/obstacle_descriptions/3d/noobs/",
+    "robot_parameters_directory": "examples/inputs/demo_descriptions/3d/demo_3/",
+    "replanning_period": 0.1,
+    "reach_distance": 0.1,
+    "occupancy_grid_step_size": [0.5, 0.5, 0.5],
+    "plan_for_trajectory": {
+        "pieces": [
+            {
+                "type": "BEZIER",
+                "num_control_points": 8
+            },
+            {
+                "type": "BEZIER",
+                "num_control_points": 8
+            },
+            {
+                "type": "BEZIER",
+                "num_control_points": 8
+            },
+            {
+                "type": "BEZIER",
+                "num_control_points": 8
+            }
+        ]
+    },
+    "workspace": [
+        [-10, -10, 0],
+        [10, 10, 10]
+    ],
+    "maximum_derivative_magnitudes": [
+        [1, 3],
+        [2, 5]
+    ],
+    "max_rescaling_count": 10,
+    "continuity_upto_degree": 2,
+    "collision_shape_at_zero": [
+        [-0.05, -0.05, -0.075],
+        [0.05, 0.05, 0.075]
+    ],
+    "optimization_obstacle_check_distance": 0.5,
+    "optimizer": "rlss-hard-soft",
+    "soft_optimization_parameters": {
+        "robot_to_robot_hyperplane_constraints": {
+            "enable": true,
+            "weight": 10000
+        },
+        "robot_to_obstacle_hyperplane_constraints": {
+            "enable": true,
+            "weight": 1000000
+        },
+        "initial_point_constraints": {
+            "enable": true,
+            "weight": 100000
+        },
+        "continuity_constraints": {
+            "enable": true,
+            "weight": 1000
+        }
+    },
+    "noise": [
+        [0, 0, 0.0001],
+        [1, 0, 0.0003]
+    ]
+}

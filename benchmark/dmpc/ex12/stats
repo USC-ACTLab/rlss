@@ -1,0 +1,23 @@
+max duration(ms): 11.313
+avg duration(ms): 0.958391
+stddev duration(ms): 0.496861
+success count: 4799
+fail count: 1
+Collision constraint violation: Vehicles 1 and 6 will be 0.0702392m apart @ t = 1.79s
+Collision constraint violation: Vehicles 2 and 6 will be 0.100144m apart @ t = 12.99s
+Collision constraint violation: Vehicles 4 and 5 will be 0.0564055m apart @ t = 1.83s
+Collision constraint violation: Vehicles 7 and 11 will be 0.111366m apart @ t = 7.25s
+Collision constraint violation: Vehicles 7 and 12 will be 0.08795m apart @ t = 11.29s
+Collision constraint violation: Vehicles 7 and 21 will be 0.104986m apart @ t = 1.85s
+Collision constraint violation: Vehicles 10 and 16 will be 0.143981m apart @ t = 5.71s
+Collision constraint violation: Vehicles 16 and 20 will be 0.105384m apart @ t = 4.47s
+Collision constraint violation: Vehicles 18 and 20 will be 0.0798497m apart @ t = 5.85s
+All the vehicles reached their goals!
+
+obstacle radius: 0.44
+robot radius: 0.1
+collision count: 1158
+total steps: 2000
+total distance: 156.30755377818915
+avg distance: 6.512814740757881
+

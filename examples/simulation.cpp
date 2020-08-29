@@ -160,6 +160,7 @@ int main(int argc, char* argv[]) {
     std::cout << "num obstacles: " << occupancy_grid.size() << std::endl;
 
 
+
     std::vector<RLSS> planners;
     std::vector<std::shared_ptr<CollisionShape>> collision_shapes;
     std::vector<PiecewiseCurve> original_trajectories;

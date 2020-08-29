@@ -1,0 +1,19 @@
+max duration(ms): 13.434
+avg duration(ms): 2.547
+stddev duration(ms): 1.19515
+success count: 1199
+fail count: 1
+Collision constraint violation: Vehicles 4 and 5 will be 0.089602m apart @ t = 2.02s
+Vehicle 0 did not reached its goal by 3.31112 m
+Vehicle 2 did not reached its goal by 6.47456 m
+Vehicle 4 did not reached its goal by 4.29374 m
+Vehicle 5 did not reached its goal by 4.53635 m
+
+
+obstacle radius: 0.44
+robot radius: 0.1
+collision count: 3386
+total steps: 2000
+total distance: 32.14559166102936
+avg distance: 5.35759861017156
+

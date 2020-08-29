@@ -5,6 +5,7 @@ from geometry_msgs.msg import Quaternion
 from geometry_msgs.msg import Vector3
 from std_msgs.msg import ColorRGBA
 import rospy
+import itertools
 from id import id
 
 class AABB:
@@ -19,7 +20,7 @@ class AABB:
         self.max = _max
         self.id = id.next()
 
-    def toMarker(self, position, frame_id = "map", color = ColorRGBA(0.2, 0.2, 0.2, 1)):
+    def toMarker(self, position, frame_id = "map", color = ColorRGBA(0.3, 0.3, 0.3, 0.4)):
         center = tuple([(m+M) / 2.0 + p for m,M,p in zip(self.min, self.max, position)])
         scale = tuple([(M-m) for m, M in zip(self.min, self.max)])
         assert(len(center) == 3)
@@ -38,6 +39,16 @@ class AABB:
         return marker
 
     def toMarkerArray(self, position, frame_id = "map", color = ColorRGBA(1, 0, 0, 1)):
+
+        lines = Marker()
+        marker.type = marker.LINE_LIST
+        marker.header.frame_id = frame_id
+        marker.action = marker.ADD
+        marker.scale = Vector3(0.5, 0.5, 0.5)
+        marker.color = color
+
+
+
         return MarkerArray([self.toMarker(position, frame_id, color)])
 
 
