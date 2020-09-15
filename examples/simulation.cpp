@@ -492,6 +492,8 @@ int main(int argc, char* argv[]) {
             other_robot_collision_boxes.erase(
                     other_robot_collision_boxes.begin() + i);
 
+//            double cutoff_duration = 100000; // us
+//            auto plan_start_time = std::chrono::steady_clock::now();
             std::optional<PiecewiseCurve> curve
                     = planners[i].plan(
                             current_time,
@@ -499,8 +501,12 @@ int main(int argc, char* argv[]) {
                             other_robot_collision_boxes,
                             occupancy_grid
                     );
+//            auto plan_end_time = std::chrono::steady_clock::now();
+//            auto planning_duration = std::chrono::duration_cast<std::chrono::microseconds>(
+//                        plan_end_time - plan_start_time
+//                ).count();
 
-            if(curve) {
+            if(curve /*&& planning_duration < cutoff_duration*/) {
                 rlss::debug_message(
                         rlss::internal::debug::colors::GREEN,
                         "planning successful.",

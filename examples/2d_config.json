@@ -3,6 +3,7 @@
   "obstacle_directory": "examples/inputs/obstacle_descriptions/2d/obsdiamonds3/",
   "robot_parameters_directory": "examples/inputs/demo_descriptions/2d/demo_1/",
   "replanning_period": 0.1,
+  "reach_distance": 0.1,
   "occupancy_grid_step_size": [0.23, 0.23],
   "plan_for_trajectory": {
     "pieces": [

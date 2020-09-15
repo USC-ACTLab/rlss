@@ -7,10 +7,11 @@ from matplotlib.animation import FuncAnimation
 import numpy as np
 import matplotlib.animation as animation
 import matplotlib
-#matplotlib.use("Agg")
+import sys
+matplotlib.use("Agg")
 
 fig = plt.figure(figsize=(15, 15))
-ax = plt.axes(xlim = (-5, 25), ylim = (-2, 20))
+ax = plt.axes(xlim = (-5, 4), ylim = (-3, 3))
 ax.set_aspect('equal')
 
 robot_shapes = {}
@@ -38,7 +39,7 @@ def create_frames(_log):
 
     frames = []
 
-    colors = [(0.9019607843137255,0.09803921568627451,0.29411764705882354,1),(0.23529411764705882,0.7058823529411765,0.29411764705882354,1),(1.0,0.8823529411764706,0.09803921568627451,1),(0.0,0.5098039215686274,0.7843137254901961,1),(0.9607843137254902,0.5098039215686274,0.18823529411764706,1),(0.5686274509803921,0.11764705882352941,0.7058823529411765,1),(0.27450980392156865,0.9411764705882353,0.9411764705882353,1),(0.9411764705882353,0.19607843137254902,0.9019607843137255,1),(0.8235294117647058,0.9607843137254902,0.23529411764705882,1),(0.9803921568627451,0.7450980392156863,0.8313725490196079,1),(0.0,0.5019607843137255,0.5019607843137255,1),(0.8627450980392157,0.7450980392156863,1.0,1),(0.6666666666666666,0.43137254901960786,0.1568627450980392,1),(1.0,0.9803921568627451,0.7843137254901961,1),(0.5019607843137255,0.0,0.0,1),(0.6666666666666666,1.0,0.7647058823529411,1),(0.5019607843137255,0.5019607843137255,0.0,1),(1.0,0.8431372549019608,0.7058823529411765,1),(0.0,0.0,0.5019607843137255,1),(0.5019607843137255,0.5019607843137255,0.5019607843137255,1),(1.0,1.0,1.0,1),(0.0,0.0,0.0,1)]
+    colors = [(0.9019607843137255,0.09803921568627451,0.29411764705882354,1),(0.23529411764705882,0.7058823529411765,0.29411764705882354,1),(0.0,0.0,0.5019607843137255,1),(1.0,0.8823529411764706,0.09803921568627451,1),(0.0,0.5098039215686274,0.7843137254901961,1),(0.9607843137254902,0.5098039215686274,0.18823529411764706,1),(0.5686274509803921,0.11764705882352941,0.7058823529411765,1),(0.27450980392156865,0.9411764705882353,0.9411764705882353,1),(0.9411764705882353,0.19607843137254902,0.9019607843137255,1),(0.8235294117647058,0.9607843137254902,0.23529411764705882,1),(0.9803921568627451,0.7450980392156863,0.8313725490196079,1),(0.0,0.5019607843137255,0.5019607843137255,1),(0.8627450980392157,0.7450980392156863,1.0,1),(0.6666666666666666,0.43137254901960786,0.1568627450980392,1),(1.0,0.9803921568627451,0.7843137254901961,1),(0.5019607843137255,0.0,0.0,1),(0.6666666666666666,1.0,0.7647058823529411,1),(0.5019607843137255,0.5019607843137255,0.0,1),(1.0,0.8431372549019608,0.7058823529411765,1),(0.5019607843137255,0.5019607843137255,0.5019607843137255,1),(1.0,1.0,1.0,1),(0.0,0.0,0.0,1)]
     color_idx = 0
 
 
@@ -132,14 +133,15 @@ def update(frame):
 
     for rid, position in frame.robot_positions.items():
         if rid in robot_shape_plots:
-            rect = robot_shapes[rid].rect(position, color = robot_colors[rid])
-            robot_shape_plots[rid].set_xy(rect.get_xy())
-            robot_shape_plots[rid].set_width(rect.get_width())
-            robot_shape_plots[rid].set_height(rect.get_height())
-
-            if frame.step % trail_concat_interval == 0:
-                pts = np.concatenate((trails[rid], np.array([[position[0]], [position[1]]])), axis = 1)
-                trails[rid] = pts
+            pass
+            # rect = robot_shapes[rid].rect(position, color = robot_colors[rid])
+            # robot_shape_plots[rid].set_xy(rect.get_xy())
+            # robot_shape_plots[rid].set_width(rect.get_width())
+            # robot_shape_plots[rid].set_height(rect.get_height())
+            #
+            # if frame.step % trail_concat_interval == 0:
+            #     pts = np.concatenate((trails[rid], np.array([[position[0]], [position[1]]])), axis = 1)
+            #     trails[rid] = pts
         else:
             robot_shape_plots[rid] = robot_shapes[rid].rect(position, color = robot_colors[rid])
             ax.add_patch(robot_shape_plots[rid])
@@ -147,24 +149,25 @@ def update(frame):
             trails[rid] = np.array([[position[0]], [position[1]]])
 
         updated_plots.append(robot_shape_plots[rid])
-
-        if frame.step % trail_concat_interval == 0:
-            if rid in trail_plots:
-                trail_plots[rid].set_xdata(trails[rid][0, :])
-                trail_plots[rid].set_ydata(trails[rid][1, :])
-            else:
-                trail_plots[rid], = ax.plot(trails[rid][0, :], trails[rid][0, :], '-', color = robot_colors[rid])
-
-        updated_plots.append(trail_plots[rid])
+        #
+        # if frame.step % trail_concat_interval == 0:
+        #     if rid in trail_plots:
+        #         trail_plots[rid].set_xdata(trails[rid][0, :])
+        #         trail_plots[rid].set_ydata(trails[rid][1, :])
+        #     else:
+        #         trail_plots[rid], = ax.plot(trails[rid][0, :], trails[rid][0, :], '-', linewidth=3, color = robot_colors[rid])
+        #
+        # updated_plots.append(trail_plots[rid])
 
 
     for rid, traj in original_trajectories.items():
         pts = original_trajectories[rid].pts(current_time)
         if rid in original_trajectory_plots:
-            original_trajectory_plots[rid].set_xdata(pts[0, :])
-            original_trajectory_plots[rid].set_ydata(pts[1, :])
+            pass
+            # original_trajectory_plots[rid].set_xdata(pts[0, :])
+            # original_trajectory_plots[rid].set_ydata(pts[1, :])
         else:
-            line, = ax.plot(pts[0, :], pts[1, :], '--', color = robot_colors[rid])
+            line, = ax.plot(pts[0, :], pts[1, :], '--', linewidth=3, color = robot_colors[rid])
             original_trajectory_plots[rid] = line
         updated_plots.append(original_trajectory_plots[rid])
 
@@ -190,22 +193,25 @@ def update(frame):
         del obstacle_plots[last_idx]
 
 
-    for rid, traj in frame.trajectories.items():
-        pts = traj.pts(0)
-        if rid in trajectory_plots:
-            trajectory_plots[rid].set_xdata(pts[0, :])
-            trajectory_plots[rid].set_ydata(pts[1, :])
-        else:
-            line, = ax.plot(pts[0, :], pts[1, :], '-', color = robot_colors[rid])
-            trajectory_plots[rid] = line
-        updated_plots.append(trajectory_plots[rid])
+    # for rid, traj in frame.trajectories.items():
+    #     pts = traj.pts(0)
+    #     if rid in trajectory_plots:
+    #         trajectory_plots[rid].set_xdata(pts[0, :])
+    #         trajectory_plots[rid].set_ydata(pts[1, :])
+    #     else:
+    #         line, = ax.plot(pts[0, :], pts[1, :], '-', linewidth=3, color = robot_colors[rid])
+    #         trajectory_plots[rid] = line
+    #     updated_plots.append(trajectory_plots[rid])
 
 
-    # fig.savefig("images/" + str(frame.step) + ".png")
+    fig.savefig("2d_orig_images/orig.png") #+ str(frame.step) + ".png")
+
+    if frame.step == 3:
+        exit()
 
     return updated_plots
 
-f = open("vis.json", "r")
+f = open(sys.argv[1], "r")
 import json
 j = json.loads(f.read())
 f.close()
@@ -221,7 +227,7 @@ writer = Writer(fps= 1 / dt, bitrate = 8 * 1024)
 
 ani = FuncAnimation(fig, update, frames = frames, blit = True, interval = dt * 3000, repeat = False)
 
-#ani.save("res.mp4", writer = writer, dpi = 150)
+ani.save("2d_res_orig.mp4", writer = writer, dpi = 300)
 
 
-plt.show()
+# plt.show()

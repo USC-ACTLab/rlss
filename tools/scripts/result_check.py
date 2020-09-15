@@ -8,6 +8,15 @@ log = json.loads(f.read())
 f.close()
 
 
+def aabb_intersects_epsilon(aabb1, aabb2, epsilon = 0.02):
+    for i in range(3):
+        if aabb1["min"][i] >= aabb2["max"][i] - epsilon:
+            return False
+        if aabb1["max"][i] <= aabb2["min"][i] + epsilon:
+            return False
+
+    return True
+
 def aabb_intersects(aabb1, aabb2):
     for i in range(3):
         if aabb1["min"][i] >= aabb2["max"][i]:
@@ -71,14 +80,14 @@ for frame_dict in log["frames"]:
 
     for rbox in robot_boxes:
         for obs in obstacles:
-            if(aabb_intersects(rbox, obs)):
+            if(aabb_intersects_epsilon(rbox, obs)):
                 collision_count += 1
 
     i = 0
     while i < len(robot_boxes):
         j = i + 1
         while j < len(robot_boxes):
-            if(aabb_intersects(robot_boxes[i], robot_boxes[j])):
+            if(aabb_intersects_epsilon(robot_boxes[i], robot_boxes[j])):
                 collision_count += 1
             j += 1
         i += 1

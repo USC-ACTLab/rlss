@@ -67,11 +67,11 @@ class Visualizer:
         trajectories = TrajectoriesContainer()
         obstacle_markers = []
 
-        for frame in _log["frames"]:
+        for idx, frame in enumerate(_log["frames"]):
             delta = Delta()
 
             # trajectories update
-            if "trajectories" in frame:
+            if "trajectories" in frame and idx > 10:
                 for traj_dict in frame["trajectories"]:
                     robot_id = traj_dict["robot_id"]
                     traj = PiecewiseCurve.fromDictionary(traj_dict["trajectory"])
@@ -139,6 +139,8 @@ class Visualizer:
                     delta.removeMarker(marker)
 
 
+
+            # original trajectories
             last_markers = original_trajectories.last_markers
             new_markers = original_trajectories.toMarkerArray(current_time, robot_transparent_colors)
             for marker in new_markers:
