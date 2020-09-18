@@ -134,6 +134,10 @@ public:
         T actual_horizon = target_time - current_time;
         return std::make_pair(target_position, actual_horizon);
     }
+
+    void setOriginalTrajectory(const PiecewiseCurve& origtraj) {
+        m_original_trajectory = origtraj;
+    }
 private:
     T m_desired_horizon;
     PiecewiseCurve m_original_trajectory;
