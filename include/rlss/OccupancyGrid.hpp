@@ -364,6 +364,10 @@ public:
         return m_grid.size();
     }
 
+    const UnorderedIndexSet& getIndexSet() const {
+        return m_grid;
+    }
+
     friend OccupancyGridIterator<T, DIM>;
     friend OccupancyGridDistanceIterator<T, DIM>;
 
