@@ -8,7 +8,7 @@ import numpy as np
 import matplotlib.animation as animation
 import matplotlib
 import sys
-matplotlib.use("Agg")
+# matplotlib.use("Agg")
 
 fig = plt.figure(figsize=(15, 15))
 ax = plt.axes(xlim = (-5, 4), ylim = (-3, 3))
@@ -133,15 +133,14 @@ def update(frame):
 
     for rid, position in frame.robot_positions.items():
         if rid in robot_shape_plots:
-            pass
-            # rect = robot_shapes[rid].rect(position, color = robot_colors[rid])
-            # robot_shape_plots[rid].set_xy(rect.get_xy())
-            # robot_shape_plots[rid].set_width(rect.get_width())
-            # robot_shape_plots[rid].set_height(rect.get_height())
-            #
-            # if frame.step % trail_concat_interval == 0:
-            #     pts = np.concatenate((trails[rid], np.array([[position[0]], [position[1]]])), axis = 1)
-            #     trails[rid] = pts
+            rect = robot_shapes[rid].rect(position, color = robot_colors[rid])
+            robot_shape_plots[rid].set_xy(rect.get_xy())
+            robot_shape_plots[rid].set_width(rect.get_width())
+            robot_shape_plots[rid].set_height(rect.get_height())
+
+            if frame.step % trail_concat_interval == 0:
+                pts = np.concatenate((trails[rid], np.array([[position[0]], [position[1]]])), axis = 1)
+                trails[rid] = pts
         else:
             robot_shape_plots[rid] = robot_shapes[rid].rect(position, color = robot_colors[rid])
             ax.add_patch(robot_shape_plots[rid])
@@ -149,23 +148,22 @@ def update(frame):
             trails[rid] = np.array([[position[0]], [position[1]]])
 
         updated_plots.append(robot_shape_plots[rid])
-        #
-        # if frame.step % trail_concat_interval == 0:
-        #     if rid in trail_plots:
-        #         trail_plots[rid].set_xdata(trails[rid][0, :])
-        #         trail_plots[rid].set_ydata(trails[rid][1, :])
-        #     else:
-        #         trail_plots[rid], = ax.plot(trails[rid][0, :], trails[rid][0, :], '-', linewidth=3, color = robot_colors[rid])
-        #
-        # updated_plots.append(trail_plots[rid])
+
+        if frame.step % trail_concat_interval == 0:
+            if rid in trail_plots:
+                trail_plots[rid].set_xdata(trails[rid][0, :])
+                trail_plots[rid].set_ydata(trails[rid][1, :])
+            else:
+                trail_plots[rid], = ax.plot(trails[rid][0, :], trails[rid][0, :], '-', linewidth=3, color = robot_colors[rid])
+
+        updated_plots.append(trail_plots[rid])
 
 
     for rid, traj in original_trajectories.items():
         pts = original_trajectories[rid].pts(current_time)
         if rid in original_trajectory_plots:
-            pass
-            # original_trajectory_plots[rid].set_xdata(pts[0, :])
-            # original_trajectory_plots[rid].set_ydata(pts[1, :])
+            original_trajectory_plots[rid].set_xdata(pts[0, :])
+            original_trajectory_plots[rid].set_ydata(pts[1, :])
         else:
             line, = ax.plot(pts[0, :], pts[1, :], '--', linewidth=3, color = robot_colors[rid])
             original_trajectory_plots[rid] = line
@@ -193,21 +191,21 @@ def update(frame):
         del obstacle_plots[last_idx]
 
 
-    # for rid, traj in frame.trajectories.items():
-    #     pts = traj.pts(0)
-    #     if rid in trajectory_plots:
-    #         trajectory_plots[rid].set_xdata(pts[0, :])
-    #         trajectory_plots[rid].set_ydata(pts[1, :])
-    #     else:
-    #         line, = ax.plot(pts[0, :], pts[1, :], '-', linewidth=3, color = robot_colors[rid])
-    #         trajectory_plots[rid] = line
-    #     updated_plots.append(trajectory_plots[rid])
+    for rid, traj in frame.trajectories.items():
+        pts = traj.pts(0)
+        if rid in trajectory_plots:
+            trajectory_plots[rid].set_xdata(pts[0, :])
+            trajectory_plots[rid].set_ydata(pts[1, :])
+        else:
+            line, = ax.plot(pts[0, :], pts[1, :], '-', linewidth=3, color = robot_colors[rid])
+            trajectory_plots[rid] = line
+        updated_plots.append(trajectory_plots[rid])
 
 
-    fig.savefig("2d_orig_images/orig.png") #+ str(frame.step) + ".png")
+    # fig.savefig("2d_orig_images/orig.png") #+ str(frame.step) + ".png")
 
-    if frame.step == 3:
-        exit()
+    # if frame.step == 3:
+    #     exit()
 
     return updated_plots
 
@@ -227,7 +225,7 @@ writer = Writer(fps= 1 / dt, bitrate = 8 * 1024)
 
 ani = FuncAnimation(fig, update, frames = frames, blit = True, interval = dt * 3000, repeat = False)
 
-ani.save("2d_res_orig.mp4", writer = writer, dpi = 300)
+# ani.save("2d_res_orig.mp4", writer = writer, dpi = 300)
 
 
-# plt.show()
+plt.show()
