@@ -529,7 +529,7 @@ int main(int argc, char* argv[]) {
                     json_builder.setRobotPositionInCurrentFrame(
                             i, states[i][j]);
                 }
-                std::cout << "robot " << i << " eval" << std::endl;
+//                std::cout << "robot " << i << " eval" << std::endl;
                 states[i][j] = trajectories[i].eval(
                         std::min(
                                 trajectory_current_times[i] + replanning_period,

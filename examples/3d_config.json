@@ -1,7 +1,7 @@
 {
     "base_path": "/home/baskin/repos/rlss/",
     "obstacle_directory": "examples/inputs/obstacle_descriptions/3d/warehouse/",
-    "robot_parameters_directory": "examples/inputs/demo_descriptions/3d/demo_5/",
+    "robot_parameters_directory": "examples/inputs/demo_descriptions/3d/demo_1/",
     "replanning_period": 0.1,
     "reach_distance": 0.1,
     "occupancy_grid_step_size": [0.5, 0.5, 0.5],

@@ -804,6 +804,12 @@ public:
 
     void save() const {
     }
+
+
+    StatisticsStorage<T>& operator+=(const StatisticsStorage<T>& rhs) {
+        return *this;
+
+    }
 };
 
 #endif
