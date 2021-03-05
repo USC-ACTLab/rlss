@@ -261,10 +261,10 @@ namespace rlss {
         class JSONBuilder {
         public:
 
-            using AlignedBox = AlignedBox<T, DIM>;
+            using AlignedBox = internal::AlignedBox<T, DIM>;
             using PiecewiseCurve = splx::PiecewiseCurve<T, DIM>;
             using Bezier = splx::Bezier<T, DIM>;
-            using VectorDIM = VectorDIM<T, DIM>;
+            using VectorDIM = internal::VectorDIM<T, DIM>;
 
             JSONBuilder() {
             }
