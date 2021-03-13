@@ -1,5 +1,10 @@
 # RLSS: Distributed Real-time Trajectory Replanning using Linear Spatial Separations
 
+![rlss_1](https://github.com/usc-actlab/rlss/blob/master/rlss_1.gif?raw=true)
+![rlss_2](https://github.com/usc-actlab/rlss/blob/master/rlss_2.gif?raw=true)
+![rlss_3](https://github.com/usc-actlab/rlss/blob/master/rlss_3.gif?raw=true)
+![rlss_4](https://github.com/usc-actlab/rlss/blob/master/rlss_4.gif?raw=true)
+
 RLSS is a real time trajectory replanning algorithm for multi robot teams.
 RLSS combines A*-based discrete search with QP based trajectory optimization
 where linear separations enforce safety.
