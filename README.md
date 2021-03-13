@@ -1,9 +1,9 @@
 # RLSS: Distributed Real-time Trajectory Replanning using Linear Spatial Separations
 
-<img src="https://github.com/usc-actlab/rlss/blob/master/gifs/rlss_1.gif?raw=true" width="300"/>
-<img src="https://github.com/usc-actlab/rlss/blob/master/gifs/rlss_2.gif?raw=true" width="300"/>
-<img src="https://github.com/usc-actlab/rlss/blob/master/gifs/rlss_3.gif?raw=true" width="300"/>
-<img src="https://github.com/usc-actlab/rlss/blob/master/gifs/rlss_4.gif?raw=true" width="300"/>
+<img style="display:inline-block" src="https://github.com/usc-actlab/rlss/blob/master/gifs/rlss_1.gif?raw=true" width="300"/>
+<img style="display:inline-block" src="https://github.com/usc-actlab/rlss/blob/master/gifs/rlss_2.gif?raw=true" width="300"/>
+<img style="display:inline-block" src="https://github.com/usc-actlab/rlss/blob/master/gifs/rlss_3.gif?raw=true" width="300"/>
+<img style="display:inline-block" src="https://github.com/usc-actlab/rlss/blob/master/gifs/rlss_4.gif?raw=true" width="300"/>
 
 RLSS is a real time trajectory replanning algorithm for multi robot teams.
 RLSS combines A*-based discrete search with QP based trajectory optimization
