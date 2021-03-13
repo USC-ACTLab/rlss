@@ -29,7 +29,7 @@ namespace rlss {
 #ifdef ENABLE_RLSS_DEBUG_MESSAGES
 namespace internal {
     template<typename T>
-    void debug_message_internal(bool first, T message) {
+    void debug_message_internal(bool first, const T& message) {
         if(first) {
             std::cout << "[DEBUG] ";
         }
@@ -37,7 +37,7 @@ namespace internal {
     }
 
     template<typename T, typename... Args>
-    void debug_message_internal(bool first, T message, Args... args) {
+    void debug_message_internal(bool first, const T& message, const Args&... args) {
         if(first) {
             std::cout << "[DEBUG] ";
         }
@@ -47,12 +47,12 @@ namespace internal {
 } // namespace internal
 
     template<typename... Args>
-    void debug_message(Args... args) {
+    void debug_message(const Args&... args) {
         internal::debug_message_internal(true, args...);
     }
 #else
     template<typename... Args>
-    void debug_message(Args... args) {
+    void debug_message(const Args&... args) {
 
     }
 #endif
