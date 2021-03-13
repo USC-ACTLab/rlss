@@ -72,3 +72,7 @@ make -j4
 * `unpause`: Unpause visualization
 * `help`: List available commands
 * `exit`: Exit visualizer
+
+## ROS Integration
+
+The ROS integration of RLSS is developed in a separate repo: [rlss_ros](https://github.com/usc-actlab/rlss_ros).
