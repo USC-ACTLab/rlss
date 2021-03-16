@@ -18,6 +18,25 @@ RLSS,
 * requires perfect sensing of only the positions of robots and obstacles
 * does not depend on communication for safety
 
+## Citing RLSS
+Please use the following entry to cite RLSS:
+
+```
+@article{senbaslar2021rlss,
+    author = {{{\c{S}}enba{\c{s}}lar}, Bask{\i}n and {H{\"o}nig}, Wolfgang and {Ayanian}, Nora},
+    title = "{RLSS: Real-time Multi-Robot Trajectory Replanning using Linear Spatial Separations}",
+    journal = {arXiv e-prints},
+    keywords = {Computer Science - Robotics},
+    year = 2021,
+    month = mar,
+    eid = {arXiv:2103.07588},
+    pages = {arXiv:2103.07588},
+    archivePrefix = {arXiv},
+    eprint = {2103.07588},
+    primaryClass = {cs.RO}
+}
+```
+
 ## Dependencies
 RLSS depends on [Eigen3](https://eigen.tuxfamily.org/index.php?title=Main_Page), [Boost](https://www.boost.org/).
 It also depends on [ILOG CPLEX C++](https://www.ibm.com/products/ilog-cplex-optimization-studio), [GUROBI](https://www.gurobi.com/products/gurobi-optimizer/) as optimization libraries. 
