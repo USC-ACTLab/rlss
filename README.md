@@ -71,6 +71,12 @@ ln -s ../src/build/libgurobi_c++.a  libgurobi_c++.a
 
 ## Running Simulator Examples & Visualization
 * Set `base_path` to the rlss root folder in `examples/2d_config.json` and `examples/3d_config.json`
+* Dependencies for 2D visualizer
+    ```
+    pip3 install matplotlib
+    sudo apt install ffmpeg
+    pip3 install numpy
+    ```
 * For 2D visualization run:
     ```
     cd build
@@ -78,6 +84,13 @@ ln -s ../src/build/libgurobi_c++.a  libgurobi_c++.a
     python3 ../tools/vis/2d/run.py vis.json
     ```
 * 3D visualizer requires [ROS](https://www.ros.org/) and [rviz](http://wiki.ros.org/rviz).
+* Dependencies for 3D visualizer
+    ```
+    pip3 install rospkg
+    pip3 install sympy
+    pip3 install numpy
+    BEZIER_INSTALL_PREFIX=./ BEZIER_NO_EXTENSION=true pip3 install bezier==2020.5.19
+    ```
 * For 3D visualizer run:
     ```
     (terminal A) cd build
