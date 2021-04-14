@@ -51,6 +51,15 @@ cd build
 cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_RLSS_EXAMPLES=ON -DENABLE_RLSS_JSON_BUILDER=ON ..
 make -j4
 ```
+
+### If you are having problems linking Gurobi
+```
+cd $GUROBI_HOME/src/build
+make
+cd $GUROBI_HOME/lib
+rm libgurobi_c++.a
+ln -s ../src/build/libgurobi_c++.a  libgurobi_c++.a
+```
     
 ### Targets 
 * `make 2d_sim`: build 2D simulator example
