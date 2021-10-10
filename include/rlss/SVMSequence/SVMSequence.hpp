@@ -51,14 +51,14 @@ public:
         typedef int difference_type;
         iterator(pointer ptr) : ptr_(ptr) { }
         self_type operator++(){
-
+            
         }
     private:
         pointer ptr_;
     }
 
 private:
-    deque<Pair> sequence;
+    std::deque<Pair> sequence;
 } // class SVMSequence
 
 } // namespace rlss
