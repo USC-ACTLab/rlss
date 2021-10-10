@@ -3,7 +3,8 @@
 
 #include <rlss/internal/Util.hpp>
 #include <splx/curve/PiecewiseCurve.hpp>
-// #include <deque>
+#include <deque>
+#include <iterator>
 
 namespace rlss {
 
@@ -37,6 +38,23 @@ public:
         } catch(...) {
             return false;
         }
+    }
+    // TODO implement custom iterator, SVMSequenc::iterator
+    // following template found: https://gist.github.com/jeetsukumaran/307264
+    class iterator{
+    public:
+        typedef iterator self_type;
+        typedef Hyperplane valueType;
+        typedef Hyperplane& reference;
+        typedef Hyperplane* pointer;
+        typedef std::forward_iterator_tag iterator_category;
+        typedef int difference_type;
+        iterator(pointer ptr) : ptr_(ptr) { }
+        self_type operator++(){
+
+        }
+    private:
+        pointer ptr_;
     }
 
 private:
