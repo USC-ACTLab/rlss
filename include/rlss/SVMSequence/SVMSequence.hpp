@@ -30,19 +30,19 @@ public:
         if (sequence.empty()) return false;
         else{
             while (sequence.front()->first < _t){
-                sequece.pop_front().second
+                sequence.pop_front().second
             }
             return true;
         }
     }
-    size_type size() const {
+    size_t size() const {
         return sequence.size();
     }
-    Hyperplane& operator[](size_type i){
+    Hyperplane& operator[](size_t i){
         assert(i < sequence.size());
         return sequence[i].second;
     }
-    const Hyperplane& operator[](size_type i) const {
+    const Hyperplane& operator[](size_t i) const {
         assert(i < sequence.size());
         return sequence[i].second;
     }
