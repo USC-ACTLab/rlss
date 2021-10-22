@@ -10,38 +10,39 @@ namespace rlss {
 
 template<typename T, unsigned int DIM>
 class SVMSequence {
-public:
     using Hyperplane = rlss::internal::Hyperplane<T, DIM>;
     using Pair = std::pair<T, Hyperplane>;
-    SVMSequence(){
-        
-    }
-    ~SVMSequence(){
+public:
+    SVMSequence() {}
+    ~SVMSequence() {}
 
-    }
-    bool add(T time, Hyperplane& plane){
-        if (sequence.empty() || sequence.front()->first < time){
+    // return if added to sequence at all
+    bool add(T time, const Hyperplane& plane){
+        if (sequence.empty() || sequence.front().first < time){
             sequence.push_back(std::make_pair(time, plane));
             return true;
         }
-        else return false;
+        return false;
     }
-    bool forget(T _t){
-        if (sequence.empty()) return false;
-        else{
-            while (sequence.front()->first < _t){
-                sequence.pop_front().second
-            }
-            return true;
+
+    // return how many items popped
+    size_t forget(T _t){
+        size_t counter = 0;
+        while (!sequence.empty() && sequence.front().first < _t){
+            sequence.pop_front();
+            counter++;
         }
+        return counter;
     }
-    size_t size() const {
-        return sequence.size();
-    }
+
+    size_t size() const {return sequence.size();}
+    bool empty() {return sequence.empty();}
+
     Hyperplane& operator[](size_t i){
         assert(i < sequence.size());
         return sequence[i].second;
     }
+
     const Hyperplane& operator[](size_t i) const {
         assert(i < sequence.size());
         return sequence[i].second;
@@ -49,24 +50,24 @@ public:
     // implement custom iterator, SVMSequenc::const_iterator
     // following template found: https://gist.github.com/jeetsukumaran/307264
     class const_iterator{
-    public:
         typedef const_iterator self_type;
         typedef Hyperplane valueType;
         typedef Hyperplane& reference;
         typedef Hyperplane* pointer;
-        typedef std::deque<Pair>::const_iterator base_iterator;
+        typedef typename std::deque<Pair>::const_iterator base_iterator;
         typedef std::forward_iterator_tag iterator_category;
         typedef int difference_type;
+    public:
         const_iterator(base_iterator itr):iterator_to_deque(itr) {}
         self_type operator++(){++iterator_to_deque; return *this;}
         self_type operator++(int index){iterator_to_deque += index; return *this;}
-        const reference operator*() {return iterator_to_queue.second;}
-        const pointer operator->() {return iterator_to_queue.second;}
+        const reference operator*() {return iterator_to_deque.second;}
+        const pointer operator->() {return iterator_to_deque.second;}
         bool operator==(const self_type& rhs) {return iterator_to_deque == rhs.iterator_to_deque;}
         bool operator!=(const self_type& rhs) {return iterator_to_deque != rhs.iterator_to_deque;}
     private:
         base_iterator iterator_to_deque;
-    }
+    };
     const_iterator cbegin() const {
         return const_iterator(sequence.cbegin());
     }
@@ -75,7 +76,7 @@ public:
     }
 private:
     std::deque<Pair> sequence;
-} // class SVMSequence
+}; // class SVMSequence
 
 } // namespace rlss
 
