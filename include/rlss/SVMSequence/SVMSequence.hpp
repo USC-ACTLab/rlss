@@ -38,6 +38,9 @@ public:
     size_t size() const {return sequence.size();}
     bool empty() {return sequence.empty();}
 
+    // statusOr
+    // reference wrapper
+    // strCat
     Hyperplane& operator[](size_t i){
         assert(i < sequence.size());
         return sequence[i].second;

@@ -43,5 +43,7 @@ TEST_CASE("SVMSequence basic_operation test", "SVMSequence"){
         REQUIRE(testSequence.size() == 2);
         REQUIRE(testSequence.forget(4.0) == 2);
         REQUIRE(testSequence.size() == 0);
+        // try negative time
+        // try double, int..... NaN
     }
 }
