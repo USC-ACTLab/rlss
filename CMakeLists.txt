@@ -1,3 +1,5 @@
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 cmake_minimum_required(VERSION 3.9)
 project(rlss)
 
@@ -22,6 +24,7 @@ target_link_libraries(
     lp_wrappers
     ${Boost_LIBRARIES}
     ${Boost_FILESYSTEM_LIBRARY}
+    absl::statusor
 )
 
 if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
