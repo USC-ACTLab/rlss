@@ -1,5 +1,4 @@
-This repository is archived. For the latest version of RLSS, please email baskin.senbaslar@usc.edu.
-{: .alert .alert-warning}
+> :warning: This repository is archived. For the latest version of RLSS, please email baskin.senbaslar@usc.edu.
 
 # RLSS: Distributed Real-time Trajectory Replanning using Linear Spatial Separations
 <p float="left">
